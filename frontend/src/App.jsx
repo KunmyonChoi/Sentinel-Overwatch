@@ -8,6 +8,7 @@ import BlockListPanel from './components/BlockListPanel';
 import HighlightKorean from './components/HighlightKorean';
 import TokenGate from './components/TokenGate';
 import HardeningPanel from './components/HardeningPanel';
+import MaintenanceControl from './components/MaintenanceControl';
 import { api, getToken } from './api';
 import { ShieldAlert } from 'lucide-react';
 
@@ -82,6 +83,7 @@ function App() {
           </div>
         </div>
         <div className="flex items-center gap-4 text-sm">
+          <MaintenanceControl maintenance={stats?.maintenance} onChanged={refreshNow} />
           {stats && (
             <span className={`px-3 py-1 border rounded font-bold tracking-wider ${badge} ${isDefcon1 ? 'animate-pulse' : ''}`}>
               {stats.status} · {stats.status_ko}

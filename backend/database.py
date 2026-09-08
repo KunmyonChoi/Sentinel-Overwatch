@@ -161,6 +161,18 @@ class KnownListener(Base):
     last_seen = Column(DateTime, default=utcnow)
 
 
+class MaintenanceWindow(Base):
+    """운영자가 선언한 계획 작업 창. 이 동안의 설정/패키지/영속화 알림은 자동 확인 처리된다."""
+    __tablename__ = "maintenance_windows"
+
+    id = Column(Integer, primary_key=True, index=True)
+    started_at = Column(DateTime, default=utcnow)
+    ends_at = Column(DateTime, index=True)
+    ended_at = Column(DateTime, nullable=True)
+    note = Column(Text, nullable=True)
+    by = Column(String, nullable=True)
+
+
 class DailyReport(Base):
     __tablename__ = "daily_reports"
 

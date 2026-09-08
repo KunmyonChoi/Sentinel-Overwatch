@@ -14,7 +14,8 @@ import re
 import stat
 from pathlib import Path
 
-from alerts import raise_alert, recent_admin_context
+from alerts import raise_alert, recent_admin_context, recent_package_activity
+from integrations import apt
 from database import IntegrityBaseline, SessionLocal
 from monitor.base import BaseMonitor
 
@@ -109,6 +110,17 @@ def summarize_generic(old: str | None, new: str | None) -> str:
     o = {l.strip() for l in (old or "").splitlines()}
     n = {l.strip() for l in (new or "").splitlines()}
     return f"{len(n - o)}줄 추가, {len(o - n)}줄 삭제"
+
+
+ALWAYS_ALERT_MARKERS = ("sudoers", "sshd_config", "authorized_keys", "ld.so.preload", "/etc/shadow", "/etc/passwd", "/etc/group")
+
+
+def package_context(path: str) -> tuple[str | None, str | None]:
+    """(소유 패키지, 최근 그 패키지의 설치/업그레이드 설명). 패키지 작업의 부산물이면 둘 다 값이 있다."""
+    owner = apt.package_owner(path)
+    if not owner:
+        return None, None
+    return owner, recent_package_activity(owner)
 
 
 WATCH_FILES = {
@@ -257,6 +269,12 @@ class IntegrityMonitor(BaseMonitor):
         except OSError:
             meta = ""
         d = {"path": path, "change": change, "change_ko": change_ko + when, "summary": summary, "meta": meta, "offline": offline, "desc_ko": desc_ko}
+        if not any(m in path for m in ALWAYS_ALERT_MARKERS):
+            owner, activity = package_context(path)
+            if owner and activity:
+                d |= {"package": owner, "package_activity": activity, "change_ko": f"{change_ko} (패키지 {owner} 작업의 일부)"}
+                self.log_event("FILE_INTEGRITY", "INFO", f"{path} {change} by package {owner}: {activity}", d)
+                return
         self.log_event("FILE_INTEGRITY", severity, f"{path} {change}{' while service was down' if offline else ''}: {summary}", d)
         raise_alert(
             "integrity_change", severity, f"{path} {change}: {summary}",
@@ -409,6 +427,24 @@ class PersistenceMonitor(BaseMonitor):
     def _report(self, kind: str, kind_ko: str, path: str, change: str, old: str | None, new: str | None):
         change_ko = {"created": "새로 생성됨", "modified": "변경됨", "deleted": "삭제됨"}[change]
         content = (new or old or "")
+        base = os.path.basename(path)
+        # 1) systemctl mask 가 만든 /dev/null 링크
+        if kind == "systemd" and change != "deleted" and os.path.islink(path) and os.path.realpath(path) == "/dev/null":
+            d = {"kind": kind, "kind_ko": kind_ko, "path": path, "change": "masked", "change_ko": "마스크됨 (/dev/null 링크)"}
+            self.log_event("PERSISTENCE", "INFO", f"{kind} unit masked: {path}", d)
+            return
+        # 2) snapd 가 관리하는 mount 유닛 (snap 갱신마다 바뀜)
+        if kind == "systemd" and base.startswith("snap-") and base.endswith(".mount"):
+            d = {"kind": kind, "kind_ko": kind_ko, "path": path, "change": change, "change_ko": change_ko + " (snapd 관리)"}
+            self.log_event("PERSISTENCE", "INFO", f"{kind} snap mount unit {change}: {path}", d)
+            return
+        # 3) 패키지 설치/업그레이드가 만든 파일
+        if change != "deleted":
+            owner, activity = package_context(path)
+            if owner and activity:
+                d = {"kind": kind, "kind_ko": kind_ko, "path": path, "change": change, "change_ko": f"{change_ko} (패키지 {owner} 작업의 일부)", "package": owner, "package_activity": activity}
+                self.log_event("PERSISTENCE", "INFO", f"{kind} {change} by package {owner}: {path}", d)
+                return
         suspicious = bool(re.search(r"(curl|wget)\s.*\|\s*(ba)?sh|/dev/tcp/|base64\s+-d|nc\s+-e|python[23]?\s+-c", content))
         severity = "CRITICAL" if suspicious else "WARNING"
         d = {"kind": kind, "kind_ko": kind_ko, "path": path, "change": change, "change_ko": change_ko, "suspicious": suspicious}
@@ -427,6 +463,8 @@ class PersistenceMonitor(BaseMonitor):
         base = self.baselines["suid"]
         store = self.stores["suid"]
         found, denied = find_suid(self.suid_dirs)
+        # /sbin → /usr/sbin 같은 merged-usr 경로는 실제 경로 하나로 합친다
+        found = {os.path.realpath(p) for p in found}
         if denied and self.health != "down":
             self.set_health("degraded", f"SUID 스캔에서 접근 거부된 디렉터리 {len(denied)}개 (예: {sorted(denied)[0]})",
                             "완전한 스캔을 위해 CAP_DAC_READ_SEARCH 권한을 부여하세요.")
@@ -437,6 +475,11 @@ class PersistenceMonitor(BaseMonitor):
                 if first_run:
                     continue
                 d = {"kind": "suid", "kind_ko": "SUID/SGID 바이너리", "path": path, "change": "created", "change_ko": "새로 생성됨"}
+                owner, activity = package_context(path)
+                if owner and activity:
+                    d |= {"package": owner, "package_activity": activity, "change_ko": f"새로 생성됨 (패키지 {owner} 설치의 일부)"}
+                    self.log_event("PERSISTENCE", "INFO", f"SUID/SGID binary from package {owner}: {path}", d)
+                    continue
                 self.log_event("PERSISTENCE", "CRITICAL", f"New SUID/SGID binary: {path}", d)
                 raise_alert(
                     "persistence_suid", "CRITICAL", f"New SUID/SGID binary: {path}",

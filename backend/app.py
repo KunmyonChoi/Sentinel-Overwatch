@@ -118,7 +118,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", f"http://{config.HOST}:{config.PORT}", f"http://localhost:{config.PORT}"],
     allow_credentials=False,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["Content-Type", "X-API-Token"],
 )
 
@@ -229,6 +229,42 @@ def resolve_alert(alert_id: int, body: AckBody | None = None, db: Session = Depe
     return alert_engine.serialize(a)
 
 
+class AckAllBody(BaseModel):
+    by: str = "dashboard"
+    note: str = ""
+    rule: str | None = None
+    ids: list[int] | None = None
+
+
+@app.post("/api/alerts/ack-all")
+def ack_all_alerts(body: AckAllBody | None = None, db: Session = Depends(get_db)):
+    body = body or AckAllBody()
+    n = alert_engine.ack_all(db, body.by, body.note, body.rule, body.ids)
+    return {"acked": n}
+
+
+class MaintenanceBody(BaseModel):
+    minutes: int = 60
+    note: str = ""
+    by: str = "dashboard"
+
+
+@app.get("/api/maintenance")
+def get_maintenance(db: Session = Depends(get_db)):
+    return alert_engine.maintenance_payload(alert_engine.active_maintenance(db, force=True))
+
+
+@app.post("/api/maintenance")
+def start_maintenance(body: MaintenanceBody, db: Session = Depends(get_db)):
+    win = alert_engine.start_maintenance(body.minutes, body.note, body.by, db)
+    return alert_engine.maintenance_payload(win)
+
+
+@app.delete("/api/maintenance")
+def end_maintenance(db: Session = Depends(get_db)):
+    return {"ended": alert_engine.end_maintenance("dashboard", db), "active": False}
+
+
 @app.get("/api/blocked")
 def get_blocked(db: Session = Depends(get_db)):
     rows = db.query(BlockedIP).filter(BlockedIP.status.in_(["ACTIVE", "RECOMMENDED"])).order_by(BlockedIP.blocked_at.desc()).all()
@@ -284,6 +320,7 @@ def get_stats(db: Session = Depends(get_db)):
         "critical_24h": base.filter(Event.severity == "CRITICAL").count(),
         "warning_24h": base.filter(Event.severity == "WARNING").count(),
         "degraded_monitors": degraded,
+        "maintenance": alert_engine.maintenance_payload(alert_engine.active_maintenance(db)),
         **_resource_cache,
     }
 

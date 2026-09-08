@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bell, Check, CheckCheck, ChevronDown, ClipboardCopy } from 'lucide-react';
+import { Bell, Check, CheckCheck, CheckSquare, ChevronDown, ClipboardCopy } from 'lucide-react';
 import { api, fmtDateTime } from '../api';
 
 const SEV = {
@@ -30,6 +30,22 @@ export default function AlertsPanel({ alerts, onChanged }) {
 
     const toggle = (id) => setOpen(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
+    const ackAll = async () => {
+        const targets = visible.filter(a => a.status === 'OPEN');
+        if (targets.length === 0) return;
+        const note = prompt(`표시된 미확인 알림 ${targets.length}건을 모두 확인 처리합니다. 메모(선택):`, '');
+        if (note === null) return;
+        setBusy('all');
+        try {
+            await api('/api/alerts/ack-all', { method: 'POST', body: { by: 'dashboard', note, ids: targets.map(a => a.id) } });
+            onChanged && onChanged();
+        } catch (e) {
+            alert(`처리 실패: ${e.message}`);
+        } finally {
+            setBusy(null);
+        }
+    };
+
     const act = async (a, action) => {
         let note = '';
         if (action === 'resolve') {
@@ -51,9 +67,16 @@ export default function AlertsPanel({ alerts, onChanged }) {
         <div className="border border-neon-green/30 bg-cyber-black/80 backdrop-blur-sm p-4 rounded-sm neon-border">
             <h2 className="text-xl font-bold text-neon-green mb-3 border-b border-neon-green/30 pb-2 flex items-center justify-between">
                 <span className="flex items-center gap-2"><Bell className="w-5 h-5" /> 알림 <span className="text-sm font-normal text-gray-400">(미확인 {openCount} / 진행 중 {alerts.length - openCount})</span></span>
-                <label className="text-xs text-gray-500 flex items-center gap-1 cursor-pointer font-normal">
-                    <input type="checkbox" checked={showAcked} onChange={(e) => setShowAcked(e.target.checked)} /> 확인된 알림 표시
-                </label>
+                <span className="flex items-center gap-3 font-normal">
+                    {openCount > 0 && (
+                        <button onClick={ackAll} disabled={busy === 'all'} className="text-xs border border-blue-500/50 text-blue-300 hover:bg-blue-500/20 px-2 py-1 rounded flex items-center gap-1" title="표시된 미확인 알림을 모두 확인 처리">
+                            <CheckSquare className="w-3 h-3" /> 모두 확인 ({visible.filter(a => a.status === 'OPEN').length})
+                        </button>
+                    )}
+                    <label className="text-xs text-gray-500 flex items-center gap-1 cursor-pointer">
+                        <input type="checkbox" checked={showAcked} onChange={(e) => setShowAcked(e.target.checked)} /> 확인된 알림 표시
+                    </label>
+                </span>
             </h2>
             {visible.length === 0 ? (
                 <div className="text-gray-500 text-sm py-3 text-center">처리할 알림이 없습니다.</div>
@@ -71,6 +94,7 @@ export default function AlertsPanel({ alerts, onChanged }) {
                                             <span className={`${s.text} font-bold text-xs`}>[{s.label}]</span>
                                             {a.count > 1 && <span className={`text-[10px] px-1.5 rounded-full border ${s.text} border-current`}>×{a.count}</span>}
                                             {acked && <span className="text-[10px] px-1 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">확인됨 · {a.acked_by}</span>}
+                                            {a.details?.package && <span className="text-[10px] px-1 rounded bg-gray-700/40 text-gray-400 border border-gray-600">패키지 {a.details.package}</span>}
                                             {a.is_simulation && <span className="text-[10px] px-1 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">TEST DATA</span>}
                                             <span className="text-[10px] text-gray-500 font-mono">{a.rule}</span>
                                         </div>

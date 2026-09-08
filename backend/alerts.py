@@ -15,11 +15,83 @@ from sqlalchemy.orm import Session
 
 import korean
 import notifications
-from database import Alert, SessionLocal, utcnow
+from database import Alert, MaintenanceWindow, SessionLocal, utcnow
 
 logger = logging.getLogger("alerts")
 
 SEVERITY_RANK = {"INFO": 0, "WARNING": 1, "CRITICAL": 2}
+
+# 점검 모드 중 자동 확인되는 규칙 (계획 작업으로 생기는 것들). 침입 신호는 절대 포함하지 않는다.
+MAINTENANCE_RULE_PREFIXES = (
+    "integrity_change", "persistence_", "security_package_removed", "pending_security_updates",
+    "new_listener", "kernel_module", "lynis_", "usn_affects_host", "high_cpu", "high_memory", "disk_full", "process_spike",
+)
+_mw_cache: dict = {"at": 0.0, "win": None}
+
+
+def active_maintenance(db: Session | None = None, force: bool = False) -> MaintenanceWindow | None:
+    """현재 활성 점검 창 (5초 캐시)."""
+    now = time.time()
+    if not force and now - _mw_cache["at"] < 5:
+        return _mw_cache["win"]
+    own = db is None
+    db = db or SessionLocal()
+    try:
+        win = (
+            db.query(MaintenanceWindow)
+            .filter(MaintenanceWindow.ended_at.is_(None), MaintenanceWindow.ends_at > utcnow())
+            .order_by(MaintenanceWindow.id.desc()).first()
+        )
+        if win:
+            db.expunge(win)
+        _mw_cache.update(at=now, win=win)
+        return win
+    finally:
+        if own:
+            db.close()
+
+
+def start_maintenance(minutes: int, note: str, by: str, db: Session) -> MaintenanceWindow:
+    end_maintenance(by, db)
+    win = MaintenanceWindow(started_at=utcnow(), ends_at=utcnow() + datetime.timedelta(minutes=max(1, min(minutes, 24 * 60))), note=note, by=by)
+    db.add(win)
+    db.commit()
+    db.refresh(win)
+    _mw_cache["at"] = 0.0
+    return win
+
+
+def end_maintenance(by: str, db: Session) -> int:
+    rows = db.query(MaintenanceWindow).filter(MaintenanceWindow.ended_at.is_(None), MaintenanceWindow.ends_at > utcnow()).all()
+    for w in rows:
+        w.ended_at = utcnow()
+    db.commit()
+    _mw_cache["at"] = 0.0
+    return len(rows)
+
+
+def maintenance_payload(win: MaintenanceWindow | None) -> dict:
+    if not win:
+        return {"active": False}
+    remaining = int((win.ends_at - utcnow()).total_seconds())
+    return {"active": True, "id": win.id, "note": win.note, "by": win.by, "started_at": win.started_at.isoformat(),
+            "ends_at": win.ends_at.isoformat(), "remaining_seconds": max(0, remaining)}
+
+
+def ack_all(db: Session, by: str, note: str = "", rule: str | None = None, ids: list[int] | None = None) -> int:
+    q = db.query(Alert).filter(Alert.status == "OPEN")
+    if rule:
+        q = q.filter(Alert.rule == rule)
+    if ids:
+        q = q.filter(Alert.id.in_(ids))
+    rows = q.all()
+    now = utcnow()
+    for a in rows:
+        a.status, a.acked_at, a.acked_by = "ACKED", now, by
+        if note:
+            a.resolution_note = note
+    db.commit()
+    return len(rows)
 
 
 def raise_alert(
@@ -67,6 +139,7 @@ def raise_alert(
                 _notify(existing, escalated=True)
             return existing, False
 
+        win = active_maintenance() if rule.startswith(MAINTENANCE_RULE_PREFIXES) else None
         alert = Alert(
             rule=rule,
             fingerprint=fingerprint,
@@ -77,19 +150,22 @@ def raise_alert(
             summary_ko=summary_ko or summary,
             action_ko=action_ko,
             evidence=evidence[:8000] if evidence else None,
-            details=json.dumps(details, ensure_ascii=False) if details else None,
+            details=json.dumps((details or {}) | ({"maintenance": win.note or True} if win else {}), ensure_ascii=False) if (details or win) else None,
             is_simulation=is_simulation,
             created_at=now,
             last_seen_at=now,
         )
+        if win:
+            alert.status, alert.acked_at, alert.acked_by = "ACKED", now, "점검 모드"
+            alert.resolution_note = f"점검 모드 중 발생 ({win.by or '?'}: {win.note or '메모 없음'})"
         db.add(alert)
         db.commit()
         db.refresh(alert)
         logger.log(
             logging.CRITICAL if severity == "CRITICAL" else logging.WARNING,
-            f"ALERT[{rule}] {title}",
+            f"ALERT[{rule}] {title}" + (" [maintenance]" if win else ""),
         )
-        if not is_simulation:
+        if not is_simulation and not win:
             _notify(alert)
         return alert, True
     except Exception as e:
@@ -235,6 +311,23 @@ class DefconWatcher:
 
 
 ADMIN_CONTEXT_TYPES = ("SUDO_COMMAND", "AUTH_SUCCESS", "ROOT_SESSION", "SOFTWARE_UPDATE", "AUDIT_WRITE")
+
+
+def recent_package_activity(package: str, minutes: int = 30) -> str | None:
+    """최근 N분 내 해당 패키지의 설치/업그레이드/제거 이벤트가 있으면 그 설명을 돌려준다."""
+    from database import Event
+    db = SessionLocal()
+    try:
+        since = utcnow() - datetime.timedelta(minutes=minutes)
+        rows = db.query(Event).filter(Event.timestamp >= since, Event.event_type == "SOFTWARE_UPDATE").order_by(Event.id.desc()).limit(300).all()
+        for e in rows:
+            if e.details_dict().get("package") == package:
+                return e.description_ko or e.description
+        return None
+    except Exception:
+        return None
+    finally:
+        db.close()
 
 
 def recent_admin_context(minutes: int = 15, limit: int = 5, types: tuple[str, ...] = ADMIN_CONTEXT_TYPES) -> str:

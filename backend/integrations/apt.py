@@ -55,6 +55,29 @@ def version_lt(a: str, b: str) -> bool:
         return False
 
 
+@lru_cache(maxsize=4096)
+def package_owner(path: str) -> str | None:
+    """dpkg -S 로 파일의 소유 패키지를 찾는다. 없으면 None. (/sbin → /usr/sbin 등 merged-usr 경로 모두 시도)"""
+    if not shutil.which("dpkg-query"):
+        return None
+    import os
+    candidates = [path]
+    real = os.path.realpath(path)
+    if real != path:
+        candidates.append(real)
+    for p in candidates:
+        try:
+            proc = subprocess.run(["dpkg-query", "-S", p], capture_output=True, text=True, timeout=10)
+        except Exception:
+            return None
+        if proc.returncode == 0 and proc.stdout:
+            owner = proc.stdout.split(":", 1)[0].strip()
+            # "diversion by ..." 형식 제외
+            if owner and " " not in owner:
+                return owner.split(",")[0].strip()
+    return None
+
+
 _APT_LINE = re.compile(r"^(?P<pkg>[^/\s]+)/(?P<suite>\S+)\s+(?P<new>\S+)\s+\S+\s+\[upgradable from:\s*(?P<old>[^\]]+)\]")
 
 
