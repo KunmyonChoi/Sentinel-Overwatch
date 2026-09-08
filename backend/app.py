@@ -181,10 +181,10 @@ database.init_db()
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Allow all for local dev
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],  # Vite dev server only
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
 )
 
 # Global Monitors (Start on startup)
@@ -422,4 +422,4 @@ def get_korean_highlight(db: Session = Depends(get_db)):
     return {"highlight": highlight}
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)

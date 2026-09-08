@@ -18,7 +18,7 @@ echo "Backend started (PID: $BACKEND_PID)"
 
 # Start Frontend
 cd ../frontend
-npm run dev -- --host &
+npm run dev -- --host 127.0.0.1 &
 FRONTEND_PID=$!
 echo "Frontend started (PID: $FRONTEND_PID)"
 
