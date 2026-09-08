@@ -34,6 +34,12 @@ fi
 # 3) lynis
 if command -v lynis >/dev/null || [ -x /usr/sbin/lynis ]; then
     install_if_changed "$SRC/deploy/cron-secdash-lynis" /etc/cron.d/secdash-lynis 0644 && echo "   lynis cron installed (daily 04:15)"
+    # 수용/해결 항목을 건너뛰는 프로파일. 사용자가 직접 만든 custom.prf 는 덮어쓰지 않는다.
+    if [ ! -f /etc/lynis/custom.prf ] || grep -q "secdash Lynis" /etc/lynis/custom.prf; then
+        install_if_changed "$SRC/deploy/lynis-custom.prf" /etc/lynis/custom.prf 0644 && echo "   lynis custom.prf installed ($(grep -c '^skip-test' "$SRC/deploy/lynis-custom.prf") tests skipped)"
+    else
+        echo "   /etc/lynis/custom.prf 가 이미 있어 건드리지 않았습니다. deploy/lynis-custom.prf 의 skip-test 줄을 수동으로 합치세요."
+    fi
     if [ ! -f /var/log/lynis-report.dat ]; then
         echo "   첫 Lynis 감사를 지금 실행합니다 (1~2분)..."
         nice -n 10 /usr/sbin/lynis audit system --cronjob --quiet >/dev/null 2>&1 || true

@@ -5,16 +5,18 @@
 #   sudo deploy/harden.sh --apply --disable-usb-storage   # USB 저장장치 드라이버까지 차단 (물리 접근 가능한 서버)
 #   추가 플래그: --remove-nginx (미운영 nginx 제거)  --disable-cups (인쇄 불필요 시 CUPS 중지·마스크)
 #               --grub-password-hash '<grub.pbkdf2.sha512...>'  (BOOT-5122; 해시는 grub-mkpasswd-pbkdf2 로 생성)
+#               --keep-x11 (SSH X11Forwarding 을 유지; 기본은 비활성)
 # 적용 항목: AUTH-9216 점검, DEB-0831/needrestart, PKGS-7410 옛 커널, LOGG-2190, HOME-9304, KRNL-6000 sysctl,
 #           AUTH-9328/9230/9286 login.defs, KRNL-5820 코어 덤프, NETW-3200 모듈, BANN-7126/7130, DEB-0280/PKGS-7370/7394, PKGS-7346
 # 건드리지 않음: rp_filter/ip_forward (docker), 컴파일러 제한(HRDN-7222), GRUB 비밀번호(BOOT-5122), nginx/CUPS 판단 항목
 set -uo pipefail
 [ "$(id -u)" -eq 0 ] || { echo "run as root"; exit 1; }
-APPLY=0; USB=0; NGINX=0; CUPS=0; GRUB_HASH=""
+APPLY=0; USB=0; NGINX=0; CUPS=0; GRUB_HASH=""; KEEP_X11=0
 while [ $# -gt 0 ]; do
     case "$1" in
         --apply) APPLY=1;; --disable-usb-storage) USB=1;; --remove-nginx) NGINX=1;; --disable-cups) CUPS=1;;
         --grub-password-hash) GRUB_HASH="$2"; shift;;
+        --keep-x11) KEEP_X11=1;;
         *) echo "unknown arg $1"; exit 1;;
     esac; shift
 done
@@ -42,9 +44,14 @@ write_if_diff() { # dst <<content via stdin
 }
 
 say "1. AUTH-9216 그룹 파일 일관성 (grpck -r, 읽기 전용)"
-if out=$(grpck -r 2>&1); then echo "   이상 없음"; else
+out=$(grpck -r 2>&1 || true)
+if [ -z "$out" ]; then echo "   이상 없음"; else
     echo "$out" | sed 's/^/   /'
-    echo "   → 수정은 대화형입니다: sudo grpck   (없는 사용자를 그룹에서 제거하거나 gshadow 항목을 추가)"
+    if echo "$out" | grep -q "not in /etc/gshadow"; then
+        run "grpconv"   # /etc/group 기준으로 gshadow 를 다시 맞춘다 (멱등)
+    else
+        echo "   → 수정은 대화형입니다: sudo grpck   (없는 사용자를 그룹에서 제거)"
+    fi
 fi
 
 say "2. 패키지: needrestart, libpam-tmpdir, debsums, apt-show-versions, apt-listchanges (DEB-0831/0280, PKGS-7370/7394, DEB-0811)"
@@ -54,6 +61,10 @@ if [ -n "$missing" ]; then run "DEBIAN_FRONTEND=noninteractive apt-get install -
 
 say "3. LOGG-2190 삭제된 라이브러리를 아직 쓰는 프로세스 (needrestart 목록 모드, 재시작은 하지 않음)"
 if command -v needrestart >/dev/null; then needrestart -r l 2>/dev/null | sed 's/^/   /' | head -30; else echo "   (needrestart 설치 후 다시 실행하면 목록이 나옵니다)"; fi
+if command -v lsof >/dev/null; then
+    echo "   삭제된 파일을 열어 둔 프로세스 (재시작하면 해소):"
+    lsof -nP +L1 2>/dev/null | awk 'NR>1{print "     "$1" (pid "$2", "$3")"}' | sort -u | head -15
+fi
 
 say "4. PKGS-7410 옛 커널 제거 (실행 중 커널, 최신 설치본, 직전 버전 1개는 유지)"
 cur=$(uname -r); cur=${cur%-generic}
@@ -79,6 +90,13 @@ done
 say "5. HOME-9304 홈 디렉터리 권한 750, 신규 계정 기본 0750"
 for h in /home/*/; do [ -d "$h" ] || continue; m=$(stat -c %a "$h"); [ "$m" = "750" ] || [ "$m" = "700" ] || run "chmod 750 '$h'"; done
 ensure_line /etc/adduser.conf '^#?DIR_MODE=.*' 'DIR_MODE=0750'
+
+say "5b. AUTH-9282 비밀번호 계정 만료 정책 (최대 365일, 14일 전 경고) — 기존 계정은 login.defs 가 소급되지 않음"
+for u in $(passwd -S -a 2>/dev/null | awk '$2=="P"{print $1}'); do
+    maxd=$(chage -l "$u" 2>/dev/null | awk -F: '/Maximum/{gsub(/ /,"",$2); print $2}')
+    [ "$maxd" = "99999" ] || [ -z "$maxd" ] && run "chage -M 365 -W 14 '$u'"
+done
+echo "   (AUTH-9284 잠긴 계정 정리는 운영자 판단: passwd -S -a | awk '\$2==\"L\"' 로 목록 확인)"
 
 say "6. KRNL-6000 sysctl (Lynis 가 다르다고 본 값 중 docker 와 무관한 것만)"
 grep -oE "sysctl key [^ ]+ has a different value[^,]*|Expected[^ ]* Real[^ ]*" /var/log/lynis.log 2>/dev/null | sed 's/^/   lynis: /' | head -20
@@ -139,9 +157,19 @@ fi
 say "9. NETW-3200 미사용 네트워크 프로토콜 모듈 차단 (dccp sctp rds tipc)$([ $USB -eq 1 ] && echo ' + usb-storage')"
 {
     echo "# secdash hardening (Lynis NETW-3200)"
-    for m in dccp sctp rds tipc; do echo "install $m /bin/false"; echo "blacklist $m"; done
-    [ $USB -eq 1 ] && { echo "# USB-1000"; echo "install usb-storage /bin/false"; echo "blacklist usb-storage"; }
+    for m in dccp sctp rds tipc; do echo "install $m /bin/true"; echo "blacklist $m"; done
+    [ $USB -eq 1 ] && { echo "# USB-1000"; echo "install usb-storage /bin/true"; echo "blacklist usb-storage"; }
 } | write_if_diff /etc/modprobe.d/90-secdash-hardening.conf
+
+say "9b. FILE-7524 민감 파일 권한 (crontab, sshd_config, grub.cfg → 600)"
+for f in /etc/crontab /etc/ssh/sshd_config /boot/grub/grub.cfg; do
+    [ -f "$f" ] || continue
+    m=$(stat -c %a "$f"); [ "$m" = "600" ] || [ "$m" = "400" ] || run "chmod 600 '$f'"
+done
+for d in /etc/cron.d /etc/cron.hourly /etc/cron.daily /etc/cron.weekly /etc/cron.monthly; do
+    [ -d "$d" ] || continue
+    [ "$(stat -c %a "$d")" = "700" ] || run "chmod 700 '$d'"
+done
 
 say "10. BANN-7126/7130 로그인 경고 배너"
 banner='이 시스템은 허가된 사용자만 접근할 수 있습니다. 모든 접속과 명령은 기록되며 감사 대상입니다.
@@ -150,7 +178,23 @@ printf '%s\n' "$banner" | write_if_diff /etc/issue.net
 printf '%s\n\n' "$banner" | write_if_diff /etc/issue
 if [ -d /etc/ssh/sshd_config.d ]; then
     printf 'Banner /etc/issue.net\n' | write_if_diff /etc/ssh/sshd_config.d/90-secdash-banner.conf
-    [ $APPLY -eq 1 ] && sshd -t && systemctl reload ssh 2>/dev/null
+    [ $APPLY -eq 1 ] && { install -d -m 0755 /run/sshd; sshd -t && systemctl reload ssh 2>/dev/null; }
+fi
+
+say "10b. SSH-7408 sshd 강화 (부작용 없는 항목만; 터널·에이전트 포워딩·포트는 유지)"
+if [ -d /etc/ssh/sshd_config.d ]; then
+    {
+        echo "# secdash SSH hardening (Lynis SSH-7408). AllowTcpForwarding/AllowAgentForwarding/Port 는 운영 편의상 유지."
+        echo "LogLevel VERBOSE"
+        echo "MaxAuthTries 3"
+        echo "ClientAliveInterval 300"
+        echo "ClientAliveCountMax 2"
+        echo "TCPKeepAlive no"
+        echo "Compression no"
+        [ $KEEP_X11 -eq 1 ] || echo "X11Forwarding no"
+    } | write_if_diff /etc/ssh/sshd_config.d/90-secdash-hardening.conf
+    [ $APPLY -eq 1 ] && { install -d -m 0755 /run/sshd; sshd -t && systemctl reload ssh 2>/dev/null && echo "   sshd 설정 검증 및 reload 완료"; }
+    echo "   (수용: AllowTcpForwarding=yes 는 대시보드 ssh -L 터널에 필요, AllowAgentForwarding/MaxSessions/Port 는 개발 편의)"
 fi
 
 say "11. PKGS-7346 제거된 패키지의 설정 잔재 purge"
@@ -193,6 +237,8 @@ if [ -n "$GRUB_HASH" ]; then
 else
     echo "   GRUB 비밀번호: 물리 접근 가능한 서버라면 권장. 터미널에서 grub-mkpasswd-pbkdf2 로 해시를 만든 뒤 --grub-password-hash 로 넘기세요."
 fi
+
+[ $APPLY -eq 1 ] && [ -f /boot/grub/grub.cfg ] && chmod 600 /boot/grub/grub.cfg
 
 say "요약"
 if [ $APPLY -eq 1 ]; then

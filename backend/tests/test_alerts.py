@@ -43,3 +43,19 @@ def test_defcon_watcher_notifies_on_transition(monkeypatch):
     w._on_transition("SAFE", "DEFCON 1")
     w._on_transition("DEFCON 1", "SAFE")
     assert any("DEFCON 1" in t for t in sent) and any("완화" in t for t in sent)
+
+
+def test_time_sync_alert_and_recovery(db, monkeypatch):
+    from monitor import resource
+    from database import Alert
+    m = resource.ResourceMonitor()
+    monkeypatch.setattr(resource, "time_synchronized", lambda: False)
+    m._check_time_sync()
+    assert db.query(Alert).filter(Alert.rule == "time_unsynced", Alert.status == "OPEN").count() == 1
+    monkeypatch.setattr(resource, "time_synchronized", lambda: True)
+    m._check_time_sync()
+    db.expire_all()
+    assert db.query(Alert).filter(Alert.rule == "time_unsynced").one().status == "RESOLVED"
+    monkeypatch.setattr(resource, "time_synchronized", lambda: None)
+    m._check_time_sync()   # 판단 불가 시 아무것도 하지 않음
+    assert db.query(Alert).count() == 1

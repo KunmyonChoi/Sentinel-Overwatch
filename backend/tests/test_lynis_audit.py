@@ -109,3 +109,16 @@ def test_audit_numeric_fields_are_not_hex_decoded():
     assert r["auid"] == "1001" and r["a0"] == "7ffd1234" and r["arch"] == "c000003e"
     e = parse_record('type=EXECVE msg=audit(1725800000.100:10): argc=1 a0=6E6D6170')
     assert e["a0"] == "nmap"
+
+
+def test_empty_report_from_aborted_audit_does_not_alert(db, tmp_path):
+    rep = tmp_path / "lynis-report.dat"; cron = tmp_path / "cron"; cron.write_text("x")
+    rep.write_text(REPORT_V1)
+    m = LynisMonitor(report_path=str(rep), cron_path=str(cron)); m.setup()
+    time.sleep(0.01)
+    rep.write_text("# Lynis Report\nreport_datetime_start=2026-09-11 04:15:01\n")   # 중단된 감사
+    os.utime(rep, (time.time() + 5, time.time() + 5))
+    m.tick()
+    assert m.health == "degraded" and "비어" in m.health_reason
+    assert db.query(Alert).filter(Alert.rule == "lynis_index_drop").count() == 0
+    assert m.latest["hardening_index"] == 64   # 마지막 정상 결과 유지

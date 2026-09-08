@@ -1,0 +1,39 @@
+# secdash Lynis profile -> /etc/lynis/custom.prf
+# ASCII only: Lynis aborts on non-ASCII characters in profiles (security measure).
+# Each skip is a decision for this host. Rationale (Korean) in deploy/README.md.
+# Change a decision: edit this file, then run: sudo deploy/apply-host-config.sh
+
+# Already covered by the dashboard / auditd
+# FINT-4350 file integrity tool -> IntegrityMonitor (sha256 + DB baseline + diff) + auditd write records
+skip-test=FINT-4350
+# ACCT-9622 process accounting -> auditd execve records (deploy/audit-secdash.rules)
+skip-test=ACCT-9622
+# ACCT-9626 sysstat -> ResourceMonitor
+skip-test=ACCT-9626
+
+# Accepted for this host (GPU development server, no external file intake)
+# HRDN-7222 restrict compilers to root -> development server
+skip-test=HRDN-7222
+# HRDN-7230 malware scanner -> no upload/mail path; revisit if that changes
+skip-test=HRDN-7230
+# FILE-6310 separate partitions -> requires reinstall; disk usage alert instead
+skip-test=FILE-6310
+# FIRE-4513 unused iptables rules -> managed by docker
+skip-test=FIRE-4513
+# KRNL-6000 sysctl differences -> remaining ones are deliberate (GPU tooling, docker)
+skip-test=KRNL-6000
+
+# PRNT-2307 CUPS configuration -> cups is masked (no printing on this host)
+skip-test=PRNT-2307
+
+# TIME-3185 timesyncd recency -> Lynis 3.0.9 checks /run/systemd/timesync/synchronized, which newer systemd
+# touches only once; the dashboard checks timedatectl NTPSynchronized instead (ResourceMonitor)
+skip-test=TIME-3185
+
+# Not applicable
+# TOOL-5002 automation tooling
+skip-test=TOOL-5002
+# NAME-4028 DNS domain name (standalone host)
+skip-test=NAME-4028
+# DEB-0810 apt-listbugs (interactive noise)
+skip-test=DEB-0810

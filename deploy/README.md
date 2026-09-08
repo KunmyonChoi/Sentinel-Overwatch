@@ -31,6 +31,24 @@ sudo deploy/install.sh
 
 `deploy/apply-host-config.sh` 가 fail2ban 보강(`jail.d/secdash.conf`: ignoreip, bantime.increment, recidive), auditd 규칙, Lynis 크론을 설치한다. install.sh 와 update.sh 가 자동 호출하며, `ignoreip` 에 관리자 대역을 추가한 뒤 다시 실행하면 반영된다.
 
+## Lynis 프로파일 (수용·해결 항목 제외)
+
+`deploy/lynis-custom.prf` 는 이 서버에서 '수용' 또는 '이미 다른 방식으로 해결' 로 결정한 테스트를 `skip-test=` 로 건너뛴다. 강화 작업 목록에는 아직 결정하지 않은 항목만 남는다. 결정을 바꾸면 줄을 지우거나 추가하고 `sudo deploy/apply-host-config.sh` 를 실행한다.
+
+주의: Lynis 는 프로파일에 ASCII 외 문자가 있으면 실행을 중단한다(보안 조치). 파일은 영문 주석만 쓴다. 결정 근거:
+
+| 테스트 | 결정 | 근거 |
+|---|---|---|
+| FINT-4350, ACCT-9622, ACCT-9626 | 이미 해결 | 무결성 감시·auditd execve·리소스 감시가 담당 |
+| HRDN-7222 | 수용 | GPU 개발 서버라 컴파일러 제한 불가 |
+| HRDN-7230 | 수용 | 외부 파일 유입 경로 없음. 생기면 ClamAV 정기 스캔 검토 |
+| FILE-6310 | 수용 | 별도 파티션은 재설치 필요. 디스크 사용률 알림으로 대체 |
+| FIRE-4513, KRNL-6000 잔여 | 수용 | docker 관리 규칙, GPU 도구용 sysctl 은 의도적 결정 |
+| PRNT-2307 | 해당 없음 | CUPS 마스크됨 (인쇄 불필요) |
+| SSH-7408 잔여 (AllowTcpForwarding, AllowAgentForwarding, MaxSessions, Port) | 수용 | ssh -L 터널과 개발 편의. LogLevel/MaxAuthTries/ClientAlive/TCPKeepAlive/X11 은 적용 |
+| TIME-3185 | 이미 해결 | Lynis 3.0.9 가 보는 파일은 최신 systemd 에서 갱신되지 않음. 대시보드가 timedatectl 로 동기화 여부를 직접 감시 |
+| TOOL-5002, NAME-4028, DEB-0810 | 해당 없음 | 단독 호스트, 대화형 잡음 |
+
 ## 강화 스크립트 (Lynis 후속)
 
 ```bash

@@ -36,6 +36,7 @@ from ban_manager import BanManager, manual_block_command
 from database import Alert, BlockedIP, Event, get_db, utcnow
 from integrations.fail2ban import Fail2banClient
 from integrations import modules as kmod
+from integrations import accounts as acct
 from monitor.fail2ban_sync import Fail2banSync
 from monitor.integrity import IntegrityMonitor, PersistenceMonitor
 from monitor.intel import IntelMonitor
@@ -394,6 +395,12 @@ def get_hardening():
     if not inst:
         return {"available": False, "health": "down", "health_reason": "LynisMonitor 미기동"}
     return inst.status_payload()
+
+
+@app.get("/api/accounts")
+def get_accounts():
+    """사람 계정과 root 의 잠김/만료, 권한 그룹, 마지막 로그인, SSH 키 보유."""
+    return acct.list_accounts()
 
 
 @app.get("/api/summary/korean")

@@ -143,6 +143,12 @@ class LynisMonitor(BaseMonitor):
             self.set_health("degraded", f"보고서 읽기 권한 없음: {self.report_path}", "서비스에 CAP_DAC_READ_SEARCH 를 부여하세요.")
             return
         summary = summarize(data)
+        # 감사가 중간에 실패하면(프로파일 오류 등) 빈 보고서가 남는다. 이를 '지수 0' 으로 비교하면 거짓 하락 알림이 된다.
+        if not data.get("lynis_version") or (summary["hardening_index"] == 0 and not summary["warnings"] and not summary["suggestions"]):
+            self.set_health("degraded", "Lynis 보고서가 비어 있음 (감사가 중단됨: 프로파일 오류 가능)",
+                            "sudo lynis audit system --cronjob 을 직접 실행해 오류 메시지를 확인하세요. /etc/lynis/custom.prf 에 ASCII 외 문자가 있으면 실행이 중단됩니다.")
+            self._last_mtime = st.st_mtime
+            return
         self._compare_and_alert(self.previous, summary)
         self.previous, self.latest = summary, summary
         self._last_mtime = st.st_mtime
