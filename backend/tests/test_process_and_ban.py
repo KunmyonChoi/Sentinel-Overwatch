@@ -93,3 +93,28 @@ def test_sync_from_fail2ban_adds_and_expires(db):
     assert m.sync_from_fail2ban()["expired"] == 1
     db.expire_all()
     assert db.query(BlockedIP).one().status == "EXPIRED"
+
+
+def test_package_removal_event_carries_admin_context(db):
+    from monitor.intrusion import AuthLogWatcher
+    from monitor.update import UpdateMonitor
+    w = AuthLogWatcher(log_path="/nonexistent")
+    w.process_line("Sep  8 18:32:40 host sudo:  kunmyon : TTY=pts/2 ; PWD=/ ; USER=root ; COMMAND=/usr/bin/apt-get autoremove -y")
+    u = UpdateMonitor(log_path="/nonexistent", pending_interval=10**9)
+    u._process_line("2026-09-08 18:32:42 remove nvidia-firmware-580-580.95.05:amd64 580.95.05-0ubuntu0.24.04.3 <none>")
+    ev = db.query(Event).filter(Event.event_type == "SOFTWARE_UPDATE").one()
+    ctx = ev.details_dict()["admin_context"]
+    assert "apt-get autoremove" in ctx and "kunmyon" in ctx
+    assert ev.details_dict()["package"] == "nvidia-firmware-580-580.95.05"
+
+
+def test_parse_banned_output_and_multi_jail_sync(db):
+    from integrations.fail2ban import parse_banned_output
+    out = "[{'sshd': ['203.0.113.7', '198.51.100.2']}, {'recidive': ['203.0.113.7']}]"
+    assert parse_banned_output(out) == {"sshd": ["203.0.113.7", "198.51.100.2"], "recidive": ["203.0.113.7"]}
+    assert parse_banned_output("garbage") == {}
+    m = BanManager(db, FakeF2B())
+    r = m.sync_from_fail2ban({"203.0.113.7": "recidive", "198.51.100.2": "sshd"})
+    assert r["added"] == 2
+    rows = {b.ip_address: b.jail for b in db.query(BlockedIP).all()}
+    assert rows == {"203.0.113.7": "recidive", "198.51.100.2": "sshd"}

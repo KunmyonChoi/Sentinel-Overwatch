@@ -32,6 +32,14 @@ const MONITOR_INFO = {
         details: ['패키지 제거 → 경고, 보안 패키지(fail2ban, openssh-server 등) 제거 → 긴급', '미적용 보안 업데이트가 있으면 경고 알림, 적용되면 자동 해결'],
     },
     ResourceMonitor: { desc: '30초마다 CPU/메모리/디스크/프로세스 수를 점검합니다.', details: ['CPU 90% 2회 연속, 메모리 85%, 디스크 90%, 프로세스 +50 → 경고 알림', '조건 해소 시 자동 해결'] },
+    AuditMonitor: {
+        desc: 'auditd 로그를 tail 합니다. 규칙은 deploy/audit-secdash.rules (대화형 세션의 execve, 핵심 파일 쓰기, 커널 모듈).',
+        details: ['짧게 실행되는 공격/진단 도구도 놓치지 않음 (ProcessAudit 30초 샘플링 보완)', '/tmp·/dev/shm 바이너리 실행 → 경고(root 면 긴급)', 'passwd/sudoers/sshd_config/authorized_keys/cron/systemd 쓰기 → "누가 어떤 프로그램으로" 이벤트, 무결성 알림의 근거에 첨부', '/etc/ld.so.preload 쓰기 → 긴급', '커널 모듈 로드/제거 → 경고', 'auditd 가 없으면 DEGRADED 로 표시하고 샘플링으로 동작'],
+    },
+    LynisMonitor: {
+        desc: '크론이 매일 04:15 실행한 Lynis 결과(/var/log/lynis-report.dat)를 이전 실행과 비교합니다.',
+        details: ['새 경고 → 경고 알림 (해결 방법 포함), 사라지면 자동 해결', '강화 지수 3점 이상 하락 → 경고 알림', '제안(suggestion)은 알림이 아니라 강화 작업 목록으로만 표시', '보고서가 2일 이상 오래되면 DEGRADED'],
+    },
     IntelMonitor: {
         desc: '1시간마다 보안 뉴스와 Ubuntu 보안 공지(USN)를 수집합니다.',
         details: ['USN 의 영향 패키지/수정 버전을 이 호스트의 설치 버전과 대조 → 취약하면 경고 알림', '패키지 목록은 외부로 전송하지 않음 (공개 URL 읽기만)', '뉴스 제목만 외부 번역/긴급도 평가에 사용 (호스트 로그는 절대 전송 안 함)'],

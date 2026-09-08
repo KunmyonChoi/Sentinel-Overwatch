@@ -10,6 +10,8 @@
 | 파일/영속화 무결성 | 자체 SHA-256 + DB 기준선 | diff 첨부 알림 (AIDE 가 있으면 병행 권장) |
 | 프로세스/네트워크 | /proc (psutil) | 리버스 셸·임시 디렉터리 실행·새 리스너 탐지 |
 | 취약점 | Ubuntu USN JSON ↔ 설치 패키지 | 이 호스트에 실제 영향 있는 공지만 알림 |
+| 명령 실행·파일 쓰기 주체 | auditd (`rules.d/secdash.rules`) | 도구 실행 즉시 탐지, 무결성 알림에 "누가 썼나" 첨부 |
+| 설정 강화 감사 | Lynis (cron 04:15) | 새 경고·지수 하락만 알림, 제안은 작업 목록 |
 
 ## 설치
 
@@ -24,6 +26,19 @@ sudo deploy/install.sh
 4. `/etc/secdash/secdash.env` 설정 파일
 5. `/etc/sudoers.d/secdash` (fail2ban-client 만 허용) 와 systemd 유닛 설치
 6. 서비스 시작, API 토큰 출력
+
+## 호스트 도구 설정
+
+`deploy/apply-host-config.sh` 가 fail2ban 보강(`jail.d/secdash.conf`: ignoreip, bantime.increment, recidive), auditd 규칙, Lynis 크론을 설치한다. install.sh 와 update.sh 가 자동 호출하며, `ignoreip` 에 관리자 대역을 추가한 뒤 다시 실행하면 반영된다.
+
+## 강화 스크립트 (Lynis 후속)
+
+```bash
+sudo deploy/harden.sh          # dry-run: 점검 결과와 변경 예정 목록
+sudo deploy/harden.sh --apply  # 적용 (umask 027, sysctl, 코어 덤프, 모듈 차단, 배너, 옛 커널/잔재 정리 등)
+```
+
+docker 와 충돌하는 rp_filter/ip_forward, 개발을 막는 컴파일러 제한, 원격 재부팅을 막을 수 있는 GRUB 비밀번호는 건드리지 않는다.
 
 ## 업데이트
 

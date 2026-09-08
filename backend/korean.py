@@ -27,6 +27,10 @@ EVENT_TYPE_KO = {
     "SOFTWARE_UPDATE": "소프트웨어 업데이트",
     "PENDING_UPDATES": "미적용 업데이트",
     "THREAT_INTEL": "위협 인텔",
+    "LYNIS_AUDIT": "보안 감사 (Lynis)",
+    "AUDIT_WRITE": "감시 파일 쓰기 (auditd)",
+    "AUDIT_EXEC": "명령 실행 (auditd)",
+    "KERNEL_MODULE": "커널 모듈",
     "SYSTEM": "시스템",
     "MONITOR_HEALTH": "모니터 상태",
     # 이전 버전 호환
@@ -119,6 +123,14 @@ def event_ko(event_type: str, d: dict | None = None) -> str:
         return f"미적용 업데이트 {d.get('total', 0)}건 (보안 {d.get('security', 0)}건)"
     if t == "THREAT_INTEL":
         return d.get("title_ko") or ""
+    if t == "LYNIS_AUDIT":
+        return d.get("message_ko") or "Lynis 감사 완료"
+    if t == "AUDIT_WRITE":
+        return f"{d.get('user', '?')} 이(가) {d.get('exe', '?')} 로 {', '.join(d.get('paths', [])[:3]) or '감시 파일'} 에 씀" + ("" if d.get("success", True) else " (실패)")
+    if t == "AUDIT_EXEC":
+        return f"{d.get('user', '?')} 이(가) 실행: {d.get('command', '?')[:120]}"
+    if t == "KERNEL_MODULE":
+        return f"커널 모듈 {d.get('op', '변경')} (사용자 {d.get('user', '?')}, 명령 {d.get('command', '?')[:80]})"
     if t == "MONITOR_HEALTH":
         return d.get("message_ko") or ""
     return d.get("message_ko") or ""

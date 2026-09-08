@@ -127,6 +127,8 @@ WATCH_GLOBS = {
     "/etc/ssh/sshd_config.d/*.conf": ("CRITICAL", False, summarize_generic, "SSH 서버 설정 (drop-in)"),
     "/root/.ssh/authorized_keys": ("CRITICAL", False, summarize_authorized_keys, "root SSH 공개키"),
     "/home/*/.ssh/authorized_keys": ("CRITICAL", False, summarize_authorized_keys, "SSH 공개키"),
+    "/etc/modprobe.d/*.conf": ("WARNING", False, summarize_generic, "커널 모듈 정책 (usb-storage 차단 등)"),
+    "/etc/sysctl.d/*.conf": ("WARNING", False, summarize_generic, "커널 파라미터"),
 }
 
 
@@ -278,6 +280,8 @@ class IntegrityMonitor(BaseMonitor):
             return "추가된 계정/그룹이 예정된 것인지 확인하세요. UID 0 계정이 추가되었다면 즉시 제거하세요."
         if path == "/etc/shadow":
             return "비밀번호 변경이 예정된 것인지 확인하세요. 예정에 없다면 `sudo passwd -S <계정>` 으로 상태를 보고 해당 계정을 잠그세요(`sudo usermod -L`)."
+        if "/etc/modprobe.d/" in path:
+            return "usb-storage 나 프로토콜 차단 줄이 지워졌다면 누가 해제했는지 '최근 관리자 활동' 으로 확인하세요. 의도한 해제면 확인(ack), 아니면 harden.sh --apply --disable-usb-storage 로 복구하세요."
         if "ld.so.preload" in path:
             return "정상 시스템에는 보통 이 파일이 없습니다. 내용을 확인하고 알 수 없는 라이브러리라면 루트킷을 의심해 격리하세요."
         if change == "deleted":

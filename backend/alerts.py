@@ -234,15 +234,18 @@ class DefconWatcher:
             )
 
 
-def recent_admin_context(minutes: int = 15, limit: int = 5) -> str:
-    """무결성/영속화 알림에 붙일 '누가 방금 무엇을 했나' 컨텍스트 (sudo 명령, 로그인)."""
+ADMIN_CONTEXT_TYPES = ("SUDO_COMMAND", "AUTH_SUCCESS", "ROOT_SESSION", "SOFTWARE_UPDATE", "AUDIT_WRITE")
+
+
+def recent_admin_context(minutes: int = 15, limit: int = 5, types: tuple[str, ...] = ADMIN_CONTEXT_TYPES) -> str:
+    """무결성/영속화/패키지 이벤트에 붙일 '누가 방금 무엇을 했나' 컨텍스트 (sudo 명령, 로그인)."""
     from database import Event
     db = SessionLocal()
     try:
         since = utcnow() - datetime.timedelta(minutes=minutes)
         rows = (
             db.query(Event)
-            .filter(Event.timestamp >= since, Event.event_type.in_(["SUDO_COMMAND", "AUTH_SUCCESS", "ROOT_SESSION", "SOFTWARE_UPDATE"]),
+            .filter(Event.timestamp >= since, Event.event_type.in_(list(types)),
                     Event.is_simulation == False)  # noqa: E712
             .order_by(Event.id.desc()).limit(limit).all()
         )

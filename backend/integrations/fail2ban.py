@@ -16,6 +16,23 @@ logger = logging.getLogger("fail2ban")
 _IP_RE = re.compile(r"[0-9a-fA-F:.]+")
 
 
+def parse_banned_output(out: str) -> dict[str, list[str]]:
+    """`fail2ban-client banned` 출력: [{'sshd': ['1.2.3.4']}, {'recidive': []}]"""
+    import ast
+    text = out.strip()
+    try:
+        data = ast.literal_eval(text)
+    except (ValueError, SyntaxError):
+        return {}
+    result: dict[str, list[str]] = {}
+    items = data if isinstance(data, list) else [data]
+    for item in items:
+        if isinstance(item, dict):
+            for jail, ips in item.items():
+                result[str(jail)] = [str(ip) for ip in (ips or []) if _IP_RE.fullmatch(str(ip))]
+    return result
+
+
 class Fail2banClient:
     def __init__(self, jail: str | None = None, use_sudo: bool | None = None, client: str | None = None):
         self.jail = jail or config.FAIL2BAN_JAIL
@@ -80,6 +97,13 @@ class Fail2banClient:
             if "Banned IP list:" in line:
                 return [t for t in line.split(":", 1)[1].split() if _IP_RE.fullmatch(t)]
         return []
+
+    def banned_all(self) -> dict[str, list[str]] | None:
+        """`fail2ban-client banned` 한 번으로 모든 jail 의 차단 목록을 얻는다. {jail: [ip]}"""
+        rc, out = self._run("banned")
+        if rc != 0:
+            return None
+        return parse_banned_output(out)
 
     def status_snapshot(self) -> tuple[list[str] | None, dict]:
         """status <jail> 한 번으로 (차단 IP 목록, 통계) 를 얻는다. sudo 호출을 최소화하기 위함."""

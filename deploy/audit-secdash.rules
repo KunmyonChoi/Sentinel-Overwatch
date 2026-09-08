@@ -1,0 +1,36 @@
+## /etc/audit/rules.d/secdash.rules
+## 대시보드용 최소 auditd 규칙. 대화형 세션(auid 설정됨)의 명령 실행과 핵심 파일 쓰기만 기록한다.
+## 적용: sudo augenrules --load   (또는 deploy/update.sh)
+
+## 버퍼/실패 정책 (실패 시 로그만 남기고 계속)
+-b 8192
+-f 1
+
+## 1) 대화형 세션의 모든 명령 실행 — 짧게 실행되는 도구도 놓치지 않는다 (30초 샘플링 보완)
+-a always,exit -F arch=b64 -S execve -F auid!=unset -k secdash_exec
+-a always,exit -F arch=b32 -S execve -F auid!=unset -k secdash_exec
+
+## 2) 계정/권한 파일 쓰기 — "누가 언제 무엇으로" 를 즉시 남긴다
+-w /etc/passwd -p wa -k secdash_identity
+-w /etc/shadow -p wa -k secdash_identity
+-w /etc/group -p wa -k secdash_identity
+-w /etc/gshadow -p wa -k secdash_identity
+-w /etc/sudoers -p wa -k secdash_sudo
+-w /etc/sudoers.d/ -p wa -k secdash_sudo
+
+## 3) SSH 설정과 키
+-w /etc/ssh/sshd_config -p wa -k secdash_ssh
+-w /etc/ssh/sshd_config.d/ -p wa -k secdash_ssh
+-w /root/.ssh/ -p wa -k secdash_ssh
+
+## 4) 영속화 지점
+-w /etc/cron.d/ -p wa -k secdash_persist
+-w /etc/crontab -p wa -k secdash_persist
+-w /var/spool/cron/ -p wa -k secdash_persist
+-w /etc/systemd/system/ -p wa -k secdash_persist
+-w /etc/ld.so.preload -p wa -k secdash_persist
+-w /etc/modprobe.d/ -p wa -k secdash_persist
+-w /etc/sysctl.d/ -p wa -k secdash_persist
+
+## 5) 커널 모듈 로드/제거 (대화형 세션만; 부팅 시 udev 는 제외)
+-a always,exit -F arch=b64 -S init_module,finit_module,delete_module -F auid!=unset -k secdash_modules

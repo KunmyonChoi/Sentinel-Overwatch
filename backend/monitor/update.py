@@ -7,7 +7,7 @@ import re
 import time
 
 import config
-from alerts import auto_resolve, raise_alert
+from alerts import auto_resolve, raise_alert, recent_admin_context
 from integrations import apt
 from monitor.base import BaseMonitor, TailReader
 
@@ -67,13 +67,16 @@ class UpdateMonitor(BaseMonitor):
         pkg = package.split(":")[0]
         v = versions.strip().split()
         if action in ("remove", "purge"):
-            d = {"action": action, "package": pkg, "version": v[0] if v else ""}
+            # 누가 지웠는지: 최근 sudo 명령/로그인 (패키지 이벤트끼리는 제외해 연쇄 제거 시 자기 참조를 막는다)
+            ctx = recent_admin_context(types=("SUDO_COMMAND", "AUTH_SUCCESS", "ROOT_SESSION"))
+            d = {"action": action, "package": pkg, "version": v[0] if v else "", "admin_context": ctx}
             self.log_event("SOFTWARE_UPDATE", "WARNING", f"Package {action}d: {pkg} {d['version']}", d)
             if pkg in ("fail2ban", "rsyslog", "openssh-server", "auditd", "ufw", "apparmor", "unattended-upgrades"):
                 raise_alert("security_package_removed", "CRITICAL", f"Security package removed: {pkg}",
                             fingerprint=f"pkg_removed:{pkg}", title_ko=f"보안 관련 패키지 제거됨: {pkg}",
                             summary_ko="방어 도구가 제거되면 이 대시보드의 탐지 범위도 줄어듭니다.",
-                            action_ko=f"예정된 작업이 아니면 `sudo apt install {pkg}` 로 복구하고 제거한 주체를 auth.log 의 sudo 기록에서 확인하세요.", details=d)
+                            action_ko=f"예정된 작업이 아니면 `sudo apt install {pkg}` 로 복구하고 제거한 주체를 확인하세요.",
+                            evidence=ctx, details=d)
         elif action == "install":
             d = {"action": action, "package": pkg, "version": v[-1] if v else ""}
             self.log_event("SOFTWARE_UPDATE", "INFO", f"Package installed: {pkg} {d['version']}", d)

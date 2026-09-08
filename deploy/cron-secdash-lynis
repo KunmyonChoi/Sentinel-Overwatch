@@ -1,0 +1,5 @@
+# /etc/cron.d/secdash-lynis — 매일 04:15 Lynis 시스템 감사 (일회성, 평소 부하 없음)
+# 결과: /var/log/lynis-report.dat, /var/log/lynis.log → 대시보드 LynisMonitor 가 읽어 이전 실행과 비교한다
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+15 4 * * * root test -x /usr/sbin/lynis && nice -n 10 /usr/sbin/lynis audit system --cronjob --quiet >/dev/null 2>&1

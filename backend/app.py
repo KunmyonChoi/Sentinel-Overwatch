@@ -35,10 +35,13 @@ import translate
 from ban_manager import BanManager, manual_block_command
 from database import Alert, BlockedIP, Event, get_db, utcnow
 from integrations.fail2ban import Fail2banClient
+from integrations import modules as kmod
 from monitor.fail2ban_sync import Fail2banSync
 from monitor.integrity import IntegrityMonitor, PersistenceMonitor
 from monitor.intel import IntelMonitor
 from monitor.intrusion import AuthLogWatcher, NetworkWatcher
+from monitor.lynis import LynisMonitor
+from monitor.audit import AuditMonitor
 from monitor.process_audit import ProcessAudit
 from monitor.resource import ResourceMonitor
 from monitor.update import UpdateMonitor
@@ -93,6 +96,7 @@ async def lifespan(app: FastAPI):
     for inst in (
         AuthLogWatcher(), Fail2banSync(), NetworkWatcher(), ProcessAudit(), IntegrityMonitor(),
         PersistenceMonitor(), UpdateMonitor(), ResourceMonitor(), IntelMonitor(),
+        AuditMonitor(), LynisMonitor(),
     ):
         try:
             _start_monitor(inst)
@@ -340,8 +344,19 @@ def get_host():
             "fail2ban_hint": hint,
         },
         "pending_updates": getattr(upd, "pending", {}),
+        "usb_storage": kmod.usb_storage_status(),
+        "blocked_modules": kmod.blocked_modules(),
         "api_token_file": str(config.API_TOKEN_FILE),
     }
+
+
+@app.get("/api/hardening")
+def get_hardening():
+    """Lynis 감사 결과: 강화 지수, 경고, 제안(강화 작업 목록)."""
+    inst = monitor_registry.get("LynisMonitor", {}).get("instance")
+    if not inst:
+        return {"available": False, "health": "down", "health_reason": "LynisMonitor 미기동"}
+    return inst.status_payload()
 
 
 @app.get("/api/summary/korean")
@@ -375,6 +390,10 @@ def get_korean_summary(db: Session = Depends(get_db)):
             parts.append(f"보안 업데이트 {pending['security']}건이 미적용 상태입니다.")
         else:
             parts.append("미적용 보안 업데이트는 없습니다.")
+    lynis = monitor_registry.get("LynisMonitor", {}).get("instance")
+    latest = getattr(lynis, "latest", None) or {}
+    if latest.get("hardening_index"):
+        parts.append(f"Lynis 강화 지수 {latest['hardening_index']}, 미해결 경고 {len(latest.get('warnings', []))}건, 강화 제안 {len(latest.get('suggestions', []))}건.")
     usn = db.query(Alert).filter(Alert.rule == "usn_affects_host", Alert.status.in_(["OPEN", "ACKED"])).count()
     if usn:
         parts.append(f"이 서버의 설치 패키지에 영향을 주는 Ubuntu 보안 공지 {usn}건이 있습니다.")

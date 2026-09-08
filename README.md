@@ -33,6 +33,8 @@
 | UpdateMonitor | dpkg.log, apt | 패키지 제거(보안 패키지면 긴급), 미적용 보안 업데이트 |
 | ResourceMonitor | psutil | CPU/메모리/디스크/프로세스 급증 (해소 시 자동 해결) |
 | IntelMonitor | 뉴스 RSS, Ubuntu USN | USN 영향 패키지 ↔ 설치 버전 대조 → 이 서버에 실제 영향 있는 공지만 알림 |
+| AuditMonitor | auditd (`deploy/audit-secdash.rules`) | 대화형 세션의 모든 execve(도구·임시 디렉터리 실행 즉시 탐지), 핵심 파일 쓰기의 주체, ld.so.preload 쓰기(긴급), 커널 모듈 |
+| LynisMonitor | Lynis 크론 결과 | 새 경고 알림, 사라지면 자동 해결, 강화 지수 하락 알림, 제안은 강화 작업 목록으로 표시 |
 
 ## 실행
 
@@ -63,6 +65,7 @@ sudo deploy/install.sh
 | `GET /api/monitors` | 모니터 health(ok/degraded/down), 사유, 해결 힌트 |
 | `GET /api/host` | 호스트, 실행 권한 점검, 미적용 업데이트 |
 | `GET /api/intel` | 뉴스 + USN (이 서버 영향 여부) |
+| `GET /api/hardening` | Lynis 강화 지수, 경고, 제안 |
 | `GET /api/summary/korean` | 현재 상황 한국어 요약 |
 
 ## 테스트
@@ -92,4 +95,4 @@ python3 simulate_attack.py                            # 탐지 파이프라인 �
 
 - 포트 스캔 탐지는 커널 소켓 테이블 기반 휴리스틱이라 SYN 스캔 대부분을 놓친다. 필요하면 방화벽 로그나 IDS 를 붙여라.
 - 파일 무결성은 자체 해시다. 규제 요건이 있으면 AIDE 를 병행하고 이 대시보드는 표시 계층으로 써라.
-- auditd 가 없으면 프로세스 실행 이력(execve)은 30초 샘플링으로만 본다. 짧게 실행되는 도구는 놓칠 수 있다.
+- auditd 가 없으면 프로세스 실행 이력(execve)은 30초 샘플링으로만 본다. `deploy/install.sh` 는 auditd 와 최소 규칙을 설치해 이 공백을 메운다.

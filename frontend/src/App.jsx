@@ -7,6 +7,7 @@ import MonitorStatus from './components/MonitorStatus';
 import BlockListPanel from './components/BlockListPanel';
 import HighlightKorean from './components/HighlightKorean';
 import TokenGate from './components/TokenGate';
+import HardeningPanel from './components/HardeningPanel';
 import { api, getToken } from './api';
 import { ShieldAlert } from 'lucide-react';
 
@@ -95,6 +96,7 @@ function App() {
           <HighlightKorean />
           <SystemHealth stats={stats} host={host} />
           <MonitorStatus />
+          <HardeningPanel />
           <ThreatIntel />
         </section>
         <section className="lg:col-span-2 flex flex-col min-h-[500px] gap-4">

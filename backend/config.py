@@ -44,7 +44,8 @@ DPKG_LOG_PATH = _env("SECDASH_DPKG_LOG", "/var/log/dpkg.log")
 DB_URL = _env("SECDASH_DB_URL", f"sqlite:///{BASE_DIR / 'security_monitor.db'}")
 
 # --- fail2ban 연동 ---
-FAIL2BAN_JAIL = _env("SECDASH_FAIL2BAN_JAIL", "sshd")
+FAIL2BAN_JAIL = _env("SECDASH_FAIL2BAN_JAIL", "sshd")            # 차단 요청을 보낼 jail
+FAIL2BAN_JAILS = [j.strip() for j in _env("SECDASH_FAIL2BAN_JAILS", "sshd,recidive").split(",") if j.strip()]  # 동기화 대상
 FAIL2BAN_CLIENT = _env("SECDASH_FAIL2BAN_CLIENT", "/usr/bin/fail2ban-client")
 # root가 아니면 sudo -n 으로 fail2ban-client 를 호출한다 (deploy/sudoers-secdash 참고)
 FAIL2BAN_USE_SUDO = _env_bool("SECDASH_FAIL2BAN_USE_SUDO", os.geteuid() != 0)

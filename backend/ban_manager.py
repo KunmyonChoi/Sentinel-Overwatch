@@ -84,26 +84,32 @@ class BanManager:
         self.db.commit()
         return True, "해제됨"
 
-    def sync_from_fail2ban(self, banned: list[str] | None = None) -> dict | None:
-        """fail2ban 의 실제 차단 목록을 DB 에 반영한다. 실패 시 None."""
+    def sync_from_fail2ban(self, banned: list[str] | dict[str, str] | None = None) -> dict | None:
+        """fail2ban 의 실제 차단 목록을 DB 에 반영한다. banned 는 [ip] 또는 {ip: jail}. 실패 시 None."""
         if banned is None:
             banned = self.client.banned_ips()
         if banned is None:
             return None
-        banned_set = set(banned)
+        jail_of: dict[str, str] = banned if isinstance(banned, dict) else {ip: config.FAIL2BAN_JAIL for ip in banned}
+        banned_set = set(jail_of)
         active_rows = self.db.query(BlockedIP).filter(BlockedIP.status == "ACTIVE").all()
         active_map = {r.ip_address: r for r in active_rows}
         added, expired = 0, 0
         for ip in banned_set - set(active_map):
+            jail = jail_of[ip]
             row = self.db.query(BlockedIP).filter(BlockedIP.ip_address == ip).first()
             if row:
-                row.status, row.source, row.blocked_at, row.unblocked_at = "ACTIVE", "fail2ban", utcnow(), None
-                row.reason = row.reason or f"fail2ban jail {config.FAIL2BAN_JAIL}"
+                row.status, row.source, row.blocked_at, row.unblocked_at, row.jail = "ACTIVE", "fail2ban", utcnow(), None, jail
+                row.reason = row.reason or f"fail2ban jail {jail}"
             else:
-                self.db.add(BlockedIP(ip_address=ip, reason=f"fail2ban jail {config.FAIL2BAN_JAIL}", status="ACTIVE", source="fail2ban", jail=config.FAIL2BAN_JAIL))
-            self._log("IP_BLOCKED", "INFO", f"fail2ban banned {ip} (jail {config.FAIL2BAN_JAIL})",
-                      {"ip": ip, "reason": f"fail2ban jail {config.FAIL2BAN_JAIL}", "source": "fail2ban"})
+                self.db.add(BlockedIP(ip_address=ip, reason=f"fail2ban jail {jail}", status="ACTIVE", source="fail2ban", jail=jail))
+            self._log("IP_BLOCKED", "INFO", f"fail2ban banned {ip} (jail {jail})",
+                      {"ip": ip, "reason": f"fail2ban jail {jail}", "source": "fail2ban"})
             added += 1
+        # 이미 ACTIVE 인 IP 의 jail 이 바뀌면(sshd → recidive) 반영
+        for ip in banned_set & set(active_map):
+            if active_map[ip].jail != jail_of[ip]:
+                active_map[ip].jail = jail_of[ip]
         for ip, row in active_map.items():
             if ip not in banned_set and row.source == "fail2ban":
                 row.status, row.unblocked_at = "EXPIRED", utcnow()

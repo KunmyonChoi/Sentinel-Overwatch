@@ -7,6 +7,7 @@ const ICONS = {
     ROOT_SESSION: User, ACCOUNT_CHANGE: User, IP_BLOCKED: Shield, IP_UNBLOCKED: Shield, IP_BLOCK_RECOMMENDED: Shield,
     NETWORK_LISTENER: Network, NETWORK_CONN: Network, PORT_SCAN: Network, PROCESS_TOOL: Cpu, PROCESS_INDICATOR: Cpu,
     FILE_INTEGRITY: Shield, PERSISTENCE: Shield, RESOURCE_ANOMALY: Cpu, SOFTWARE_UPDATE: Package, PENDING_UPDATES: Package,
+    AUDIT_WRITE: Shield, AUDIT_EXEC: Terminal, KERNEL_MODULE: Cpu, LYNIS_AUDIT: Shield,
 };
 const SEVERITY_KO = { CRITICAL: '긴급', WARNING: '경고', INFO: '정보' };
 const FILTERS = ['ALL', 'CRITICAL', 'WARNING', 'INFO'];
@@ -44,6 +45,9 @@ export default function AlertFeed({ events }) {
             <div className={compact ? 'py-1 border-b border-gray-800 last:border-0' : ''}>
                 <div className="text-gray-100" style={{ wordBreak: 'keep-all' }}>{ev.description_ko || ev.description}</div>
                 {ev.description_ko && <div className="text-[11px] text-gray-500 break-all mt-0.5">{ev.description}</div>}
+                {d.admin_context && (
+                    <pre className="mt-1 text-[11px] text-gray-400 bg-black/40 border-l-2 border-gray-700 px-2 py-1 whitespace-pre-wrap break-all font-mono">{d.admin_context}</pre>
+                )}
                 {d.command && ev.event_type === 'IP_BLOCK_RECOMMENDED' && (
                     <button onClick={(e) => { e.stopPropagation(); copy(`cmd${ev.id}`, d.command); }} className="mt-1 text-[11px] text-yellow-400 border border-yellow-600/50 px-1.5 py-0.5 rounded hover:bg-yellow-500/10 flex items-center gap-1">
                         {copied === `cmd${ev.id}` ? <Check className="w-3 h-3" /> : <ClipboardCopy className="w-3 h-3" />} 차단 명령 복사

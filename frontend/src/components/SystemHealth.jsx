@@ -1,7 +1,44 @@
 import React, { useEffect, useState } from 'react';
-import { Activity, Cpu, HardDrive, ShieldCheck, ShieldOff } from 'lucide-react';
+import { Activity, Cpu, HardDrive, ShieldCheck, ShieldOff, Usb, ClipboardCopy, Check } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { api } from '../api';
+
+function CopyCmd({ label, cmd }) {
+    const [ok, setOk] = useState(false);
+    return (
+        <button
+            onClick={() => { navigator.clipboard.writeText(cmd); setOk(true); setTimeout(() => setOk(false), 1500); }}
+            title={cmd}
+            className="flex items-center gap-1 text-[11px] border border-gray-700 hover:border-neon-green text-gray-300 hover:text-neon-green px-1.5 py-0.5 rounded"
+        >
+            {ok ? <Check className="w-3 h-3 text-neon-green" /> : <ClipboardCopy className="w-3 h-3" />} {label}
+        </button>
+    );
+}
+
+function UsbPolicy({ usb, blocked }) {
+    if (!usb) return null;
+    const c = usb.commands || {};
+    const tone = usb.state === 'blocked' ? 'text-neon-green' : usb.state === 'temporarily_unblocked' ? 'text-yellow-400' : 'text-gray-300';
+    return (
+        <div className="border-t border-gray-800 pt-2 mt-2 text-[11px]">
+            <div className="flex items-center gap-1 mb-1">
+                <Usb className={`w-3.5 h-3.5 ${tone}`} />
+                <span className="text-gray-400">USB 저장장치:</span>
+                <span className={`${tone} font-bold`}>{usb.state_ko}</span>
+            </div>
+            <div className="flex flex-wrap gap-1">
+                {usb.state === 'blocked' && <CopyCmd label="일시 해제 (재부팅까지)" cmd={c.temp_unblock} />}
+                {usb.state === 'temporarily_unblocked' && <CopyCmd label="다시 차단" cmd={c.reblock} />}
+                {usb.blocked_by_config && <CopyCmd label="영구 해제" cmd={c.permanent_unblock} />}
+                {!usb.blocked_by_config && <CopyCmd label="차단 설정" cmd={c.permanent_block} />}
+            </div>
+            {blocked && blocked.length > 0 && (
+                <div className="text-gray-600 mt-1">차단 모듈: {blocked.join(', ')} · 해제 시 auditd 가 모듈 로드를 기록해 알림이 올라옵니다</div>
+            )}
+        </div>
+    );
+}
 
 export default function SystemHealth({ stats, host }) {
     const isDefcon1 = stats?.status === 'DEFCON 1';
@@ -85,6 +122,7 @@ export default function SystemHealth({ stats, host }) {
                             <span className={ok ? 'text-gray-400' : 'text-yellow-400'}>{label}: {ok ? '가능' : '불가'}</span>
                         </div>
                     ))}
+                    <UsbPolicy usb={host.usb_storage} blocked={host.blocked_modules} />
                     {host.pending_updates?.available && (
                         <div className={host.pending_updates.security > 0 ? 'text-yellow-400' : 'text-gray-400'}>
                             미적용 업데이트 {host.pending_updates.total} (보안 {host.pending_updates.security})

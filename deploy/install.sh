@@ -7,18 +7,13 @@ set -euo pipefail
 SRC="$(cd "$(dirname "$0")/.." && pwd)"
 DEST=/opt/secdash
 
-echo ">> 1/6 전제 도구 확인"
-for pkg in fail2ban rsyslog python3-venv; do
+echo ">> 1/6 전제 도구 확인 (fail2ban, rsyslog, auditd, lynis)"
+for pkg in fail2ban rsyslog python3-venv auditd lynis; do
     dpkg -s "$pkg" >/dev/null 2>&1 || apt-get install -y "$pkg"
 done
-systemctl enable --now fail2ban
-if ! fail2ban-client status sshd >/dev/null 2>&1; then
-    cat > /etc/fail2ban/jail.d/secdash-sshd.conf <<'J'
-[sshd]
-enabled = true
-J
-    systemctl restart fail2ban
-fi
+systemctl enable --now fail2ban auditd
+# 호스트 도구 설정 (fail2ban 보강, auditd 규칙, lynis 크론) — update.sh 와 같은 파일을 쓴다
+"$SRC/deploy/apply-host-config.sh" "$SRC"
 
 echo ">> 2/6 전용 계정"
 id secdash >/dev/null 2>&1 || useradd --system --home-dir "$DEST" --shell /usr/sbin/nologin secdash

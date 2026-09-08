@@ -20,6 +20,7 @@ fi
 if ! cmp -s "$SRC/deploy/sudoers-secdash" /etc/sudoers.d/secdash; then
     install -m 0440 -o root -g root "$SRC/deploy/sudoers-secdash" /etc/sudoers.d/secdash && visudo -cf /etc/sudoers.d/secdash
 fi
+"$SRC/deploy/apply-host-config.sh" "$SRC"
 chown -R secdash:secdash "$DEST/backend" "$DEST/frontend" 2>/dev/null || true
 systemctl restart secdash
 sleep 6
