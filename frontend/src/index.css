@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cyber-black: #0a0a0a;
+  --color-cyber-gray: #1a1a1a;
+  --color-neon-green: #00ff41;
+  --color-neon-red: #ff0033;
+  --color-neon-blue: #00f3ff;
+
+  --font-mono: "Fira Code", monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-cyber-black text-white font-mono min-h-screen;
+    /* Removed overflow-hidden to allow scrolling if needed */
+  }
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.neon-border {
+  box-shadow: 0 0 5px #00ff41, inset 0 0 5px #00ff41;
+  border: 1px solid #00ff41;
+}
+
+.neon-border-red {
+  box-shadow: 0 0 5px #ff0033, inset 0 0 5px #ff0033;
+  border: 1px solid #ff0033;
+}
+
+.neon-text {
+  text-shadow: 0 0 5px #00ff41;
+}
+
+.cyber-grid {
+  background-size: 40px 40px;
+  background-image:
+    linear-gradient(to right, rgba(0, 255, 65, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 255, 65, 0.05) 1px, transparent 1px);
+}

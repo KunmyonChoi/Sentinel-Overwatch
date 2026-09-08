@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+psutil
+requests
+schedule
+pydantic
+python-multipart
+python-dotenv
