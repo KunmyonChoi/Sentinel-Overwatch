@@ -1,219 +1,107 @@
 import React, { useState } from 'react';
-import { AlertTriangle, Terminal, Network, Shield, ChevronDown, Skull } from 'lucide-react';
+import { AlertTriangle, Terminal, Network, Shield, ChevronDown, Check, ClipboardCopy, KeyRound, Package, User, Cpu } from 'lucide-react';
+import { fmtTime } from '../api';
 
-const icons = {
-    'INTRUSION_ATTEMPT': AlertTriangle,
-    'MALWARE_DETECTED': Shield,
-    'NETWORK_ANOMALY': Network,
-    'PORT_SCAN': Network,
-    'NETWORK_CONN': Network,
-    'RESOURCE_ANOMALY': Terminal,
-    'FILE_INTEGRITY': Shield,
-    'SYSTEM': Terminal,
-    'PRIVILEGE_ESCALATION': AlertTriangle,
+const ICONS = {
+    AUTH_FAILURE: AlertTriangle, INVALID_USER: AlertTriangle, AUTH_SUCCESS: KeyRound, SUDO_COMMAND: Terminal, SUDO_FAILURE: AlertTriangle,
+    ROOT_SESSION: User, ACCOUNT_CHANGE: User, IP_BLOCKED: Shield, IP_UNBLOCKED: Shield, IP_BLOCK_RECOMMENDED: Shield,
+    NETWORK_LISTENER: Network, NETWORK_CONN: Network, PORT_SCAN: Network, PROCESS_TOOL: Cpu, PROCESS_INDICATOR: Cpu,
+    FILE_INTEGRITY: Shield, PERSISTENCE: Shield, RESOURCE_ANOMALY: Cpu, SOFTWARE_UPDATE: Package, PENDING_UPDATES: Package,
 };
-
-const EVENT_TYPE_KO = {
-    'INTRUSION_ATTEMPT': '침입 시도',
-    'MALWARE_DETECTED': '악성코드 탐지',
-    'NETWORK_ANOMALY': '네트워크 이상',
-    'PORT_SCAN': '포트 스캔',
-    'NETWORK_CONN': '외부 연결',
-    'RESOURCE_ANOMALY': '리소스 이상',
-    'FILE_INTEGRITY': '파일 무결성',
-    'SYSTEM': '시스템',
-    'INVALID_USER': '유효하지 않은 사용자',
-    'SUCCESSFUL_LOGIN': '로그인 성공',
-    'PRIVILEGE_ESCALATION': '권한 상승',
-    'SOFTWARE_UPDATE': '소프트웨어 업데이트',
-};
-
-const SEVERITY_KO = {
-    'CRITICAL': '긴급',
-    'WARNING': '경고',
-    'INFO': '정보',
-};
-
+const SEVERITY_KO = { CRITICAL: '긴급', WARNING: '경고', INFO: '정보' };
 const FILTERS = ['ALL', 'CRITICAL', 'WARNING', 'INFO'];
 
-function renderWithLinks(text) {
-    const parts = text.split(/(https?:\/\/[^\s]+)/g);
-    return parts.map((part, i) =>
-        part.match(/https?:\/\//) ?
-            <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-neon-blue hover:underline underline-offset-2 break-all" onClick={(e) => e.stopPropagation()}>{part}</a> :
-            part
-    );
-}
-
 function groupEvents(events) {
-    // events arrive newest-first; group consecutive same type+source entries
     const groups = [];
-    for (const event of events) {
+    for (const ev of events) {
         const last = groups[groups.length - 1];
-        if (last && last.event_type === event.event_type && last.source === event.source) {
-            last.count += 1;
-            last.oldest = event; // keep track of oldest for expanded view
+        if (last && last.event_type === ev.event_type && last.severity === ev.severity && last.source === ev.source) {
+            last.count += 1; last.items.push(ev);
         } else {
-            // first encountered = newest; use its fields as the representative
-            groups.push({ ...event, count: 1, oldest: event });
+            groups.push({ ...ev, count: 1, items: [ev] });
         }
     }
     return groups;
 }
 
-function extractPid(description) {
-    const m = description.match(/\(PID:\s*(\d+)\)/);
-    return m ? parseInt(m[1], 10) : null;
-}
-
 export default function AlertFeed({ events }) {
     const [filter, setFilter] = useState('ALL');
+    const [hideSim, setHideSim] = useState(false);
     const [expanded, setExpanded] = useState(new Set());
-    const [copied, setCopied] = useState({}); // {pid: true}
+    const [copied, setCopied] = useState(null);
 
-    const copyKillCmd = (pid) => {
-        navigator.clipboard.writeText(`kill -9 ${pid}`);
-        setCopied(s => ({ ...s, [pid]: true }));
-        setTimeout(() => setCopied(s => ({ ...s, [pid]: false })), 2000);
-    };
+    const copy = (key, text) => { navigator.clipboard.writeText(text); setCopied(key); setTimeout(() => setCopied(null), 1500); };
 
-    const feedEvents = events.filter(e => e.event_type !== 'THREAT_INTEL');
-    const filtered = filter === 'ALL' ? feedEvents : feedEvents.filter(e => e.severity === filter);
+    const base = events.filter(e => e.event_type !== 'THREAT_INTEL' && (!hideSim || !e.is_simulation));
+    const filtered = filter === 'ALL' ? base : base.filter(e => e.severity === filter);
     const grouped = groupEvents(filtered);
+    const toggle = (id) => setExpanded(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
-    const toggleExpand = (id) => {
-        setExpanded(prev => {
-            const next = new Set(prev);
-            next.has(id) ? next.delete(id) : next.add(id);
-            return next;
-        });
+    const renderRow = (ev, compact = false) => {
+        const d = ev.details || {};
+        const pid = d.pid;
+        return (
+            <div className={compact ? 'py-1 border-b border-gray-800 last:border-0' : ''}>
+                <div className="text-gray-100" style={{ wordBreak: 'keep-all' }}>{ev.description_ko || ev.description}</div>
+                {ev.description_ko && <div className="text-[11px] text-gray-500 break-all mt-0.5">{ev.description}</div>}
+                {d.command && ev.event_type === 'IP_BLOCK_RECOMMENDED' && (
+                    <button onClick={(e) => { e.stopPropagation(); copy(`cmd${ev.id}`, d.command); }} className="mt-1 text-[11px] text-yellow-400 border border-yellow-600/50 px-1.5 py-0.5 rounded hover:bg-yellow-500/10 flex items-center gap-1">
+                        {copied === `cmd${ev.id}` ? <Check className="w-3 h-3" /> : <ClipboardCopy className="w-3 h-3" />} 차단 명령 복사
+                    </button>
+                )}
+                {pid && (ev.event_type === 'PROCESS_TOOL' || ev.event_type === 'PROCESS_INDICATOR') && (
+                    <button onClick={(e) => { e.stopPropagation(); copy(`kill${ev.id}`, `sudo kill -9 ${pid}`); }} className="mt-1 text-[11px] text-neon-red border border-neon-red/50 px-1.5 py-0.5 rounded hover:bg-neon-red/10 flex items-center gap-1">
+                        {copied === `kill${ev.id}` ? <Check className="w-3 h-3" /> : <ClipboardCopy className="w-3 h-3" />} kill -9 {pid} 복사
+                    </button>
+                )}
+            </div>
+        );
     };
 
     return (
-        <div className="h-full border border-neon-green/30 bg-cyber-black/80 backdrop-blur-sm p-4 flex flex-col rounded-sm neon-border">
+        <div className="h-full border border-neon-green/30 bg-cyber-black/80 backdrop-blur-sm p-4 flex flex-col rounded-sm neon-border min-h-[400px]">
             <h2 className="text-xl font-bold text-neon-green mb-3 border-b border-neon-green/30 pb-2 flex items-center justify-between">
-                <span>LIVE_FEED</span>
-                <span className="text-xs blink">RECEIVING_DATA...</span>
+                <span>라이브 피드 <span className="text-xs text-gray-500 font-normal">원시 이벤트</span></span>
+                <label className="text-xs text-gray-500 font-normal flex items-center gap-1 cursor-pointer"><input type="checkbox" checked={hideSim} onChange={e => setHideSim(e.target.checked)} /> 시뮬레이션 숨김</label>
             </h2>
-
-            {/* Filter tabs */}
             <div className="flex gap-1 mb-3">
                 {FILTERS.map(f => (
-                    <button
-                        key={f}
-                        onClick={() => setFilter(f)}
-                        className={`text-xs px-2 py-1 rounded border font-mono transition-colors ${
-                            filter === f
-                                ? 'bg-neon-green/20 border-neon-green text-neon-green'
-                                : 'border-gray-700 text-gray-500 hover:border-gray-500 hover:text-gray-300'
-                        }`}
-                    >
-                        {f}
-                        {f !== 'ALL' && (
-                            <span className="ml-1 opacity-60">
-                                ({feedEvents.filter(e => e.severity === f).length})
-                            </span>
-                        )}
+                    <button key={f} onClick={() => setFilter(f)} className={`text-xs px-2 py-1 rounded border font-mono ${filter === f ? 'bg-neon-green/20 border-neon-green text-neon-green' : 'border-gray-700 text-gray-500 hover:border-gray-500 hover:text-gray-300'}`}>
+                        {f === 'ALL' ? '전체' : SEVERITY_KO[f]}{f !== 'ALL' && <span className="ml-1 opacity-60">({base.filter(e => e.severity === f).length})</span>}
                     </button>
                 ))}
             </div>
-
-            <div className="flex-1 overflow-y-auto space-y-2 pr-2 scrollbar-hide">
-                {grouped.map((event) => {
-                    const Icon = icons[event.event_type] || Terminal;
-                    const isCritical = event.severity === 'CRITICAL';
-                    const isWarning = event.severity === 'WARNING';
-                    const isGrouped = event.count > 1;
-                    const isOpen = expanded.has(event.id);
-
-                    const borderColor = isCritical ? 'border-neon-red neon-border-red' :
-                        isWarning ? 'border-yellow-500' : 'border-neon-green/20';
-                    const textColor = isCritical ? 'text-neon-red' :
-                        isWarning ? 'text-yellow-500' : 'text-neon-green';
-                    const labelKo = EVENT_TYPE_KO[event.event_type];
-                    const severityKo = SEVERITY_KO[event.severity];
-
+            <div className="flex-1 overflow-y-auto space-y-2 pr-2 scrollbar-hide max-h-[70vh]">
+                {grouped.length === 0 && <div className="text-gray-600 text-sm text-center py-6">이벤트가 없습니다.</div>}
+                {grouped.map((ev) => {
+                    const Icon = ICONS[ev.event_type] || Terminal;
+                    const isCritical = ev.severity === 'CRITICAL';
+                    const isWarning = ev.severity === 'WARNING';
+                    const isGrouped = ev.count > 1;
+                    const isOpen = expanded.has(ev.id);
+                    const border = isCritical ? 'border-neon-red' : isWarning ? 'border-yellow-500' : 'border-neon-green/20';
+                    const color = isCritical ? 'text-neon-red' : isWarning ? 'text-yellow-500' : 'text-neon-green';
                     return (
-                        <div
-                            key={event.id}
-                            className={`border-l-4 ${borderColor} bg-cyber-gray/50 p-3 font-mono text-sm w-full ${isGrouped ? 'cursor-pointer hover:bg-cyber-gray' : ''} transition-colors`}
-                            onClick={isGrouped ? () => toggleExpand(event.id) : undefined}
-                        >
+                        <div key={ev.id} className={`border-l-4 ${border} bg-cyber-gray/50 p-3 font-mono text-sm w-full ${isGrouped ? 'cursor-pointer hover:bg-cyber-gray' : ''}`} onClick={isGrouped ? () => toggle(ev.id) : undefined}>
                             <div className="flex items-center justify-between mb-1">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                    <Icon className={`w-4 h-4 ${textColor} flex-shrink-0`} />
-                                    <span className={`${textColor} font-bold`}>[{event.event_type}]</span>
-                                    {labelKo && <span className={`text-xs ${textColor} opacity-70`}>{labelKo}</span>}
-                                    {isGrouped && (
-                                        <span className={`text-xs px-1.5 py-0.5 rounded-full border ${textColor} border-current opacity-80 flex items-center gap-1`}>
-                                            ×{event.count}
-                                            <ChevronDown className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-                                        </span>
-                                    )}
-                                    {event.description.includes('[SIMULATION]') && (
-                                        <span className="bg-blue-500/20 text-blue-400 text-[10px] px-1 rounded border border-blue-500/30">TEST DATA</span>
-                                    )}
+                                    <Icon className={`w-4 h-4 ${color} flex-shrink-0`} />
+                                    <span className={`${color} font-bold`}>{ev.event_type_ko || ev.event_type}</span>
+                                    <span className={`text-[10px] ${color} opacity-60`}>{SEVERITY_KO[ev.severity] || ev.severity}</span>
+                                    {isGrouped && <span className={`text-xs px-1.5 py-0.5 rounded-full border ${color} border-current opacity-80 flex items-center gap-1`}>×{ev.count}<ChevronDown className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} /></span>}
+                                    {ev.is_simulation && <span className="bg-blue-500/20 text-blue-400 text-[10px] px-1 rounded border border-blue-500/30">TEST DATA</span>}
                                 </div>
-                                <span className="text-xs text-gray-500 flex-shrink-0">
-                                    {new Date(event.timestamp + "Z").toLocaleTimeString()}
-                                </span>
+                                <span className="text-xs text-gray-500">{fmtTime(ev.timestamp)}</span>
                             </div>
-                            <div className="text-gray-300 break-words">
-                                {renderWithLinks(event.description.replace('[SIMULATION]', ''))}
-                            </div>
-                            {event.description_ko === null ? (
-                                <div className="text-gray-600 text-xs mt-1 border-t border-gray-700/50 pt-1 italic">번역 중...</div>
-                            ) : event.description_ko ? (
-                                <div className="text-gray-400 text-xs break-words mt-1 border-t border-gray-700/50 pt-1" style={{ wordBreak: 'keep-all' }}>
-                                    {renderWithLinks(event.description_ko)}
-                                </div>
-                            ) : null}
-                            <div className="text-xs text-gray-600 mt-1 uppercase tracking-wider flex items-center justify-between flex-wrap gap-1">
-                                <span>
-                                    SOURCE: {event.source} | SEVERITY: {event.severity}{severityKo ? ` (${severityKo})` : ''}
-                                    {isGrouped && !isOpen && (
-                                        <span className="ml-2 text-gray-500">— 클릭하여 {event.count}개 그룹 확인</span>
-                                    )}
-                                </span>
-                                {event.event_type === 'MALWARE_DETECTED' && (() => {
-                                    const pid = extractPid(event.description);
-                                    if (!pid) return null;
-                                    const isCopied = copied[pid];
-                                    return (
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); copyKillCmd(pid); }}
-                                            className="flex items-center gap-1 px-2 py-0.5 rounded border border-neon-red/60 text-neon-red hover:bg-neon-red/20 transition-colors font-mono normal-case"
-                                        >
-                                            <Skull className="w-3 h-3" />
-                                            {isCopied ? 'COPIED!' : `KILL PID ${pid}`}
-                                        </button>
-                                    );
-                                })()}
-                            </div>
-
-                            {/* Expanded group: show all but first item */}
+                            {renderRow(ev)}
                             {isGrouped && isOpen && (
-                                <div className="mt-2 space-y-1 border-t border-gray-700/50 pt-2">
-                                    {filtered
-                                        .filter(e => e.event_type === event.event_type && e.source === event.source)
-                                        .slice(1)
-                                        .map(e => (
-                                            <div key={e.id} className="text-xs text-gray-500 pl-2 border-l border-gray-700">
-                                                <span className="text-gray-600 mr-2">{new Date(e.timestamp + "Z").toLocaleTimeString()}</span>
-                                                {e.description.replace('[SIMULATION]', '')}
-                                            </div>
-                                        ))
-                                    }
+                                <div className="mt-2 pt-2 border-t border-gray-700 text-xs text-gray-400">
+                                    {ev.items.slice(1).map(e => <div key={e.id} className="flex gap-2"><span className="text-gray-600 flex-shrink-0">{fmtTime(e.timestamp)}</span>{renderRow(e, true)}</div>)}
                                 </div>
                             )}
                         </div>
                     );
                 })}
-                {grouped.length === 0 && (
-                    <div className="text-center text-gray-600 italic py-10">
-                        {filter === 'ALL' ? 'No active threats detected. Systems nominal.' : `No ${filter} events.`}
-                    </div>
-                )}
             </div>
         </div>
     );

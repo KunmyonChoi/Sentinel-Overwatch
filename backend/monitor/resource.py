@@ -1,99 +1,94 @@
 import psutil
-import logging
-import time
-from database import SessionLocal, Event
 
-logger = logging.getLogger("resource_monitor")
+from alerts import auto_resolve, raise_alert
+from monitor.base import BaseMonitor
 
-CPU_WARN_THRESHOLD = 90      # %
-MEM_WARN_THRESHOLD = 85      # %
-DISK_WARN_THRESHOLD = 90     # %
-PROC_SPIKE_THRESHOLD = 50    # 이전 대비 프로세스 수 급증 기준
+CPU_WARN_THRESHOLD = 90
+MEM_WARN_THRESHOLD = 85
+DISK_WARN_THRESHOLD = 90
+PROC_SPIKE_THRESHOLD = 50
 
 
-class ResourceMonitor:
-    def __init__(self, interval=30):
-        self.interval = interval
-        self.running = False
+class ResourceMonitor(BaseMonitor):
+    name = "ResourceMonitor"
+    label = "시스템 리소스 감시"
+    interval = 30
+
+    def __init__(self, interval: int | None = None):
+        super().__init__(interval)
+        self.source = "psutil (cpu/mem/disk/pids)"
         self.prev_proc_count = None
-        # Consecutive high readings required before alerting (avoid transient spikes)
         self._cpu_high_count = 0
         self._mem_alerted = False
         self._disk_alerted = False
 
-    def monitor(self):
-        self.running = True
-        logger.info("Starting Resource Monitor")
-        # Warm-up read (first cpu_percent call always returns 0.0)
+    def setup(self):
         psutil.cpu_percent(interval=None)
-        time.sleep(1)
-        while self.running:
-            self.check_resources()
-            time.sleep(self.interval)
 
-    def check_resources(self):
-        try:
-            cpu = psutil.cpu_percent(interval=1)
-            mem = psutil.virtual_memory()
-            disk = psutil.disk_usage('/')
-            proc_count = len(psutil.pids())
+    def tick(self):
+        cpu = psutil.cpu_percent(interval=1)
+        mem = psutil.virtual_memory()
+        disk = psutil.disk_usage("/")
+        proc_count = len(psutil.pids())
 
-            # CPU sustained high usage (2 consecutive readings)
-            if cpu > CPU_WARN_THRESHOLD:
-                self._cpu_high_count += 1
-                if self._cpu_high_count >= 2:
-                    self.log_event(
-                        "RESOURCE_ANOMALY", "WARNING", "ResourceMonitor",
-                        f"Sustained high CPU usage: {cpu}% (threshold {CPU_WARN_THRESHOLD}%). Possible crypto miner or runaway process."
-                    )
-                    self._cpu_high_count = 0
-            else:
+        if cpu > CPU_WARN_THRESHOLD:
+            self._cpu_high_count += 1
+            if self._cpu_high_count >= 2:
+                top = self._top_cpu()
+                d = {"cpu": cpu, "top": top, "message_ko": f"CPU 사용률 {cpu}% 지속 (상위: {top})"}
+                self.log_event("RESOURCE_ANOMALY", "WARNING", f"Sustained high CPU {cpu}% top={top}", d)
+                raise_alert("high_cpu", "WARNING", f"Sustained high CPU: {cpu}%", fingerprint="high_cpu",
+                            title_ko=f"CPU 사용률 {cpu}% 지속", summary_ko=f"상위 프로세스: {top}",
+                            action_ko="`top -o %CPU` 로 프로세스를 확인하세요. 모르는 프로세스라면 실행 파일 경로(/proc/<pid>/exe)를 확인하고 크립토마이너 여부를 의심하세요.", details=d)
                 self._cpu_high_count = 0
+        else:
+            self._cpu_high_count = 0
+            auto_resolve("high_cpu")
 
-            # Memory high usage (alert once, reset when drops below threshold)
-            if mem.percent > MEM_WARN_THRESHOLD:
-                if not self._mem_alerted:
-                    self._mem_alerted = True
-                    used_gb = round(mem.used / (1024 ** 3), 1)
-                    total_gb = round(mem.total / (1024 ** 3), 1)
-                    self.log_event(
-                        "RESOURCE_ANOMALY", "WARNING", "ResourceMonitor",
-                        f"High memory usage: {mem.percent}% ({used_gb}/{total_gb} GB). Investigate for leaks or malicious activity."
-                    )
-            else:
-                self._mem_alerted = False
+        if mem.percent > MEM_WARN_THRESHOLD:
+            if not self._mem_alerted:
+                self._mem_alerted = True
+                used_gb, total_gb = round(mem.used / 1024**3, 1), round(mem.total / 1024**3, 1)
+                d = {"mem_percent": mem.percent, "message_ko": f"메모리 사용률 {mem.percent}% ({used_gb}/{total_gb} GB)"}
+                self.log_event("RESOURCE_ANOMALY", "WARNING", f"High memory {mem.percent}% ({used_gb}/{total_gb} GB)", d)
+                raise_alert("high_memory", "WARNING", f"High memory usage {mem.percent}%", fingerprint="high_memory",
+                            title_ko=f"메모리 사용률 {mem.percent}%", summary_ko=f"{used_gb}/{total_gb} GB 사용 중",
+                            action_ko="`ps aux --sort=-%mem | head` 로 원인 프로세스를 확인하세요.", details=d)
+        else:
+            if self._mem_alerted:
+                auto_resolve("high_memory")
+            self._mem_alerted = False
 
-            # Disk high usage (alert once)
-            if disk.percent > DISK_WARN_THRESHOLD:
-                if not self._disk_alerted:
-                    self._disk_alerted = True
-                    self.log_event(
-                        "RESOURCE_ANOMALY", "WARNING", "ResourceMonitor",
-                        f"Disk usage critical: {disk.percent}% on /. Risk of service disruption."
-                    )
-            else:
-                self._disk_alerted = False
+        if disk.percent > DISK_WARN_THRESHOLD:
+            if not self._disk_alerted:
+                self._disk_alerted = True
+                d = {"disk_percent": disk.percent, "message_ko": f"루트 디스크 사용률 {disk.percent}%"}
+                self.log_event("RESOURCE_ANOMALY", "WARNING", f"Disk usage {disk.percent}% on /", d)
+                raise_alert("disk_full", "WARNING", f"Disk usage {disk.percent}% on /", fingerprint="disk_full",
+                            title_ko=f"디스크 사용률 {disk.percent}% (/)", summary_ko="로그가 기록되지 못하면 탐지가 멈출 수 있습니다.",
+                            action_ko="`sudo du -xh --max-depth=2 / | sort -h | tail` 로 큰 디렉터리를 찾아 정리하세요.", details=d)
+        else:
+            if self._disk_alerted:
+                auto_resolve("disk_full")
+            self._disk_alerted = False
 
-            # Process count spike
-            if self.prev_proc_count is not None:
-                delta = proc_count - self.prev_proc_count
-                if delta > PROC_SPIKE_THRESHOLD:
-                    self.log_event(
-                        "RESOURCE_ANOMALY", "WARNING", "ResourceMonitor",
-                        f"Process count spiked by {delta} (now {proc_count}). Possible fork bomb or mass spawning."
-                    )
-            self.prev_proc_count = proc_count
+        if self.prev_proc_count is not None:
+            delta = proc_count - self.prev_proc_count
+            if delta > PROC_SPIKE_THRESHOLD:
+                d = {"delta": delta, "count": proc_count, "message_ko": f"프로세스 수 급증 +{delta} (현재 {proc_count})"}
+                self.log_event("RESOURCE_ANOMALY", "WARNING", f"Process count spiked by {delta} (now {proc_count})", d)
+                raise_alert("process_spike", "WARNING", f"Process count spiked by {delta}", fingerprint="process_spike",
+                            title_ko=f"프로세스 수 급증: +{delta} (현재 {proc_count})", summary_ko="포크 폭탄이나 대량 생성 공격일 수 있습니다.",
+                            action_ko="`ps -eo pid,ppid,user,comm --sort=-pid | head -60` 로 새로 생긴 프로세스를 확인하세요.", details=d)
+        self.prev_proc_count = proc_count
 
-        except Exception as e:
-            logger.error(f"Resource check error: {e}")
-
-    def log_event(self, event_type, severity, source, description):
-        logger.warning(description)
-        db = SessionLocal()
+    @staticmethod
+    def _top_cpu() -> str:
         try:
-            db.add(Event(event_type=event_type, severity=severity, source=source, description=description))
-            db.commit()
-        except Exception as e:
-            logger.error(f"Database error: {e}")
-        finally:
-            db.close()
+            procs = []
+            for p in psutil.process_iter(["pid", "name", "cpu_percent"]):
+                procs.append((p.info["cpu_percent"] or 0.0, p.info["name"], p.info["pid"]))
+            procs.sort(reverse=True)
+            return ", ".join(f"{n}({pid}) {c:.0f}%" for c, n, pid in procs[:3])
+        except Exception:
+            return "?"

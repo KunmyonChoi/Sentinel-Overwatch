@@ -1,26 +1,18 @@
 #!/bin/bash
-echo ">>> Cleaning up simulation data..."
-
-# 1. Clear the test authentication log
-if [ -f "backend/test_auth.log" ]; then
-    echo "" > backend/test_auth.log
-    echo "✓ Cleared backend/test_auth.log"
-else
-    echo "⚠ backend/test_auth.log not found, skipping."
+# 시뮬레이션 흔적 정리: 테스트 로그 비우기, 시뮬레이션 이벤트/알림 삭제, 더미 프로세스 종료
+cd "$(dirname "$0")"
+[ -f backend/test_auth.log ] && : > backend/test_auth.log && echo "✓ cleared backend/test_auth.log"
+pkill -f "_sim [0-9]+" 2>/dev/null; rm -f ./*_sim; echo "✓ killed simulation processes"
+if [ -f backend/security_monitor.db ]; then
+    (cd backend && venv/bin/python - <<'PY'
+from database import SessionLocal, Event, Alert, BlockedIP
+db = SessionLocal()
+n1 = db.query(Event).filter(Event.is_simulation == True).delete(synchronize_session=False)
+n2 = db.query(Alert).filter(Alert.is_simulation == True).delete(synchronize_session=False)
+n3 = db.query(BlockedIP).filter(BlockedIP.ip_address == "192.168.1.200").delete(synchronize_session=False)
+db.commit(); db.close()
+print(f"✓ removed {n1} simulation events, {n2} alerts, {n3} block rows")
+PY
+    )
 fi
-
-# 2. Remove the database (resets all events and blocked IPs)
-if [ -f "backend/security_monitor.db" ]; then
-    rm backend/security_monitor.db
-    echo "✓ Removed backend/security_monitor.db"
-else
-    echo "⚠ backend/security_monitor.db not found, skipping."
-fi
-
-# 3. Kill any lingering dummy processes (just in case)
-pkill -f "./nmap" 2>/dev/null
-pkill -f "./wireshark" 2>/dev/null
-echo "✓ Killed lurking dummy processes"
-
-echo ">>> Cleanup Complete."
-echo "Please run './start.sh' to restart the system with a fresh database."
+echo ">>> done (실제 이벤트와 DB 는 유지됩니다)"

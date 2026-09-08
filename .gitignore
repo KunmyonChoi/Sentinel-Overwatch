@@ -51,3 +51,9 @@ dist-ssr/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Security dashboard
+backend/.api_token
+*_sim
+*.db-wal
+*.db-shm

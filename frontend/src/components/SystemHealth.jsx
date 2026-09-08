@@ -1,109 +1,100 @@
-import React, { useState, useEffect } from 'react';
-import { Activity, Cpu, HardDrive } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Activity, Cpu, HardDrive, ShieldCheck, ShieldOff } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { api } from '../api';
 
-export default function SystemHealth({ stats }) {
+export default function SystemHealth({ stats, host }) {
     const isDefcon1 = stats?.status === 'DEFCON 1';
-    const statusText = stats?.status || "ANALYZING...";
-
+    const isDefcon3 = stats?.status === 'DEFCON 3';
+    const statusText = stats ? `${stats.status}` : 'ANALYZING...';
     const [timeline, setTimeline] = useState([]);
+
     useEffect(() => {
-        const fetchTimeline = () => {
-            fetch('http://localhost:8000/api/stats/timeline')
-                .then(r => r.json())
-                .then(setTimeline)
-                .catch(() => {});
-        };
-        fetchTimeline();
-        const iv = setInterval(fetchTimeline, 30000);
+        const load = () => api('/api/stats/timeline').then(setTimeline).catch(() => {});
+        load();
+        const iv = setInterval(load, 30000);
         return () => clearInterval(iv);
     }, []);
 
+    const border = isDefcon1 ? 'neon-border-red border-neon-red' : isDefcon3 ? 'border-yellow-500' : 'neon-border border-neon-green';
+    const text = isDefcon1 ? 'text-neon-red border-neon-red' : isDefcon3 ? 'text-yellow-400 border-yellow-500' : 'text-neon-green border-neon-green';
+    const priv = host?.privileges;
+
     return (
-        <div className={`border ${isDefcon1 ? 'neon-border-red border-neon-red' : 'neon-border border-neon-green'} bg-cyber-black/80 backdrop-blur-sm p-4 rounded-sm`}>
-            <h2 className={`text-xl font-bold mb-4 border-b pb-2 flex justify-between ${isDefcon1 ? 'text-neon-red border-neon-red' : 'text-neon-green border-neon-green'}`}>
-                <span>SYSTEM_STATUS</span>
+        <div className={`border ${border} bg-cyber-black/80 backdrop-blur-sm p-4 rounded-sm`}>
+            <h2 className={`text-xl font-bold mb-3 border-b pb-2 flex justify-between ${text}`}>
+                <span>시스템 상태</span>
                 <span className={isDefcon1 ? 'animate-pulse' : ''}>{statusText}</span>
             </h2>
 
-            <div className="flex gap-4 mb-4">
-                <div className="flex-1 bg-cyber-gray/50 p-3 rounded border border-gray-700">
-                    <div className="flex items-center gap-2 mb-2 text-gray-400">
-                        <Cpu className="w-4 h-4" /> CPU
-                    </div>
-                    <div className={`text-2xl font-bold ${(stats?.cpu_percent ?? 0) > 90 ? 'text-neon-red' : (stats?.cpu_percent ?? 0) > 70 ? 'text-yellow-400' : 'text-white'}`}>
-                        {stats?.cpu_percent != null ? `${stats.cpu_percent}%` : '---'}
-                    </div>
+            {stats && (
+                <div className="grid grid-cols-3 gap-2 mb-3 text-center text-xs">
+                    <div className="bg-cyber-gray/50 p-2 rounded border border-gray-700"><div className="text-neon-red text-lg font-bold">{stats.open_critical}</div><div className="text-gray-500">미확인 긴급</div></div>
+                    <div className="bg-cyber-gray/50 p-2 rounded border border-gray-700"><div className="text-yellow-400 text-lg font-bold">{stats.open_warning}</div><div className="text-gray-500">미확인 경고</div></div>
+                    <div className="bg-cyber-gray/50 p-2 rounded border border-gray-700"><div className="text-blue-300 text-lg font-bold">{stats.acked}</div><div className="text-gray-500">대응 중</div></div>
                 </div>
-                <div className="flex-1 bg-cyber-gray/50 p-3 rounded border border-gray-700">
-                    <div className="flex items-center gap-2 mb-2 text-gray-400">
-                        <HardDrive className="w-4 h-4" /> RAM
-                    </div>
-                    <div className={`text-2xl font-bold ${(stats?.mem_percent ?? 0) > 85 ? 'text-neon-red' : (stats?.mem_percent ?? 0) > 70 ? 'text-yellow-400' : 'text-white'}`}>
-                        {stats?.mem_used_gb != null ? `${stats.mem_used_gb}G` : '---'}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">/ {stats?.mem_total_gb ?? '?'} GB ({stats?.mem_percent ?? '?'}%)</div>
+            )}
+
+            {stats && stats.status !== 'SAFE' && (
+                <div className={`mb-3 p-2 rounded text-xs border ${isDefcon1 ? 'bg-red-900/20 border-red-900/50' : 'bg-yellow-900/10 border-yellow-800/50'}`}>
+                    <div className={`${isDefcon1 ? 'text-neon-red' : 'text-yellow-400'} font-bold mb-1`}>{stats.status_ko}</div>
+                    <div className="text-gray-300 mb-1" style={{ wordBreak: 'keep-all' }}>{stats.reason}</div>
+                    <div className="mt-1"><span className="text-gray-400 font-bold">조치: </span><span className="text-white" style={{ wordBreak: 'keep-all' }}>{stats.action}</span></div>
                 </div>
-                <div className="flex-1 bg-cyber-gray/50 p-3 rounded border border-gray-700">
-                    <div className="flex items-center gap-2 mb-2 text-gray-400">
-                        <Activity className="w-4 h-4" /> DISK
+            )}
+
+            <div className="flex gap-3 mb-3">
+                {[
+                    { icon: Cpu, label: 'CPU', val: stats?.cpu_percent, warn: 70, crit: 90, fmt: v => `${v}%` },
+                    { icon: HardDrive, label: 'RAM', val: stats?.mem_percent, warn: 70, crit: 85, fmt: v => `${v}%`, sub: stats ? `${stats.mem_used_gb}/${stats.mem_total_gb} GB` : '' },
+                    { icon: Activity, label: 'DISK', val: stats?.disk_percent, warn: 75, crit: 90, fmt: v => `${v}%` },
+                ].map(({ icon, label, val, warn, crit, fmt, sub }) => (
+                    <div key={label} className="flex-1 bg-cyber-gray/50 p-2 rounded border border-gray-700">
+                        <div className="flex items-center gap-1 mb-1 text-gray-400 text-xs">{React.createElement(icon, { className: 'w-3.5 h-3.5' })} {label}</div>
+                        <div className={`text-xl font-bold ${(val ?? 0) > crit ? 'text-neon-red' : (val ?? 0) > warn ? 'text-yellow-400' : 'text-white'}`}>{val != null ? fmt(val) : '---'}</div>
+                        {sub && <div className="text-[10px] text-gray-500">{sub}</div>}
                     </div>
-                    <div className={`text-2xl font-bold ${(stats?.disk_percent ?? 0) > 90 ? 'text-neon-red' : (stats?.disk_percent ?? 0) > 75 ? 'text-yellow-400' : 'text-white'}`}>
-                        {stats?.disk_percent != null ? `${stats.disk_percent}%` : '---'}
-                    </div>
-                </div>
+                ))}
             </div>
 
             <div className="mb-2">
-                <div className="text-xs text-gray-500 mb-1 font-mono">EVENT TIMELINE (24H)</div>
-                <div className="h-36 w-full">
+                <div className="text-xs text-gray-500 mb-1 font-mono">이벤트 타임라인 (24H, 시뮬레이션 제외)</div>
+                <div className="h-32 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={timeline} barCategoryGap={1}>
-                            <XAxis
-                                dataKey="hour"
-                                tick={{ fill: '#6b7280', fontSize: 9 }}
-                                axisLine={{ stroke: '#374151' }}
-                                tickLine={false}
-                                interval={2}
-                            />
-                            <YAxis
-                                tick={{ fill: '#6b7280', fontSize: 9 }}
-                                axisLine={false}
-                                tickLine={false}
-                                width={24}
-                                allowDecimals={false}
-                            />
-                            <Tooltip
-                                contentStyle={{ backgroundColor: '#0a0a0f', border: '1px solid #00ff41', fontSize: 11 }}
-                                labelStyle={{ color: '#9ca3af' }}
-                                itemStyle={{ padding: 0 }}
-                            />
-                            <Bar dataKey="critical" stackId="a" fill="#ff0033" name="Critical" />
-                            <Bar dataKey="warning" stackId="a" fill="#eab308" name="Warning" />
-                            <Bar dataKey="info" stackId="a" fill="#00ff4180" name="Info" radius={[2, 2, 0, 0]} />
+                            <XAxis dataKey="hour" tick={{ fill: '#6b7280', fontSize: 9 }} axisLine={{ stroke: '#374151' }} tickLine={false} interval={2} />
+                            <YAxis tick={{ fill: '#6b7280', fontSize: 9 }} axisLine={false} tickLine={false} width={24} allowDecimals={false} />
+                            <Tooltip contentStyle={{ backgroundColor: '#0a0a0f', border: '1px solid #00ff41', fontSize: 11 }} labelStyle={{ color: '#9ca3af' }} itemStyle={{ padding: 0 }} />
+                            <Bar dataKey="critical" stackId="a" fill="#ff0033" name="긴급" />
+                            <Bar dataKey="warning" stackId="a" fill="#eab308" name="경고" />
+                            <Bar dataKey="info" stackId="a" fill="#00ff4180" name="정보" radius={[2, 2, 0, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
             </div>
 
-            {/* Actionable Advice Section */}
-            {(stats?.reason && stats.status !== 'SAFE') && (
-                <div className="mb-4 p-2 bg-red-900/20 border border-red-900/50 rounded text-xs">
-                    <div className="text-neon-red font-bold mb-1">⚠️ THREAT DETECTED</div>
-                    <div className="text-gray-300 mb-1">{stats.reason}</div>
-                    <div className="flex gap-1 mt-2">
-                        <span className="text-gray-400 font-bold">RECOMMENDED ACTION:</span>
-                        <span className="text-white bg-red-600/20 px-1 rounded">{stats.action}</span>
-                    </div>
+            {priv && (
+                <div className="text-[11px] text-gray-500 border-t border-gray-800 pt-2 space-y-0.5">
+                    {[
+                        ['auth.log 읽기', priv.auth_log_readable],
+                        ['/etc/shadow 감시', priv.shadow_readable],
+                        ['fail2ban 제어', priv.fail2ban_control],
+                    ].map(([label, ok]) => (
+                        <div key={label} className="flex items-center gap-1">
+                            {ok ? <ShieldCheck className="w-3 h-3 text-neon-green" /> : <ShieldOff className="w-3 h-3 text-yellow-400" />}
+                            <span className={ok ? 'text-gray-400' : 'text-yellow-400'}>{label}: {ok ? '가능' : '불가'}</span>
+                        </div>
+                    ))}
+                    {host.pending_updates?.available && (
+                        <div className={host.pending_updates.security > 0 ? 'text-yellow-400' : 'text-gray-400'}>
+                            미적용 업데이트 {host.pending_updates.total} (보안 {host.pending_updates.security})
+                        </div>
+                    )}
                 </div>
             )}
 
-            <div className="mt-2 text-center text-xs">
-                <div className="text-gray-500 border-t border-gray-800 pt-2">
-                    <p><strong>DEFCON 1</strong> = Critical Threat Active</p>
-                    <p><strong>DEFCON 3</strong> = Warning Level</p>
-                    <p><strong>SAFE</strong> = Normal Operations</p>
-                </div>
+            <div className="mt-2 text-center text-[10px] text-gray-600 border-t border-gray-800 pt-2">
+                DEFCON 1 = 미확인 긴급 알림 있음 · DEFCON 3 = 미확인 경고 알림 있음 · SAFE = 미확인 알림 없음. 알림을 확인(ack)하면 레벨에서 제외됩니다.
             </div>
         </div>
     );

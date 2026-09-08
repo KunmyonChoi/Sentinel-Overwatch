@@ -1,425 +1,394 @@
+"""
+Security Dashboard 백엔드.
+
+역할: 검증된 호스트 도구(fail2ban, rsyslog auth.log, dpkg/apt, /proc)의 관찰 결과를
+상관 분석해 알림으로 만들고, 한국어로 조치 방법을 안내하는 뷰/트리아지 계층.
+"""
 from log_config import setup_logging
 setup_logging()
 
-from fastapi import FastAPI, Depends, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
-import threading
-import uvicorn
-import database
-from database import get_db, Event, DailyReport, init_db
-from monitor.intrusion import AuthLogWatcher, NetworkWatcher
-from monitor.malware import MalwareMonitor
-from monitor.intel import IntelMonitor
-from monitor.resource import ResourceMonitor
-from monitor.integrity import IntegrityMonitor
-from monitor.update import UpdateMonitor
-import time
-from datetime import datetime, timedelta
+import hmac
+import ipaddress
+import logging
 import os
-import json
-from deep_translator import GoogleTranslator
-import anthropic as _anthropic
+import platform
+import socket
+import threading
+import time
+from contextlib import asynccontextmanager
+from datetime import datetime, timedelta
 
-_ko_cache: dict[str, str | None] = {}      # None = in progress, "" = failed, str = done
-_urgency_cache: dict[str, str] = {}         # "" = unknown, "CRITICAL"/"HIGH"/"MEDIUM"/"LOW"
+import psutil
+import uvicorn
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
-_URGENCY_PROMPT = """\
-You are a cybersecurity analyst. Given the title/description of a threat intelligence article, do two things:
-1. Translate the text to Korean.
-2. Rate the **security urgency** for a system administrator as one of: CRITICAL, HIGH, MEDIUM, LOW.
-   - CRITICAL: zero-day exploit, actively exploited vulnerability in the wild, major ransomware campaign
-   - HIGH: new CVE (CVSS ≥ 8), confirmed data breach, active targeted attack campaign
-   - MEDIUM: patch/update advisory, general threat report, new malware family (not yet widespread)
-   - LOW: general security awareness, research, informational news
+import alerts as alert_engine
+import config
+import database
+import korean
+import translate
+from ban_manager import BanManager, manual_block_command
+from database import Alert, BlockedIP, Event, get_db, utcnow
+from integrations.fail2ban import Fail2banClient
+from monitor.fail2ban_sync import Fail2banSync
+from monitor.integrity import IntegrityMonitor, PersistenceMonitor
+from monitor.intel import IntelMonitor
+from monitor.intrusion import AuthLogWatcher, NetworkWatcher
+from monitor.process_audit import ProcessAudit
+from monitor.resource import ResourceMonitor
+from monitor.update import UpdateMonitor
 
-Respond ONLY with valid JSON (no markdown):
-{"translation": "<Korean translation>", "urgency": "<CRITICAL|HIGH|MEDIUM|LOW>", "urgency_reason": "<one sentence in Korean>"}
+logger = logging.getLogger("app")
 
-Article text:
-{text}"""
-
-def _load_translation_cache():
-    """Load persisted translations and urgency ratings from DB into memory on startup."""
-    db = database.SessionLocal()
-    try:
-        rows = db.query(database.TranslationCache).all()
-        for row in rows:
-            _ko_cache[row.source_text] = row.translated_text
-            if row.urgency:
-                _urgency_cache[row.source_text] = row.urgency
-    except Exception:
-        pass
-    finally:
-        db.close()
-
-def _persist_translation(source_text: str, translated_text: str, urgency: str = ""):
-    """Upsert a translation + urgency result into the DB."""
-    db = database.SessionLocal()
-    try:
-        row = db.query(database.TranslationCache).filter(
-            database.TranslationCache.source_text == source_text
-        ).first()
-        if row:
-            row.translated_text = translated_text
-            if urgency:
-                row.urgency = urgency
-        else:
-            db.add(database.TranslationCache(source_text=source_text, translated_text=translated_text, urgency=urgency or None))
-        db.commit()
-    except Exception:
-        pass
-    finally:
-        db.close()
-
-# Resource metrics cache — updated every 10s in background to avoid blocking API
+# --- 백그라운드 상태 ------------------------------------------------------
+monitor_registry: dict[str, dict] = {}
+monitors: list = []
+defcon_watcher = alert_engine.DefconWatcher(interval=10)
 _resource_cache: dict = {"cpu_percent": 0.0, "mem_used_gb": 0.0, "mem_total_gb": 0.0, "mem_percent": 0.0, "disk_percent": 0.0}
+_started_at = utcnow()
+
 
 def _update_resource_cache():
-    import psutil
     while True:
         try:
-            cpu = psutil.cpu_percent(interval=3)   # blocking 3s, but in background thread
+            cpu = psutil.cpu_percent(interval=3)
             mem = psutil.virtual_memory()
-            disk = psutil.disk_usage('/')
+            disk = psutil.disk_usage("/")
             _resource_cache.update({
                 "cpu_percent": cpu,
-                "mem_used_gb": round(mem.used / (1024 ** 3), 1),
-                "mem_total_gb": round(mem.total / (1024 ** 3), 1),
+                "mem_used_gb": round(mem.used / 1024**3, 1),
+                "mem_total_gb": round(mem.total / 1024**3, 1),
                 "mem_percent": mem.percent,
                 "disk_percent": disk.percent,
             })
         except Exception:
             pass
-        time.sleep(7)  # update every ~10s (3s measure + 7s sleep)
+        time.sleep(7)
 
-def _do_translate(clean: str, is_intel: bool = False) -> None:
-    """Translate text. For intel articles, also evaluate urgency via Claude API."""
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if is_intel and api_key:
-        try:
-            client = _anthropic.Anthropic(api_key=api_key)
-            msg = client.messages.create(
-                model="claude-haiku-4-5-20251001",
-                max_tokens=512,
-                messages=[{"role": "user", "content": _URGENCY_PROMPT.format(text=clean[:600])}],
-            )
-            data = json.loads(msg.content[0].text)
-            translation = data.get("translation") or ""
-            urgency = data.get("urgency", "MEDIUM")
-            urgency_reason = data.get("urgency_reason", "")
-            display = translation
-            if urgency_reason:
-                display = f"{translation} [{urgency_reason}]"
-            _ko_cache[clean] = display
-            _urgency_cache[clean] = urgency
-            if display:
-                _persist_translation(clean, display, urgency)
-            return
-        except Exception:
-            pass  # fall through to Google Translate
 
-    # Fallback: Google Translate (no urgency)
-    try:
-        translated = GoogleTranslator(source='en', target='ko').translate(clean[:500])
-        result = translated or ""
-        _ko_cache[clean] = result
-        if result:
-            _persist_translation(clean, result)
-    except Exception:
-        _ko_cache[clean] = ""
+def _retention_loop():
+    # 기동 직후에는 실행하지 않는다: 운영자가 보존 기간(SECDASH_*_RETENTION_DAYS)을 조정할 여유를 준다
+    time.sleep(3600)
+    while True:
+        database.apply_retention()
+        time.sleep(24 * 3600)
 
-def _translate_ko(text: str, is_intel: bool = False) -> str | None:
-    """Returns None while translating, "" on failure, Korean string on success."""
-    if not text:
-        return ""
-    clean = text.replace('[SIMULATION]', '').strip()
-    if clean in _ko_cache:
-        return _ko_cache[clean]
-    # Mark as in-progress and translate in background
-    _ko_cache[clean] = None
-    threading.Thread(target=_do_translate, args=(clean, is_intel), daemon=True).start()
-    return None
 
-from contextlib import asynccontextmanager
-
-# Monitor registry: {name: {"instance": ..., "label": ...}}
-monitor_registry: dict[str, dict] = {}
-
-def _start_monitor(name: str, label: str, instance, registry: dict, monitor_list: list):
-    instance.last_started = datetime.utcnow()
-    t = threading.Thread(target=instance.monitor, daemon=True, name=name)
+def _start_monitor(instance):
+    t = threading.Thread(target=instance.monitor, daemon=True, name=instance.name)
     t.start()
-    monitor_list.append(instance)
-    registry[name] = {"instance": instance, "label": label, "thread": t}
+    monitors.append(instance)
+    monitor_registry[instance.name] = {"instance": instance, "thread": t}
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    try:
-        _load_translation_cache()
-        _start_monitor("AuthLogWatcher",   "SSH/Auth 침입 탐지",   AuthLogWatcher(),   monitor_registry, monitors)
-        _start_monitor("NetworkWatcher",   "네트워크 연결 감시",    NetworkWatcher(),   monitor_registry, monitors)
-        _start_monitor("MalwareMonitor",   "악성 프로세스 스캔",    MalwareMonitor(),   monitor_registry, monitors)
-        _start_monitor("IntelMonitor",     "위협 인텔 RSS 수집",    IntelMonitor(),     monitor_registry, monitors)
-        _start_monitor("ResourceMonitor",  "시스템 리소스 감시",    ResourceMonitor(),  monitor_registry, monitors)
-        _start_monitor("IntegrityMonitor", "파일 무결성 감시",      IntegrityMonitor(), monitor_registry, monitors)
-        _start_monitor("UpdateMonitor",    "소프트웨어 업데이트 감시", UpdateMonitor(),    monitor_registry, monitors)
-        threading.Thread(target=_update_resource_cache, daemon=True, name="ResourceCache").start()
-        print("All monitors started.")
-    except Exception as e:
-        print(f"Error starting monitors: {e}")
-
+    database.init_db()
+    translate.load_cache()
+    for inst in (
+        AuthLogWatcher(), Fail2banSync(), NetworkWatcher(), ProcessAudit(), IntegrityMonitor(),
+        PersistenceMonitor(), UpdateMonitor(), ResourceMonitor(), IntelMonitor(),
+    ):
+        try:
+            _start_monitor(inst)
+        except Exception as e:
+            logger.exception(f"failed to start {inst.name}: {e}")
+    threading.Thread(target=defcon_watcher.monitor, daemon=True, name="DefconWatcher").start()
+    threading.Thread(target=_update_resource_cache, daemon=True, name="ResourceCache").start()
+    threading.Thread(target=_retention_loop, daemon=True, name="Retention").start()
+    logger.info(f"all monitors started; API token file: {config.API_TOKEN_FILE}")
     yield
+    for m in monitors:
+        m.stop()
+    defcon_watcher.running = False
 
-    for monitor in monitors:
-        monitor.running = False
-    print("Monitors stopping...")
 
-app = FastAPI(title="Security Monitor", lifespan=lifespan)
-database.init_db()
+app = FastAPI(title="Security Dashboard", lifespan=lifespan)
 
-# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],  # Vite dev server only
-    allow_credentials=True,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", f"http://{config.HOST}:{config.PORT}", f"http://localhost:{config.PORT}"],
+    allow_credentials=False,
     allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    allow_headers=["Content-Type", "X-API-Token"],
 )
 
-# Global Monitors (Start on startup)
-monitors = []
 
-from ban_manager import BanManager
-from notifications import send_slack_alert
+@app.middleware("http")
+async def require_api_token(request: Request, call_next):
+    """모든 /api 요청은 X-API-Token 헤더가 필요하다. 커스텀 헤더라 브라우저가 preflight 를 강제하므로 CSRF 도 막힌다."""
+    if request.url.path.startswith("/api/") and request.method != "OPTIONS":
+        token = request.headers.get("X-API-Token", "")
+        if not token or not hmac.compare_digest(token, config.API_TOKEN):
+            return JSONResponse({"detail": "invalid or missing X-API-Token"}, status_code=401)
+    return await call_next(request)
 
-_prev_defcon: str | None = None  # track DEFCON level changes for alerting
 
-def _check_and_notify(status: str, reason: str):
-    """Send Slack when DEFCON level changes to a worse state."""
-    global _prev_defcon
-    if status != _prev_defcon:
-        if status in ("DEFCON 1", "DEFCON 3"):
-            color = "#ff0000" if status == "DEFCON 1" else "#ffaa00"
-            send_slack_alert(
-                title=f"🚨 {status} DECLARED",
-                message=reason,
-                color=color,
-            )
-        _prev_defcon = status
+# --- 직렬화 -----------------------------------------------------------------
+def _event_dict(e: Event) -> dict:
+    return {
+        "id": e.id,
+        "timestamp": e.timestamp.isoformat() if e.timestamp else None,
+        "event_type": e.event_type,
+        "event_type_ko": korean.event_type_ko(e.event_type),
+        "severity": e.severity,
+        "source": e.source,
+        "description": e.description,
+        "description_ko": e.description_ko or "",
+        "details": e.details_dict(),
+        "is_simulation": bool(e.is_simulation),
+    }
 
-@app.get("/")
-def read_root():
-    return {"status": "Security Monitor Running"}
+
+def _blocked_dict(b: BlockedIP) -> dict:
+    return {
+        "id": b.id, "ip_address": b.ip_address, "reason": b.reason, "status": b.status, "source": b.source, "jail": b.jail,
+        "blocked_at": b.blocked_at.isoformat() if b.blocked_at else None,
+        "manual_command": manual_block_command(b.ip_address) if b.status == "RECOMMENDED" else None,
+    }
+
+
+# --- 엔드포인트 -------------------------------------------------------------
+@app.get("/api/events")
+def get_events(limit: int = 100, include_simulation: bool = True, severity: str | None = None, db: Session = Depends(get_db)):
+    q = db.query(Event).filter(Event.event_type != "THREAT_INTEL")
+    if not include_simulation:
+        q = q.filter(Event.is_simulation == False)  # noqa: E712
+    if severity:
+        q = q.filter(Event.severity == severity.upper())
+    rows = q.order_by(Event.timestamp.desc(), Event.id.desc()).limit(min(limit, 500)).all()
+    return [_event_dict(e) for e in rows]
+
 
 @app.get("/api/intel")
-def get_intel(limit: int = 20, db: Session = Depends(database.get_db)):
-    events = db.query(database.Event).filter(
-        database.Event.event_type == "THREAT_INTEL"
-    ).order_by(database.Event.timestamp.desc()).limit(limit).all()
-    return [
-        {
-            "id": e.id,
-            "timestamp": e.timestamp.isoformat() if e.timestamp else None,
-            "event_type": e.event_type,
-            "severity": e.severity,
-            "source": e.source,
-            "description": e.description,
-            "description_ko": _translate_ko(e.description, is_intel=True),
-            "urgency": _urgency_cache.get(e.description.replace('[SIMULATION]', '').strip(), ""),
-            "details": e.details,
-        }
-        for e in events
-    ]
+def get_intel(limit: int = 30, db: Session = Depends(get_db)):
+    rows = db.query(Event).filter(Event.event_type == "THREAT_INTEL").order_by(Event.timestamp.desc(), Event.id.desc()).limit(min(limit, 200)).all()
+    out = []
+    for e in rows:
+        d = e.details_dict()
+        title = d.get("title") or (e.description or "").rsplit(" - ", 1)[0].replace("New Threat Intel: ", "")
+        if d.get("feed") == "usn":
+            # USN 제목은 정형이라 외부 번역이 필요 없다
+            ko, urgency = (f"Ubuntu 보안 공지 — 영향 패키지: " + ", ".join(a["package"] for a in d.get("affected", [])[:6])) if d.get("affects_host") else "", ""
+        else:
+            ko, urgency = translate.translate_intel(title)
+        out.append({
+            **_event_dict(e),
+            "title": title,
+            "link": d.get("link") or ((e.description or "").rsplit(" - ", 1)[-1] if " - " in (e.description or "") else ""),
+            "feed": d.get("feed", "news"),
+            "affects_host": bool(d.get("affects_host")),
+            "affected": d.get("affected", []),
+            "cves": d.get("cves", []),
+            "description_ko": ko,
+            "urgency": ("HIGH" if d.get("affects_host") else urgency),
+        })
+    return out
 
-@app.get("/api/events")
-def get_events(limit: int = 50, db: Session = Depends(database.get_db)):
-    events = db.query(database.Event).filter(
-        database.Event.event_type != "THREAT_INTEL"
-    ).order_by(database.Event.timestamp.desc()).limit(limit).all()
-    return [
-        {
-            "id": e.id,
-            "timestamp": e.timestamp.isoformat() if e.timestamp else None,
-            "event_type": e.event_type,
-            "severity": e.severity,
-            "source": e.source,
-            "description": e.description,
-            "description_ko": _translate_ko(e.description),
-            "details": e.details,
-        }
-        for e in events
-    ]
+
+@app.get("/api/alerts")
+def get_alerts(status: str = "active", limit: int = 100, db: Session = Depends(get_db)):
+    q = db.query(Alert)
+    if status == "active":
+        q = q.filter(Alert.status.in_(["OPEN", "ACKED"]))
+    elif status != "all":
+        q = q.filter(Alert.status == status.upper())
+    rows = q.order_by(Alert.last_seen_at.desc()).limit(min(limit, 500)).all()
+    return [alert_engine.serialize(a) for a in rows]
+
+
+class AckBody(BaseModel):
+    by: str = "dashboard"
+    note: str = ""
+
+
+@app.post("/api/alerts/{alert_id}/ack")
+def ack_alert(alert_id: int, body: AckBody | None = None, db: Session = Depends(get_db)):
+    body = body or AckBody()
+    a = alert_engine.ack_alert(alert_id, body.by, db)
+    if not a:
+        raise HTTPException(404, "alert not found or already resolved")
+    return alert_engine.serialize(a)
+
+
+@app.post("/api/alerts/{alert_id}/resolve")
+def resolve_alert(alert_id: int, body: AckBody | None = None, db: Session = Depends(get_db)):
+    body = body or AckBody()
+    a = alert_engine.resolve_alert(alert_id, body.by, body.note, db)
+    if not a:
+        raise HTTPException(404, "alert not found")
+    return alert_engine.serialize(a)
+
 
 @app.get("/api/blocked")
-def get_blocked_ips(db: Session = Depends(database.get_db)):
-    ips = db.query(database.BlockedIP).filter(database.BlockedIP.status == "ACTIVE").order_by(database.BlockedIP.blocked_at.desc()).all()
-    return ips
+def get_blocked(db: Session = Depends(get_db)):
+    rows = db.query(BlockedIP).filter(BlockedIP.status.in_(["ACTIVE", "RECOMMENDED"])).order_by(BlockedIP.blocked_at.desc()).all()
+    f2b = monitor_registry.get("Fail2banSync", {}).get("instance")
+    return {
+        "fail2ban": {
+            "health": getattr(f2b, "health", "unknown"),
+            "reason": getattr(f2b, "health_reason", ""),
+            "fix_hint": getattr(f2b, "fix_hint", ""),
+            "jail": config.FAIL2BAN_JAIL,
+            "stats": getattr(f2b, "stats", {}),
+        },
+        "items": [_blocked_dict(b) for b in rows],
+    }
 
-@app.post("/api/unblock/{ip_address}")
-def unblock_ip(ip_address: str, db: Session = Depends(database.get_db)):
-    manager = BanManager(db)
-    success = manager.unblock_ip(ip_address)
-    if success:
-        return {"status": "success", "message": f"IP {ip_address} unblocked"}
-    return {"status": "error", "message": "IP not found or already unblocked"}
+
+class BanBody(BaseModel):
+    ip: str
+    reason: str = "manual block from dashboard"
+
+
+@app.post("/api/blocked")
+def block_ip(body: BanBody, db: Session = Depends(get_db)):
+    try:
+        ipaddress.ip_address(body.ip)
+    except ValueError:
+        raise HTTPException(400, "invalid ip")
+    result = BanManager(db).ban_ip(body.ip, body.reason)
+    return {"ip": body.ip, **result}
+
+
+@app.post("/api/blocked/{ip_address}/unblock")
+def unblock_ip(ip_address: str, db: Session = Depends(get_db)):
+    try:
+        ipaddress.ip_address(ip_address)
+    except ValueError:
+        raise HTTPException(400, "invalid ip")
+    ok, msg = BanManager(db).unblock_ip(ip_address)
+    if not ok:
+        raise HTTPException(409, msg)
+    return {"status": "success", "message": msg}
 
 
 @app.get("/api/stats")
 def get_stats(db: Session = Depends(get_db)):
-    total_events = db.query(Event).count()
-    since_24h = datetime.utcnow() - timedelta(hours=24)
-    critical_events = db.query(Event).filter(
-        Event.severity == 'CRITICAL',
-        Event.timestamp >= since_24h,
-        ~Event.description.contains('[SIMULATION]')
-    ).count()
-    warning_events = db.query(Event).filter(
-        Event.severity == 'WARNING',
-        Event.timestamp >= since_24h,
-        ~Event.description.contains('[SIMULATION]')
-    ).count()
-
-    # Use cached resource metrics (updated every ~10s in background)
-    cpu_percent = _resource_cache["cpu_percent"]
-    mem_used_gb = _resource_cache["mem_used_gb"]
-    mem_total_gb = _resource_cache["mem_total_gb"]
-    mem_percent = _resource_cache["mem_percent"]
-    disk_percent = _resource_cache["disk_percent"]
-
-    # Determine Status and Action
-    status = "SAFE"
-    reason = "System Normal"
-    action = "Monitor systems."
-
-    if critical_events > 0:
-        status = "DEFCON 1"
-        latest_critical = db.query(Event).filter(
-            Event.severity == 'CRITICAL',
-            ~Event.description.contains('[SIMULATION]')
-        ).order_by(Event.timestamp.desc()).first()
-        if latest_critical:
-            if "MALWARE" in latest_critical.event_type:
-                reason = f"Active Malware: {latest_critical.description}"
-                action = "Isolate host. Terminate process immediately."
-            elif "FILE_INTEGRITY" in latest_critical.event_type:
-                reason = f"File Integrity Violation: {latest_critical.description}"
-                action = "Inspect modified files immediately."
-            else:
-                reason = f"Critical Alert: {latest_critical.description}"
-                action = "Investigate logs immediately."
-    elif warning_events > 5:
-        status = "DEFCON 3"
-        reason = "High volume of warning events (Intrusion Attempts)"
-        action = "Check firewall rules. Verify Block List."
-    elif cpu_percent > 90:
-        status = "DEFCON 3"
-        reason = f"CPU usage critical: {cpu_percent}%"
-        action = "Check running processes for anomalies."
-    elif mem_percent > 85:
-        status = "DEFCON 3"
-        reason = f"Memory usage critical: {mem_percent}%"
-        action = "Check for memory leaks or crypto miners."
-
-    _check_and_notify(status, reason)
-
+    since = utcnow() - timedelta(hours=24)
+    base = db.query(Event).filter(Event.timestamp >= since, Event.is_simulation == False, Event.event_type != "THREAT_INTEL")  # noqa: E712
+    defcon = defcon_watcher.current if defcon_watcher.prev is not None else alert_engine.compute_defcon(db)
+    degraded = [m["instance"].label for m in monitor_registry.values() if m["instance"].health in ("degraded", "down")]
     return {
-        "total": total_events,
-        "critical": critical_events,
-        "warning": warning_events,
-        "status": status,
-        "reason": reason,
-        "action": action,
-        "cpu_percent": cpu_percent,
-        "mem_used_gb": mem_used_gb,
-        "mem_total_gb": mem_total_gb,
-        "mem_percent": mem_percent,
-        "disk_percent": disk_percent,
+        **defcon,
+        "events_24h": base.count(),
+        "critical_24h": base.filter(Event.severity == "CRITICAL").count(),
+        "warning_24h": base.filter(Event.severity == "WARNING").count(),
+        "degraded_monitors": degraded,
+        **_resource_cache,
     }
 
 
 @app.get("/api/stats/timeline")
 def get_stats_timeline(db: Session = Depends(get_db)):
-    """Return hourly event counts for the last 24 hours (CRITICAL/WARNING/INFO)."""
-    now = datetime.utcnow()
+    now = utcnow()
     start = now - timedelta(hours=24)
-
-    events = db.query(Event).filter(
-        Event.timestamp >= start,
-        Event.event_type != "THREAT_INTEL",
-        ~Event.description.contains('[SIMULATION]'),
+    rows = db.query(Event.timestamp, Event.severity).filter(
+        Event.timestamp >= start, Event.event_type != "THREAT_INTEL", Event.is_simulation == False,  # noqa: E712
     ).all()
-
-    # Build 24 hourly buckets
-    buckets: list[dict] = []
-    for i in range(24):
-        h = start + timedelta(hours=i)
-        buckets.append({
-            "hour": h.strftime("%H:00"),
-            "critical": 0,
-            "warning": 0,
-            "info": 0,
-        })
-
-    for e in events:
-        if not e.timestamp:
+    buckets = [{"hour": (start + timedelta(hours=i)).strftime("%H:00"), "critical": 0, "warning": 0, "info": 0} for i in range(24)]
+    for ts, sev in rows:
+        if not ts:
             continue
-        idx = int((e.timestamp - start).total_seconds() // 3600)
+        idx = int((ts - start).total_seconds() // 3600)
         if 0 <= idx < 24:
-            sev = (e.severity or "INFO").upper()
-            if sev == "CRITICAL":
-                buckets[idx]["critical"] += 1
-            elif sev == "WARNING":
-                buckets[idx]["warning"] += 1
-            else:
-                buckets[idx]["info"] += 1
-
+            key = (sev or "INFO").lower()
+            buckets[idx][key if key in ("critical", "warning") else "info"] += 1
     return buckets
 
 
 @app.get("/api/monitors")
 def get_monitors():
-    result = []
+    out = []
     for name, info in monitor_registry.items():
-        inst = info["instance"]
-        thread = info["thread"]
-        result.append({
-            "name": name,
-            "label": info["label"],
-            "running": getattr(inst, "running", False),
-            "thread_alive": thread.is_alive(),
-            "started_at": inst.last_started.isoformat() if hasattr(inst, "last_started") else None,
-        })
-    return result
+        d = info["instance"].status_dict()
+        d["thread_alive"] = info["thread"].is_alive()
+        if not d["thread_alive"] and d["health"] not in ("down",):
+            d["health"], d["health_reason"] = "down", d.get("health_reason") or "스레드 종료됨"
+        out.append(d)
+    return out
 
-@app.get("/api/highlight/korean")
-def get_korean_highlight(db: Session = Depends(get_db)):
-    critical_events = db.query(Event).filter(Event.severity == 'CRITICAL').count()
-    warning_events = db.query(Event).filter(Event.severity == 'WARNING').count()
-    intel_events = db.query(Event).filter(Event.event_type == 'THREAT_INTEL').count()
-    
-    if critical_events > 0:
-        highlight = f"긴급: 총 {critical_events}건의 심각한(CRITICAL) 시스템 보안 위협이 라이브 피드에 감지되었습니다! 즉각적인 확인이 필요합니다."
-    elif warning_events > 0:
-        highlight = f"주의: 라이브 피드에 의심스러운 접근 시도 등 {warning_events}건의 경고(WARNING) 기록이 있습니다. 주의 깊게 시스템을 주시해 주시기 바랍니다."
+
+@app.get("/api/host")
+def get_host():
+    def readable(p):
+        try:
+            with open(p, "rb"):
+                return True
+        except Exception:
+            return False
+    f2b = monitor_registry.get("Fail2banSync", {}).get("instance")
+    ok, why, hint = (f2b.health == "ok", f2b.health_reason, f2b.fix_hint) if f2b else Fail2banClient().availability()
+    upd = monitor_registry.get("UpdateMonitor", {}).get("instance")
+    return {
+        "hostname": socket.gethostname(),
+        "os": platform.platform(),
+        "kernel": platform.release(),
+        "uptime_hours": round((time.time() - psutil.boot_time()) / 3600, 1),
+        "dashboard_started_at": _started_at.isoformat(),
+        "running_as": {"uid": os.geteuid(), "user": os.environ.get("USER", ""), "root": os.geteuid() == 0},
+        "privileges": {
+            "auth_log_readable": readable(config.AUTH_LOG_PATH),
+            "shadow_readable": readable("/etc/shadow"),
+            "fail2ban_control": ok,
+            "fail2ban_reason": why,
+            "fail2ban_hint": hint,
+        },
+        "pending_updates": getattr(upd, "pending", {}),
+        "api_token_file": str(config.API_TOKEN_FILE),
+    }
+
+
+@app.get("/api/summary/korean")
+def get_korean_summary(db: Session = Depends(get_db)):
+    defcon = alert_engine.compute_defcon(db)
+    since = utcnow() - timedelta(hours=24)
+    parts = []
+    if defcon["open_critical"]:
+        parts.append(f"긴급: 미확인 CRITICAL 알림이 {defcon['open_critical']}건 있습니다. 가장 최근 항목은 '{defcon['reason']}' 입니다.")
+    elif defcon["open_warning"]:
+        parts.append(f"주의: 미확인 경고 알림이 {defcon['open_warning']}건 있습니다. 가장 최근 항목은 '{defcon['reason']}' 입니다.")
     else:
-        highlight = "라이브 피드 확인 결과 시스템은 매우 안정적입니다. 심각한 위협이나 경고가 없습니다."
-        
-    if intel_events > 0:
-        highlight += f" 또한, 위협 인텔(Threat Intel)을 통해 {intel_events}건의 관련된 글로벌 보안 뉴스와 취약점 정보가 수집되었습니다. 우측 피드를 통해 최신 위협 동향을 파악할 수 있습니다."
-    else:
-        highlight += " 현재 수집된 새로운 위협 인텔 정보는 없습니다."
+        parts.append("미확인 알림이 없습니다. 최근 24시간 동안 대응이 필요한 사건은 없었습니다.")
+    if defcon["acked"]:
+        parts.append(f"확인 처리되어 진행 중인 알림 {defcon['acked']}건이 있습니다.")
 
-    update_events = db.query(Event).filter(Event.event_type == 'SOFTWARE_UPDATE').count()
-    if update_events > 0:
-        removed = db.query(Event).filter(
-            Event.event_type == 'SOFTWARE_UPDATE', Event.severity == 'WARNING'
-        ).count()
-        highlight += f" 소프트웨어 업데이트 {update_events}건이 기록되었습니다."
-        if removed > 0:
-            highlight += f" (패키지 제거 {removed}건 포함 — 확인 필요)"
+    degraded = [(m["instance"].label, m["instance"].health_reason) for m in monitor_registry.values() if m["instance"].health in ("degraded", "down")]
+    if degraded:
+        parts.append("탐지 공백: " + "; ".join(f"{l} — {r}" for l, r in degraded[:3]) + ". 모니터 상태 패널의 해결 방법을 참고하세요.")
 
-    return {"highlight": highlight}
+    fails = db.query(Event).filter(Event.timestamp >= since, Event.event_type.in_(["AUTH_FAILURE", "INVALID_USER"]), Event.is_simulation == False).count()  # noqa: E712
+    logins = db.query(Event).filter(Event.timestamp >= since, Event.event_type == "AUTH_SUCCESS", Event.is_simulation == False).count()  # noqa: E712
+    blocked = db.query(BlockedIP).filter(BlockedIP.status == "ACTIVE").count()
+    recommended = db.query(BlockedIP).filter(BlockedIP.status == "RECOMMENDED").count()
+    parts.append(f"최근 24시간 SSH 로그인 실패 {fails}건, 성공 {logins}건. 현재 fail2ban 차단 IP {blocked}개" + (f", 차단 권고 {recommended}개" if recommended else "") + ".")
+
+    upd = monitor_registry.get("UpdateMonitor", {}).get("instance")
+    pending = getattr(upd, "pending", {}) or {}
+    if pending.get("available"):
+        if pending.get("security"):
+            parts.append(f"보안 업데이트 {pending['security']}건이 미적용 상태입니다.")
+        else:
+            parts.append("미적용 보안 업데이트는 없습니다.")
+    usn = db.query(Alert).filter(Alert.rule == "usn_affects_host", Alert.status.in_(["OPEN", "ACKED"])).count()
+    if usn:
+        parts.append(f"이 서버의 설치 패키지에 영향을 주는 Ubuntu 보안 공지 {usn}건이 있습니다.")
+    return {"highlight": " ".join(parts), "defcon": defcon}
+
+
+# --- 프론트엔드 정적 서빙 (빌드 결과가 있을 때) -------------------------------
+if config.FRONTEND_DIST.exists() and (config.FRONTEND_DIST / "index.html").exists():
+    app.mount("/", StaticFiles(directory=str(config.FRONTEND_DIST), html=True), name="frontend")
+else:
+    @app.get("/")
+    def read_root():
+        return {"status": "Security Dashboard running", "frontend": "not built (run: cd frontend && npm run build)"}
+
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host=config.HOST, port=config.PORT)

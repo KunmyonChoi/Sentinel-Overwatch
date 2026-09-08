@@ -1,0 +1,9 @@
+# /etc/sudoers.d/secdash  (권한 0440)
+# 대시보드 계정이 fail2ban 을 조회/제어할 수 있게 허용한다. 이 명령들만 허용된다.
+Cmnd_Alias SECDASH_F2B = /usr/bin/fail2ban-client status, \
+                         /usr/bin/fail2ban-client status *, \
+                         /usr/bin/fail2ban-client get * banip, \
+                         /usr/bin/fail2ban-client get * banip *, \
+                         /usr/bin/fail2ban-client set * banip *, \
+                         /usr/bin/fail2ban-client set * unbanip *
+secdash ALL=(root) NOPASSWD: SECDASH_F2B
