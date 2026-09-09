@@ -304,6 +304,18 @@ class DockerClient:
         return base
 
     def _run(self, *args: str, timeout: int = 15) -> tuple[int, str]:
+        rc, out = self._run_once(*args, timeout=timeout)
+        # 소켓 권한이 없으면 한 번만 sudo -n 으로 재시도한다. 개발 환경(docker 그룹 소속)에서는
+        # sudo 없이 바로 되고, 운영 서비스 계정에서는 deploy/sudoers-secdash 의 읽기 전용 허용으로 넘어간다.
+        # 서비스 계정을 docker 그룹에 넣는 것은 root 를 주는 것과 같으므로 그 길은 쓰지 않는다.
+        if rc != 0 and not self.use_sudo and "permission denied" in self._last_error.lower():
+            self.use_sudo = True
+            rc, out = self._run_once(*args, timeout=timeout)
+            if rc != 0:
+                self.use_sudo = False   # sudo 도 안 되면 원래대로 되돌려 다음 판정을 흐리지 않는다
+        return rc, out
+
+    def _run_once(self, *args: str, timeout: int = 15) -> tuple[int, str]:
         if not shutil.which(self.docker_bin):
             self._last_error = "docker 실행 파일을 찾을 수 없음"
             return 127, ""

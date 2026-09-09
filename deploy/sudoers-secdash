@@ -1,5 +1,9 @@
 # /etc/sudoers.d/secdash  (권한 0440)
-# 대시보드 계정이 fail2ban 을 조회/제어할 수 있게 허용한다. 이 명령들만 허용된다.
+# 대시보드 계정에 허용하는 명령. 여기 적힌 것만 실행된다.
+# 원칙: 차단 제어(fail2ban)를 빼면 전부 읽기 전용이다. 와일드카드를 넓히지 말 것 —
+#       예컨대 `docker *` 를 허용하면 `docker run -v /:/host` 로 root 를 내주는 것과 같다.
+
+# 차단 조회·제어. 실제 차단은 fail2ban 이 수행한다.
 Cmnd_Alias SECDASH_F2B = /usr/bin/fail2ban-client status, \
                          /usr/bin/fail2ban-client banned, \
                          /usr/bin/fail2ban-client status *, \
@@ -7,4 +11,16 @@ Cmnd_Alias SECDASH_F2B = /usr/bin/fail2ban-client status, \
                          /usr/bin/fail2ban-client get * banip *, \
                          /usr/bin/fail2ban-client set * banip *, \
                          /usr/bin/fail2ban-client set * unbanip *
-secdash ALL=(root) NOPASSWD: SECDASH_F2B
+
+# 방화벽 규칙 조회 (ExposureMonitor 가 포트별 실제 도달성을 판정하는 데 쓴다).
+# ufw 는 root 가 아니면 실행 자체를 거부하고, iptables -S 는 규칙 조회만 한다. 둘 다 변경 권한은 없다.
+Cmnd_Alias SECDASH_FW = /usr/sbin/ufw status verbose, \
+                        /usr/sbin/iptables -S
+
+# 컨테이너 설정 조회 (ContainerAudit). 읽기 전용 하위 명령만 허용한다.
+# 서비스 계정을 docker 그룹에 넣는 방법은 쓰지 않는다 — 그것은 root 와 동등한 권한이다.
+Cmnd_Alias SECDASH_DOCKER = /usr/bin/docker ps -q, \
+                            /usr/bin/docker inspect *, \
+                            /usr/bin/docker version --format *
+
+secdash ALL=(root) NOPASSWD: SECDASH_F2B, SECDASH_FW, SECDASH_DOCKER
