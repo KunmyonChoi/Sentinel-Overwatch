@@ -3,7 +3,7 @@ import { api, fmtDateTime } from '../api';
 import { Icon, Card, Btn, BackLink, BeforeAfter, StatusHead } from './ui';
 import { TONE, toneOf } from './tokens';
 import { KIND, JUDGE_STEPS } from './tasks';
-import { buildBrief, copyText } from './brief';
+import { buildBrief, copyText, downloadText } from './brief';
 
 // 권한 조치 미리보기 결과의 파일 경로 → 사람이 아는 이름
 const FILE_KO = [
@@ -134,49 +134,136 @@ function FixFlow({ task, onDone }) {
     );
 }
 
-/** 본인만 아는 일: 본인 여부를 묻고, 아니라면 순서대로 안내 */
-function JudgeFlow({ task, onAck }) {
-    const [mine, setMine] = useState(null);
+/**
+ * 본인만 아는 일.
+ *
+ * 답은 셋이다. '아니요'와 '모르겠어요'는 다음에 할 일이 다르므로 버튼을 나눈다.
+ * 어느 답이든 서버에 기록한다 — 보고 판단을 미룬 것과 아예 열어보지 않은 것은 다르다.
+ * 답한 뒤 화면을 바로 떠나지 않는다. 무슨 일이 일어났는지 보여주고 사용자가 나간다.
+ */
+function JudgeFlow({ task, onAnswered, onBack, host, accounts }) {
+    const [answer, setAnswer] = useState(task.response || null);
+    const [busy, setBusy] = useState(false);
+    const [err, setErr] = useState(null);
+    const [saved, setSaved] = useState(false);
+
+    const send = async (a) => {
+        setBusy(true); setErr(null);
+        try {
+            await api('/api/alerts/respond', {
+                method: 'POST',
+                body: { ids: task.alerts.map((x) => x.id), answer: a, by: '사용자' },
+            });
+            setAnswer(a);
+            onAnswered?.();
+        } catch (e) {
+            setErr(e.message || '기록하지 못했어요');
+        } finally { setBusy(false); }
+    };
+
+    const saveRecord = () => {
+        const name = `내컴퓨터지킴이-${new Date().toISOString().slice(0, 10)}.txt`;
+        setSaved(downloadText(name, buildBrief(task, host, true, accounts)));
+        setTimeout(() => setSaved(false), 2500);
+    };
+
+    const Steps = ({ lead }) => (
+        <>
+            <div className="text-[15px] font-semibold">{lead}</div>
+            <div className="grid gap-3 mt-3">
+                {JUDGE_STEPS.map((s, i) => (
+                    <div key={i} className="flex gap-3 items-start">
+                        <div className="w-[22px] h-[22px] rounded-full bg-calm-bg border border-calm-line2 flex items-center justify-center text-[12px] text-calm-muted shrink-0">{i + 1}</div>
+                        <div className="text-[14.5px] leading-relaxed" style={{ wordBreak: 'keep-all' }}>
+                            <b>{s.b}</b> <span className="text-calm-muted">{s.t}</span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+            <div className="flex items-center gap-2.5 mt-4 flex-wrap">
+                <Btn kind="outline" className="h-11" onClick={saveRecord}>
+                    <Icon name="save" size={16} />{saved ? '저장했어요' : '이 일에 대한 기록 저장'}
+                </Btn>
+                <Btn kind="ghost" className="h-11" onClick={onBack}>홈으로</Btn>
+            </div>
+        </>
+    );
+
     return (
         <div className="mt-7">
-            <div className="text-[17px] font-semibold">{task.ask}</div>
-            <div className="text-[13.5px] text-calm-muted mt-1.5" style={{ wordBreak: 'keep-all' }}>
-                기억이 잘 안 나시면, 바로 아래 <b className="text-calm-ink">지킴이가 본 것</b>을 펼쳐서 언제 무슨 일이 있었는지 확인하고 정하세요.
-            </div>
-            <div className="flex items-center gap-2.5 mt-3.5 flex-wrap">
-                <Btn kind="outline" onClick={() => { setMine(true); onAck(); }}>네, 제가 했어요</Btn>
-                <Btn kind="danger" onClick={() => setMine(false)}>아니요 · 모르겠어요</Btn>
-            </div>
-            {mine === true && (
-                <Card tone="ok" className="mt-5 p-5">
-                    <div className="flex items-center gap-2 text-[14.5px]">
-                        <Icon name="check" size={18} className="text-calm-accent" />
-                        확인 처리했어요. 이 일은 목록에서 빠집니다.
+            {!answer && (
+                <>
+                    <div className="text-[17px] font-semibold">{task.ask}</div>
+                    <div className="text-[13.5px] text-calm-muted mt-1.5" style={{ wordBreak: 'keep-all' }}>
+                        기억이 잘 안 나시면, 바로 아래 <b className="text-calm-ink">지킴이가 본 것</b>을 펼쳐서 언제 무슨 일이 있었는지 확인하고 정하세요.
+                    </div>
+                    <div className="flex items-center gap-2.5 mt-3.5 flex-wrap">
+                        <Btn kind="outline" disabled={busy} onClick={() => send('mine')}>네, 제가 했어요</Btn>
+                        <Btn kind="danger" disabled={busy} onClick={() => send('not_me')}>아니요, 제가 안 했어요</Btn>
+                        <Btn kind="ghost" disabled={busy} onClick={() => send('unsure')}>잘 모르겠어요</Btn>
+                    </div>
+                    {err && <div className="text-[13px] text-calm-warn mt-2">{err}</div>}
+                </>
+            )}
+
+            {answer === 'mine' && (
+                <Card tone="ok" className="p-5">
+                    <div className="flex items-center gap-2 text-[15px] font-semibold">
+                        <Icon name="check" size={18} className="text-calm-accent" />확인 처리했어요
+                    </div>
+                    <div className="text-[14px] text-calm-muted mt-2 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
+                        이 일은 목록에서 빠져요.{' '}
+                        <b className="text-calm-ink">앞으로 같은 일이 또 생겨도 다시 알리지 않아요.</b>{' '}
+                        더 심각한 상황으로 바뀌면 그때 다시 알려드려요.
+                    </div>
+                    <div className="flex items-center gap-2.5 mt-4">
+                        <Btn kind="primary" className="h-11" onClick={onBack}>홈으로</Btn>
                     </div>
                 </Card>
             )}
-            {mine === false && (
-                <div className="mt-5 bg-calm-panel border border-calm-line border-l-[3px] border-l-calm-crit rounded-r-xl p-5">
-                    <div className="text-[15px] font-semibold">순서대로 해주세요</div>
-                    <div className="text-[13px] text-calm-muted mt-1 mb-3">확실하지 않으면 ‘아니요’로 보고 아래대로 하세요.</div>
-                    <div className="grid gap-3">
-                        {JUDGE_STEPS.map((s, i) => (
-                            <div key={i} className="flex gap-3 items-start">
-                                <div className="w-[22px] h-[22px] rounded-full bg-calm-bg border border-calm-line2 flex items-center justify-center text-[12px] text-calm-muted shrink-0">{i + 1}</div>
-                                <div className="text-[14.5px] leading-relaxed" style={{ wordBreak: 'keep-all' }}>
-                                    <b>{s.b}</b> <span className="text-calm-muted">{s.t}</span>
-                                </div>
-                            </div>
-                        ))}
+
+            {answer === 'not_me' && (
+                <div className="bg-calm-panel border border-calm-line border-l-[3px] border-l-calm-crit rounded-r-xl p-5">
+                    <div className="flex items-center gap-2 text-[15px] font-semibold text-calm-crit">
+                        <Icon name="alert" size={18} />긴급으로 올렸어요
                     </div>
+                    <div className="text-[14px] text-calm-muted mt-2 mb-4 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
+                        본인이 한 일이 아니라는 것이 가장 강한 신호예요. 목록에 그대로 남겨두고 홈 화면도 &lsquo;지금 확인하세요&rsquo;로 바꿨어요.
+                    </div>
+                    <Steps lead="순서대로 해주세요" />
                 </div>
+            )}
+
+            {answer === 'unsure' && (
+                <Card tone="warn" className="p-5">
+                    <div className="flex items-center gap-2 text-[15px] font-semibold text-calm-warn">
+                        <Icon name="alert" size={18} />&lsquo;확인 중&rsquo;으로 표시했어요
+                    </div>
+                    <div className="text-[14px] text-calm-muted mt-2 mb-4 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
+                        억지로 정하지 않으셔도 돼요. 다만 <b className="text-calm-ink">목록에는 남겨둘게요</b> — 지금 숨기면 잊히니까요.
+                        아래 기록을 저장해 두시면 나중에 도움을 받을 때 그대로 보여주시면 됩니다.
+                    </div>
+                    <Steps lead="걱정되시면 이렇게 해두세요" />
+                </Card>
             )}
         </div>
     );
 }
 
 /** 순서대로 알려주는 일 */
-function GuideFlow({ task, onAck }) {
+function GuideFlow({ task, onAck, onBack, done }) {
+    if (done) {
+        return (
+            <Card tone="ok" className="mt-7 p-5">
+                <div className="flex items-center gap-2 text-[15px] font-semibold">
+                    <Icon name="check" size={18} className="text-calm-accent" />확인 처리했어요
+                </div>
+                <div className="text-[14px] text-calm-muted mt-2 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
+                    이 일은 목록에서 빠져요. <b className="text-calm-ink">같은 일이 또 생겨도 다시 알리지 않아요.</b> 더 심각해지면 그때 알려드려요.
+                </div>
+            </Card>
+        );
+    }
     return (
         <div className="mt-7">
             <div className="text-[17px] font-semibold">이렇게 하시면 돼요</div>
@@ -188,7 +275,7 @@ function GuideFlow({ task, onAck }) {
                     </div>
                 ))}
             </div>
-            <div className="mt-6"><Btn kind="outline" onClick={onAck}>확인했어요</Btn></div>
+            <div className="mt-6 flex gap-2.5"><Btn kind="outline" onClick={onAck}>확인했어요</Btn><Btn kind="ghost" onClick={onBack}>나중에</Btn></div>
         </div>
     );
 }
@@ -338,11 +425,12 @@ function AskElsewhere({ task, host, accounts }) {
 
 export default function TaskDetail({ task, onBack, onChanged, host, accounts }) {
     const tone = toneOf(task.severity);
+    const [guideDone, setGuideDone] = useState(false);
     const ackAll = async () => {
         try {
             await api('/api/alerts/ack-all', { method: 'POST', body: { ids: task.alerts.map((a) => a.id), by: '사용자', note: '쉬운 화면에서 확인' } });
         } catch { /* 확인 처리 실패는 화면을 막지 않는다 */ }
-        onChanged?.(); onBack();
+        onChanged?.();          // 목록만 새로 읽는다. 화면은 사용자가 직접 나간다.
     };
 
     return (
@@ -378,8 +466,13 @@ export default function TaskDetail({ task, onBack, onChanged, host, accounts }) 
                 {/* 질문·선택지가 먼저다. 근거는 길어질 수 있어서, 위로 올리면 답하러 스크롤해야 한다.
                     대신 근거 카드를 바로 아래에 붙이고, 접힌 상태에서도 눈에 띄게 만든다. */}
                 {task.kind === KIND.FIX && <FixFlow task={task} onDone={() => { onChanged?.(); onBack(); }} />}
-                {task.kind === KIND.JUDGE && <JudgeFlow task={task} onAck={ackAll} />}
-                {task.kind === KIND.GUIDE && <GuideFlow task={task} onAck={ackAll} />}
+                {task.kind === KIND.JUDGE && (
+                    <JudgeFlow task={task} onAnswered={onChanged} onBack={onBack} host={host} accounts={accounts} />
+                )}
+                {task.kind === KIND.GUIDE && (
+                    <GuideFlow task={task} done={guideDone} onBack={onBack}
+                        onAck={async () => { await ackAll(); setGuideDone(true); }} />
+                )}
 
                 <Evidence task={task} />
                 <AskElsewhere task={task} host={host} accounts={accounts} />

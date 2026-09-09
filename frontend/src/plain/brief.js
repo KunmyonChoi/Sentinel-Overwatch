@@ -188,3 +188,18 @@ export async function copyText(text) {
         return false;
     }
 }
+
+/** 붙여넣기용 글을 파일로 저장한다. 도움을 받을 때 그대로 보여주면 된다. */
+export function downloadText(filename, text) {
+    try {
+        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        return true;
+    } catch {
+        return false;
+    }
+}

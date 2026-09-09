@@ -23,6 +23,7 @@ EVENT_TYPE_KO = {
     "PORT_CLOSED": "리스닝 포트 닫힘",
     "FILE_PERMISSION": "파일 권한",
     "PERMISSION_FIXED": "파일 권한 조치",
+    "USER_RESPONSE": "사용자 판단",
     "CONTAINER_CONFIG": "컨테이너 설정",
     "PROCESS_TOOL": "보안 도구 실행",
     "PROCESS_INDICATOR": "의심 프로세스",
@@ -104,7 +105,7 @@ def event_ko(event_type: str, d: dict | None = None) -> str:
         return f"{proc} 이(가) 외부 {d.get('ip', '?')}:{d.get('port', '?')} 에 연결"
     if t == "PORT_SCAN":
         return f"{d.get('ip', '?')} 이(가) 서비스 포트 {d.get('port_count', '?')}개에 접촉 (포트 스캔 의심, 신뢰도 낮음)"
-    if t in ("PORT_EXPOSURE", "PORT_CLOSED", "CONTAINER_CONFIG"):
+    if t in ("PORT_EXPOSURE", "PORT_CLOSED", "CONTAINER_CONFIG", "USER_RESPONSE"):
         return d.get("message_ko") or ""
     if t == "FILE_PERMISSION":
         return d.get("title_ko") or f"{d.get('path', '?')} 권한 {d.get('mode', '?')}"

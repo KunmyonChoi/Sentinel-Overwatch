@@ -13,7 +13,15 @@ function TaskCard({ task, onOpen }) {
                     <Icon name={task.icon} size={20} />
                 </div>
                 <div className="flex-1 min-w-0">
-                    <div className="text-[19px] font-semibold leading-snug" style={{ wordBreak: 'keep-all' }}>{task.title}</div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <div className="text-[19px] font-semibold leading-snug" style={{ wordBreak: 'keep-all' }}>{task.title}</div>
+                        {task.response === 'unsure' && (
+                            <span className="text-[11.5px] text-calm-warn border border-calm-warn rounded-full px-2 py-0.5 shrink-0">확인 중</span>
+                        )}
+                        {task.response === 'not_me' && (
+                            <span className="text-[11.5px] text-calm-crit border border-calm-crit rounded-full px-2 py-0.5 shrink-0">내가 한 일 아님</span>
+                        )}
+                    </div>
                     {task.what && (
                         <div className="text-[15px] text-calm-muted leading-relaxed mt-2 max-w-[62ch]" style={{ wordBreak: 'keep-all' }}>
                             {task.what}
@@ -22,7 +30,9 @@ function TaskCard({ task, onOpen }) {
                     <div className="flex items-center gap-2.5 mt-5 flex-wrap">
                         {task.kind === KIND.FIX && <Btn kind="primary" onClick={() => onOpen(task, 'fix')}>{task.fix.verb}</Btn>}
                         <Btn kind="outline" onClick={() => onOpen(task)}>
-                            {task.kind === KIND.FIX ? '무엇이 바뀌는지 먼저 보기' : task.kind === KIND.JUDGE ? '확인하기' : '어떻게 하는지 보기'}
+                            {task.kind === KIND.FIX ? '무엇이 바뀌는지 먼저 보기'
+                                : task.kind === KIND.JUDGE ? (task.response ? '다시 보기' : '확인하기')
+                                    : '어떻게 하는지 보기'}
                         </Btn>
                     </div>
                 </div>

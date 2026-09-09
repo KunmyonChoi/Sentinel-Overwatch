@@ -222,6 +222,8 @@ export function buildTasks(alerts) {
       steps: spec.steps || FALLBACK.steps,
       fix: spec.fix || null,
       known: Boolean(RULES[rule]),
+      // 사용자가 이미 답한 일인지 (확인 중 표시에 쓴다)
+      response: items.map((i) => i.details?.user_response).find(Boolean) || null,
       alerts: items,
       seenAt: items.map((i) => i.last_seen_at).sort().at(-1),
     });
