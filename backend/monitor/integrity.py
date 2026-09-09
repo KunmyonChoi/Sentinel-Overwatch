@@ -14,7 +14,7 @@ import re
 import stat
 from pathlib import Path
 
-from alerts import raise_alert, recent_admin_context, recent_package_activity
+from alerts import auto_resolve, raise_alert, recent_admin_context, recent_package_activity
 from integrations import apt
 from database import IntegrityBaseline, SessionLocal
 from monitor.base import BaseMonitor
@@ -314,17 +314,36 @@ SUID_DIRS = ["/usr/bin", "/usr/sbin", "/usr/local/bin", "/usr/local/sbin", "/bin
 SUID_MAX_DEPTH = 3
 
 
-def list_files(dirs: list[str], patterns: tuple[str, ...] = ()) -> list[str]:
-    out = []
+def list_files(dirs: list[str], patterns: tuple[str, ...] = ()) -> tuple[list[str], set[str]]:
+    """(찾은 파일, 읽지 못한 디렉터리).
+
+    '없다'와 '못 읽는다'를 반드시 갈라서 돌려준다. 둘을 같이 삼키면 읽지 못한
+    디렉터리가 빈 디렉터리로 보이고, 호출하는 쪽은 그 안의 파일이 전부 지워진
+    것으로 판단한다. 실제로 그렇게 오탐이 났다.
+
+    반대 방향이 더 위험하다. 공격자가 크론 디렉터리의 권한을 잠가버리면 감시가
+    조용히 멈추는데, 그 사이 새로 심은 파일도 바뀐 파일도 보이지 않는다.
+    권한이 잠긴 것 자체가 알려야 할 신호다.
+    """
+    out: list[str] = []
+    denied: set[str] = set()
     for d in dirs:
         try:
-            for entry in os.scandir(d):
-                if entry.is_file(follow_symlinks=True) or entry.is_symlink():
-                    if not patterns or entry.name.endswith(patterns):
-                        out.append(entry.path)
-        except (FileNotFoundError, PermissionError, NotADirectoryError):
-            continue
-    return sorted(out)
+            with os.scandir(d) as it:
+                for entry in it:
+                    if entry.is_file(follow_symlinks=True) or entry.is_symlink():
+                        if not patterns or entry.name.endswith(patterns):
+                            out.append(entry.path)
+        except (FileNotFoundError, NotADirectoryError):
+            continue            # 없는 디렉터리는 사실이다 — 감시 대상이 아직/이제 없을 뿐
+        except OSError:
+            denied.add(d)       # 읽지 못한 것은 사실이 아니다 — 모른다는 뜻이다
+    return sorted(out), denied
+
+
+def _under(path: str, dirs: set[str]) -> bool:
+    """path 가 읽지 못한 디렉터리 안에 있나."""
+    return any(path == d or path.startswith(d.rstrip("/") + "/") for d in dirs)
 
 
 def find_suid(dirs: list[str], max_depth: int = SUID_MAX_DEPTH) -> tuple[set[str], set[str]]:
@@ -369,6 +388,8 @@ class PersistenceMonitor(BaseMonitor):
         self.cron_dirs = cron_dirs if cron_dirs is not None else CRON_DIRS
         self.systemd_dirs = systemd_dirs if systemd_dirs is not None else SYSTEMD_DIRS + self._user_systemd_dirs()
         self.suid_dirs = suid_dirs if suid_dirs is not None else SUID_DIRS
+        # 감시하지 못하고 있는 자리. kind → 경로 목록. health 와 알림의 근거가 된다.
+        self.blind: dict[str, list[str]] = {}
         self.source = "cron 디렉터리, systemd 유닛, SUID/SGID 바이너리"
         self.stores = {"cron": _BaselineStore("cron"), "systemd": _BaselineStore("systemd"), "suid": _BaselineStore("suid")}
         self.baselines: dict[str, dict[str, tuple]] = {}
@@ -390,7 +411,7 @@ class PersistenceMonitor(BaseMonitor):
         self._check("systemd", False)
         self._check_suid(False)
 
-    def _current_files(self, kind: str) -> list[str]:
+    def _current_files(self, kind: str) -> tuple[list[str], set[str]]:
         if kind == "cron":
             return list_files(self.cron_dirs)
         return list_files(self.systemd_dirs, (".service", ".timer", ".socket", ".path", ".mount", ".automount"))
@@ -398,13 +419,17 @@ class PersistenceMonitor(BaseMonitor):
     def _check(self, kind: str, first_run: bool):
         base = self.baselines[kind]
         store = self.stores[kind]
-        current = self._current_files(kind)
+        current, denied = self._current_files(kind)
         kind_ko = {"cron": "크론 작업", "systemd": "systemd 유닛"}[kind]
         seen = set()
+        unreadable: set[str] = set()
         for path in current:
             seen.add(path)
             digest = sha256_file(path)
             if digest == UNREADABLE:
+                # 파일은 있는데 내용을 못 읽는다. 지워진 것이 아니므로 삭제로 보고하지
+                # 않지만, 감시하지 못하고 있다는 사실은 올려야 한다.
+                unreadable.add(path)
                 continue
             snap = read_text(path)
             if path not in base:
@@ -418,11 +443,64 @@ class PersistenceMonitor(BaseMonitor):
                 store.save(path, digest, snap)
                 self._report(kind, kind_ko, path, "modified", old_snap, snap)
         for path in list(base):
-            if path not in seen and base[path][0] is not None:
-                old_snap = base[path][1]
-                base[path] = (None, None)
-                store.save(path, None, None)
-                self._report(kind, kind_ko, path, "deleted", old_snap, None)
+            if path in seen or base[path][0] is None:
+                continue
+            if _under(path, denied):
+                # 이 파일이 있는 디렉터리를 못 읽었다. 사라진 게 아니라 안 보이는 것이다.
+                # 기준선을 지우지 않고 그대로 둔다 — 다시 읽히면 대조를 이어가야 한다.
+                continue
+            old_snap = base[path][1]
+            base[path] = (None, None)
+            store.save(path, None, None)
+            self._report(kind, kind_ko, path, "deleted", old_snap, None)
+
+        self._report_blind_spots(kind, kind_ko, denied, unreadable)
+
+    def _report_blind_spots(self, kind: str, kind_ko: str, denied: set[str], unreadable: set[str]):
+        """감시하지 못하고 있는 자리를 알린다.
+
+        조용히 넘어가면 감시망에 구멍이 생긴다. 공격자가 권한을 잠가 감시를 멈추는 것은
+        고전적인 수법이고, 그때 화면에 아무것도 뜨지 않으면 '이상 없음'과 구별되지 않는다.
+
+        점검 모드에 걸리지 않는 규칙 이름을 쓴다(alerts.MAINTENANCE_RULE_PREFIXES 참고).
+        작업 중이라고 해서 감시 구멍까지 조용해지면 안 된다.
+        """
+        fp = f"monitor_blind_spot:persistence:{kind}"
+        spots = sorted(denied) + sorted(unreadable)
+        if not spots:
+            self.blind.pop(kind, None)
+            auto_resolve(fp, "다시 읽을 수 있게 되어 자동 해결")
+            self._sync_health()
+            return
+        self.blind[kind] = spots
+        self._sync_health()
+        d = {"kind": kind, "kind_ko": kind_ko, "denied_dirs": sorted(denied),
+             "unreadable_files": sorted(unreadable), "count": len(spots)}
+        self.log_event("MONITOR_HEALTH", "WARNING", f"{kind} watch blind spot: {len(spots)} path(s)",
+                       d | {"message_ko": f"{kind_ko} 감시 중 {len(spots)}곳을 읽지 못했습니다"})
+        raise_alert(
+            "monitor_blind_spot", "WARNING", f"{kind} watch blind spot: {len(spots)} path(s)",
+            fingerprint=fp,
+            title_ko=f"{kind_ko}를 감시하지 못하는 곳이 {len(spots)}곳 있습니다",
+            summary_ko="권한이 없어 읽지 못했습니다. 이 자리는 지금 감시되지 않습니다 — "
+                       "'이상 없음'이 아니라 '모름'입니다. 여기에 무언가 새로 심겨도 알 수 없습니다.",
+            action_ko="권한을 누가 언제 바꿨는지 `ls -ld` 와 auth.log 로 확인하세요. "
+                      "직접 바꾼 것이 아니라면 침입 신호일 수 있습니다. "
+                      "감시를 되살리려면 원래 권한으로 돌리거나 서비스 계정에 "
+                      "CAP_DAC_READ_SEARCH 를 부여하세요(deploy/secdash.service).",
+            evidence="읽지 못한 경로:\n" + "\n".join(f"  {p}" for p in spots) + "\n\n" + recent_admin_context(),
+            details=d,
+        )
+
+    def _sync_health(self):
+        if not self.blind:
+            if self.health != "down":
+                self.set_health("ok")
+            return
+        spots = [p for v in self.blind.values() for p in v]
+        self.set_health("degraded",
+                        f"읽지 못해 감시하지 못하는 곳 {len(spots)}곳 (예: {spots[0]})",
+                        "권한을 되돌리거나 CAP_DAC_READ_SEARCH 를 부여하세요.")
 
     def _report(self, kind: str, kind_ko: str, path: str, change: str, old: str | None, new: str | None):
         change_ko = {"created": "새로 생성됨", "modified": "변경됨", "deleted": "삭제됨"}[change]
@@ -465,9 +543,7 @@ class PersistenceMonitor(BaseMonitor):
         found, denied = find_suid(self.suid_dirs)
         # /sbin → /usr/sbin 같은 merged-usr 경로는 실제 경로 하나로 합친다
         found = {os.path.realpath(p) for p in found}
-        if denied and self.health != "down":
-            self.set_health("degraded", f"SUID 스캔에서 접근 거부된 디렉터리 {len(denied)}개 (예: {sorted(denied)[0]})",
-                            "완전한 스캔을 위해 CAP_DAC_READ_SEARCH 권한을 부여하세요.")
+        self._report_blind_spots("suid", "SUID/SGID 바이너리", denied, set())
         for path in sorted(found):
             if path not in base:
                 base[path] = ("suid", None)
@@ -491,6 +567,8 @@ class PersistenceMonitor(BaseMonitor):
                 )
         for path in list(base):
             if path not in found and base[path][0] is not None:
+                if _under(path, denied):
+                    continue    # 못 읽은 디렉터리 안이다. 제거된 것이 아니라 안 보이는 것이다.
                 base[path] = (None, None)
                 store.save(path, None, None)
                 d = {"kind": "suid", "kind_ko": "SUID/SGID 바이너리", "path": path, "change": "deleted", "change_ko": "제거됨"}
