@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>15-arch-trust</title>
+  </head>
+  <body>
+    <template>
+      <style>
+        #f15-arch-trust { position: relative; width: 1920px; height: 1080px; overflow: hidden;
+                  background: #eef3f0; }
+        #f15-arch-trust * { box-sizing: border-box; margin: 0; padding: 0; }
+        #f15-arch-trust .clip { position: absolute; inset: 0; }
+      </style>
+      <div id="f15-arch-trust" data-composition-id="f15-arch-trust" data-start="0"
+           data-width="1920" data-height="1080" data-duration="62">
+        <div class="clip" data-start="0" data-duration="62">
+          <div style="position:absolute;left:0px;top:0px;width:1920px;height:860px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#eef3f0;"></div>
+          <div style="position:absolute;left:150px;top:70px;width:1400px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:30px;font-weight:700;color:#0e7c6b;line-height:1.5;text-align:left;word-break:keep-all;">7장 · 아키텍처 ⑤</div>
+          <div style="position:absolute;left:150px;top:112px;width:1500px;height:82px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:62px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;">권한의 경계, 그리고 왜 이 구조인가</div>
+          <div style="position:absolute;left:150px;top:246px;width:980px;height:32px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:24px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;">지킴이는 root 로 돌지 않는다</div>
+          <div style="position:absolute;left:150px;top:292px;width:320px;height:30px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:19px;font-weight:400;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;">경계</div>
+          <div style="position:absolute;left:480px;top:292px;width:360px;height:30px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:19px;font-weight:400;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;">넘는 것</div>
+          <div style="position:absolute;left:850px;top:292px;width:280px;height:30px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:19px;font-weight:400;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;">허용 방법</div>
+          <div style="position:absolute;left:150px;top:336px;width:980px;height:1px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#dfe7e3;"></div>
+          <div style="position:absolute;left:150px;top:352px;width:320px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:22px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;">root 데몬 → secdash</div>
+          <div style="position:absolute;left:480px;top:352px;width:360px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:21px;font-weight:400;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;">auth.log 읽기</div>
+          <div style="position:absolute;left:850px;top:352px;width:280px;height:40px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:20px;font-weight:400;color:#0e7c6b;line-height:1.5;text-align:left;word-break:keep-all;">adm 그룹</div>
+          <div style="position:absolute;left:150px;top:410px;width:980px;height:1px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#dfe7e3;"></div>
+          <div style="position:absolute;left:150px;top:426px;width:320px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:22px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;">보호 파일 → secdash</div>
+          <div style="position:absolute;left:480px;top:426px;width:360px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:21px;font-weight:400;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;">shadow · sudoers · authorized_keys</div>
+          <div style="position:absolute;left:850px;top:426px;width:280px;height:40px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:20px;font-weight:400;color:#0e7c6b;line-height:1.5;text-align:left;word-break:keep-all;">CAP_DAC_READ_SEARCH</div>
+          <div style="position:absolute;left:150px;top:484px;width:980px;height:1px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#dfe7e3;"></div>
+          <div style="position:absolute;left:150px;top:500px;width:320px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:22px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;">타 사용자 프로세스</div>
+          <div style="position:absolute;left:480px;top:500px;width:360px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:21px;font-weight:400;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;">실행 파일 · 소켓 귀속</div>
+          <div style="position:absolute;left:850px;top:500px;width:280px;height:40px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:20px;font-weight:400;color:#0e7c6b;line-height:1.5;text-align:left;word-break:keep-all;">CAP_SYS_PTRACE</div>
+          <div style="position:absolute;left:150px;top:558px;width:980px;height:1px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#dfe7e3;"></div>
+          <div style="position:absolute;left:150px;top:574px;width:320px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:22px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;">secdash → fail2ban</div>
+          <div style="position:absolute;left:480px;top:574px;width:360px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:21px;font-weight:400;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;">차단 · 해제 · 조회</div>
+          <div style="position:absolute;left:850px;top:574px;width:280px;height:40px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:20px;font-weight:400;color:#0e7c6b;line-height:1.5;text-align:left;word-break:keep-all;">sudo 일곱 명령만</div>
+          <div style="position:absolute;left:150px;top:632px;width:980px;height:1px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#dfe7e3;"></div>
+          <div style="position:absolute;left:150px;top:648px;width:320px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:22px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;">브라우저 → API</div>
+          <div style="position:absolute;left:480px;top:648px;width:360px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:21px;font-weight:400;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;">조회 · 확인 · 차단 요청</div>
+          <div style="position:absolute;left:850px;top:648px;width:280px;height:40px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:20px;font-weight:400;color:#0e7c6b;line-height:1.5;text-align:left;word-break:keep-all;">X-API-Token · 127.0.0.1</div>
+          <div style="position:absolute;left:150px;top:706px;width:980px;height:1px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#dfe7e3;"></div>
+          <div style="position:absolute;left:150px;top:722px;width:320px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:22px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;">호스트 → 인터넷</div>
+          <div style="position:absolute;left:480px;top:722px;width:360px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:21px;font-weight:400;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;">공개 피드 · 제목 · 웹훅</div>
+          <div style="position:absolute;left:850px;top:722px;width:280px;height:40px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:20px;font-weight:400;color:#0e7c6b;line-height:1.5;text-align:left;word-break:keep-all;">아웃바운드 HTTPS</div>
+          <div style="position:absolute;left:150px;top:780px;width:980px;height:34px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:22px;font-weight:400;color:#b3261e;line-height:1.5;text-align:left;word-break:keep-all;">쓰기 권한은 어디에도 없다</div>
+          <div style="position:absolute;left:1200px;top:246px;width:570px;height:32px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:24px;font-weight:700;color:#0e7c6b;line-height:1.5;text-align:left;word-break:keep-all;">왜 이 구조인가</div>
+          <div style="position:absolute;left:1200px;top:300px;width:570px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:25px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;">1.  진실 원천은 하나씩</div>
+          <div style="position:absolute;left:1236px;top:346px;width:534px;height:64px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:21px;font-weight:400;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;">해석만 한다. 두 번째 사실을 만들지 않는다.</div>
+          <div style="position:absolute;left:1200px;top:428px;width:570px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:25px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;">2.  조용히 실패하지 않는다</div>
+          <div style="position:absolute;left:1236px;top:474px;width:534px;height:64px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:21px;font-weight:400;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;">읽지 못하는 파일은 '정상'이 아니라 '제한'.</div>
+          <div style="position:absolute;left:1200px;top:556px;width:570px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:25px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;">3.  사실과 판단을 나눈다</div>
+          <div style="position:absolute;left:1236px;top:602px;width:534px;height:64px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:21px;font-weight:400;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;">사람의 시간을 요구하는 것은 알림뿐.</div>
+          <div style="position:absolute;left:1200px;top:684px;width:570px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:25px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;">4.  호스트 로그는 안에 머문다</div>
+          <div style="position:absolute;left:1236px;top:730px;width:534px;height:64px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:21px;font-weight:400;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;">한국어는 서버 안에서 템플릿으로 만든다.</div>
+          <div style="position:absolute;left:0px;top:860px;width:1920px;height:220px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#17221d;"></div>
+          <div style="position:absolute;left:150px;top:916px;width:1620px;height:108px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:38px;font-weight:400;color:#ffffff;line-height:1.55;text-align:left;word-break:keep-all;">마지막으로 권한입니다. 지킴이는 root로 돌지 않습니다.</div>
+        </div>
+      </div>
+      <script>
+        // 스케치 패스 — 배치만 확인한다. 모션은 빌드 패스에서 붙인다.
+        window.__timelines["f15-arch-trust"] = gsap.timeline({ paused: true });
+      </script>
+    </template>
+  </body>
+</html>

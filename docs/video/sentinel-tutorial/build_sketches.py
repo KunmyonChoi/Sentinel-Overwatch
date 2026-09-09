@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""스케치 패스 — 장면 12개의 와이어프레임을 뽑는다.
+"""스케치 패스 — 장면 16개의 와이어프레임을 뽑는다.
 
 스케치는 '실제 문구가 들어간 배치도'다. 색은 frame.md 의 바탕·글·강조 셋만
 쓰고, 카드는 빈 상자로 둔다. 모션은 없다(빈 타임라인만 등록한다).
 
-한 벌로 뽑는 이유: 열두 장이 자막 띠·안전 여백·장 제목 자리를 똑같이 지켜야
-하는데, 손으로 열두 번 쓰면 반드시 어긋난다. 빌드 패스에서 각 장면을 직접
+한 벌로 뽑는 이유: 열여섯 장이 자막 띠·안전 여백·장 제목 자리를 똑같이 지켜야
+하는데, 손으로 열여섯 번 쓰면 반드시 어긋난다. 빌드 패스에서 각 장면을 직접
 꾸밀 때는 이 파일이 아니라 뽑힌 HTML 을 고친다.
 """
 import html
@@ -274,23 +274,44 @@ def f08():
     band("할 수 없는 것. 백신이 아닙니다. 파일을 뒤져 악성코드를 찾아내지 않습니다.")
 
 
+def station(x, y, w, h, n, title, lines, *, dark=False, accent=False):
+    """정거장 하나. 번호 · 제목 · 설명 줄."""
+    el(x, y, w, h, "", bg=DARK if dark else CARD, radius=14,
+       border=f"1px solid {ACCENT if accent else LINE}")
+    c = NEON if dark else (ACCENT if accent else MUTED)
+    el(x + 22, y + 18, 40, 30, n, size=22, weight=700, color=c)
+    el(x + 22, y + 54, w - 44, 40, title, size=28, weight=700,
+       color=NEON if dark else INK)
+    for i, ln in enumerate(lines):
+        el(x + 22, y + 104 + i * 34, w - 44, 30, ln, size=21,
+           color=NEON_DIM if dark else MUTED, mono=dark)
+
+
 def f09():
-    el(0, 0, W, CONTENT_H, "", bg=DARK)
-    head("5장", "설치", dark=True)
-    el(PAD, 250, 1620, 150, "", border=f"1px solid {NEON_DIM}", radius=12)
-    el(PAD + 30, 276, 1560, 40, "$ deploy/build-release.sh --wheels",
-       size=26, color=NEON, mono=True)
-    el(PAD + 30, 326, 1560, 40, "$ sudo secdash-&lt;ver&gt;/deploy/install.sh",
-       size=26, color=NEON, mono=True)
-    el(PAD, 428, 700, 40, "스크립트가 하는 일", size=28, weight=700, color=NEON)
-    for i, s in enumerate(["호스트 도구 설치·활성화 (fail2ban · rsyslog · auditd · lynis)",
-                           "전용 계정 secdash 생성",
-                           "/opt/secdash 복사와 가상환경",
-                           "설정 파일 /etc/secdash/secdash.env",
-                           "최소 권한 sudoers 와 systemd 유닛",
-                           "서비스 시작"]):
-        el(PAD, 486 + i * 46, 1400, 36, f"✓  {s}", size=25, color=NEON_DIM, mono=False)
-    el(PAD, 772, 800, 44, "API token: ••••••••", size=26, color=NEON, mono=True)
+    el(0, 0, W, CONTENT_H, "", bg=BG)
+    head("5장", "설치")
+    xs = [150, 563, 976, 1389]
+    station(xs[0], 290, 380, 210, "1", "빌드 머신",
+            ["$ deploy/build-release.sh", "tar.gz + sha256", "dist 포함 · 비밀 제외"], dark=True)
+    station(xs[1], 290, 380, 210, "2", "install.sh",
+            ["전용 계정 · capability", "systemd · sudoers",
+             "fail2ban · auditd · Lynis"], accent=True)
+    station(xs[2], 290, 380, 210, "3", "harden.sh",
+            ["dry-run 으로 목록 확인", "→ --apply 로 적용",
+             "역할별 플래그"], accent=True)
+    station(xs[3], 290, 380, 210, "4", "Lynis 크론",
+            ["하루 한 번", "새 경고·지수 하락만 알림", "제안은 백로그"])
+    for i in range(3):
+        el(xs[i] + 380, 372, 33, 46, "→", size=30, color=LINE2, align="center")
+    el(150, 268, 380, 26, "scp", size=20, color=MUTED, align="center")
+    # 되돌아오는 고리 — 이 장의 요점
+    el(xs[2] + 40, 540, xs[3] - xs[2] + 300, 3, "", bg=ACCENT)
+    el(xs[2] + 40, 512, 40, 30, "↖", size=26, color=ACCENT)
+    el(xs[2], 560, 780, 40,
+       "결정(적용 · 수용 · 이미 해결)이 다시 프로파일과 플래그로 돌아간다",
+       size=23, color=ACCENT)
+    el(150, 650, 1620, 44, "설치는 한 번이지만, 강화는 한 바퀴를 도는 일이다",
+       size=28, weight=700, align="center")
     band("설치는 두 줄입니다. 빌드 머신에서 압축본을 만들고, 대상 서버에서 설치 스크립트를 실행합니다.")
 
 
@@ -326,32 +347,178 @@ def f10():
 
 def f11():
     el(0, 0, W, CONTENT_H, "", bg=BG)
-    head("7장", "아키텍처")
-    el(PAD, 246, 620, 40, "진실의 원천 — 검증된 호스트 도구", size=26, weight=700, color=MUTED)
-    for i, (n, d) in enumerate([("fail2ban", "IP 차단"), ("rsyslog · auth.log", "로그인·sudo"),
-                                ("dpkg · apt", "패키지 변경"), ("auditd", "명령 실행 주체"),
-                                ("Lynis", "설정 강화 감사"), ("Ubuntu USN", "취약점 공지")]):
-        by = 300 + i * 84
-        el(PAD, by, 620, 68, "", bg=CARD, radius=12, border=f"1px solid {LINE}")
-        el(PAD + 22, by + 12, 380, 34, n, size=25, weight=700)
-        el(PAD + 22, by + 12, 576, 34, d, size=21, color=MUTED, align="right")
-    for i in range(6):
-        el(800, 314 + i * 84, 80, 40, "→", size=32, color=LINE2, align="center")
-    el(920, 246, 620, 40, "지킴이가 하는 일", size=26, weight=700, color=ACCENT)
-    for i, (n, d) in enumerate([("구조화", "줄글을 필드로"), ("상관 분석", "흩어진 것을 하나로"),
-                                ("한국어로", "사람의 말로"), ("알림 하나로", "지금 할 일만")]):
-        by = 300 + i * 108
-        el(920, by, 620, 92, "", bg=CARD, radius=12, border=f"1px solid {LINE}")
-        el(920 + 22, by + 14, 576, 36, n, size=26, weight=700, color=ACCENT)
-        el(920 + 22, by + 52, 576, 30, d, size=21, color=MUTED)
-    el(1600, 300, 170, 300, "지킴이를<br>꺼도<br>보안은<br>그대로<br>남습니다",
-       size=26, weight=700, lh=1.7)
-    el(PAD, 796, 1620, 44, "사실은 이벤트로  →  판단은 알림으로  →  위험 단계는 열린 알림에서만",
-       size=25, color=MUTED, align="center")
-    band("구조는 단순합니다. 지킴이는 새로운 보안 장치를 만들지 않습니다.")
+    head("7장 · 아키텍처 ①", "어디서 들어오나")
+    el(150, 236, 900, 30, "호스트 진실 원천 — root 소유 데몬·로그·/proc",
+       size=21, color=MUTED)
+    srcs = [("auth.log · audit.log", "rsyslog · auditd"), ("dpkg.log · apt", "패키지 변경"),
+            ("/proc", "소켓 · 프로세스 · fd"), ("/etc · cron · systemd", "설정 · 영속화 · SUID"),
+            ("fail2ban", "차단의 진실 원천"), ("USN · 뉴스 RSS", "공개 URL 읽기만")]
+    for i, (n, d) in enumerate(srcs):
+        bx, ext = 150 + i * 274, i == 5
+        el(bx, 274, 250, 104, "", bg="#f6e7cf" if ext else CARD, radius=10,
+           border=f"1px dashed #b8731c" if ext else f"1px solid {LINE}")
+        el(bx + 16, 292, 218, 34, n, size=23, weight=700,
+           color="#b8731c" if ext else INK)
+        el(bx + 16, 330, 218, 30, d, size=19, color=MUTED)
+        el(bx + 105, 386, 40, 34, "↓", size=24, color="#b8731c" if ext else LINE2)
+    # 백엔드 경계
+    el(120, 424, 1680, 232, "", border=f"1px dashed {ACCENT}", radius=14)
+    el(140, 434, 1000, 28, "secdash.service · User=secdash · 127.0.0.1:8000", size=19, color=ACCENT)
+    mons = [("AuthLog · Audit", "실패 창 · 실패 후 성공"), ("UpdateMonitor", "설치/제거 · 미적용"),
+            ("Network · Process", "새 리스너 · 리버스 셸"), ("Integrity · Persistence", "기준선 diff"),
+            ("Fail2banSync", "30초 동기화"), ("IntelMonitor", "USN ↔ 설치 버전")]
+    for i, (n, d) in enumerate(mons):
+        bx = 150 + i * 274
+        el(bx, 472, 250, 96, "", bg=CARD, radius=10, border=f"1.5px solid {ACCENT}")
+        el(bx + 16, 488, 218, 34, n, size=22, weight=700)
+        el(bx + 16, 524, 218, 30, d, size=19, color=MUTED)
+        el(bx + 105, 576, 40, 30, "↓", size=22, color=LINE2)
+    el(190, 616, 1540, 5, "", bg=ACCENT)
+    el(150, 676, 760, 40, "사실은 이벤트로", size=26, weight=700, color=ACCENT)
+    el(150, 716, 760, 34, "일어난 일. 심각도 없음. 근거로 남는다.", size=21, color=MUTED)
+    el(1010, 676, 760, 40, "판단은 알림으로", size=26, weight=700, color=ACCENT)
+    el(1010, 716, 760, 34, "묶어서 내린 결론. 사람의 시간을 요구한다.", size=21, color=MUTED)
+    band("맨 위가 진실의 원천입니다. 전부 root가 소유한 데몬과 로그입니다. 지킴이가 만든 것은 하나도 없습니다.")
 
 
 def f12():
+    el(0, 0, W, CONTENT_H, "", bg=BG)
+    head("7장 · 아키텍처 ②", "어디에 쌓이고 어디로 나가나")
+    el(190, 232, 1540, 5, "", bg=ACCENT)
+    el(150, 244, 900, 28, "앞 장의 이벤트 버스", size=19, color=ACCENT)
+    # SQLite
+    el(150, 288, 680, 292, "", bg=PANEL2, radius=12, border=f"1px solid {LINE}")
+    el(172, 308, 600, 36, "SQLite  (WAL)", size=25, weight=700)
+    for i, ln in enumerate(["events                원시 이벤트 · 30일",
+                            "alerts                 열림/확인/해결 · 90일",
+                            "integrity_baselines    파일·cron·systemd 기준선",
+                            "known_login_ips        처음 보는 주소",
+                            "blocked_ips            fail2ban 미러",
+                            "maintenance_windows    점검 모드 창"]):
+        el(172, 356 + i * 36, 640, 30, html.escape(ln), size=19, color=MUTED, mono=True)
+    # 판단
+    el(870, 288, 330, 136, "", bg=ACC_SOFT, radius=12, border=f"1.5px solid {ACCENT}")
+    el(890, 308, 290, 36, "알림 엔진", size=25, weight=700, color=ACCENT)
+    el(890, 350, 290, 60, "같은 지문 → 횟수 +1<br>심각도 상승 → 재오픈", size=20, color=MUTED, lh=1.5)
+    el(870, 444, 330, 136, "", bg=ACC_SOFT, radius=12, border=f"1.5px solid {ACCENT}")
+    el(890, 464, 290, 36, "DefconWatcher", size=25, weight=700, color=ACCENT)
+    el(890, 506, 290, 60, "10초마다<br>열린 알림만 센다", size=20, color=MUTED, lh=1.5)
+    el(1240, 288, 300, 292, "", bg=ACC_SOFT, radius=12, border=f"1.5px solid {ACCENT}")
+    el(1260, 308, 260, 36, "알림 큐", size=25, weight=700, color=ACCENT)
+    el(1260, 350, 260, 120, "워커 스레드 1개<br>분당 10건<br>초과분은 묶어서<br>모니터를 막지 않음",
+       size=20, color=MUTED, lh=1.6)
+    el(1580, 288, 190, 136, "", bg=PANEL2, radius=12, border=f"1px solid {LINE}")
+    el(1600, 308, 150, 36, "파일 로그", size=23, weight=700)
+    el(1600, 350, 150, 56, "security.log<br>critical.log", size=19, color=MUTED, mono=True, lh=1.5)
+    # API · 외부 · 브라우저
+    el(150, 612, 1050, 92, "", bg=ACC_SOFT, radius=12, border=f"1.5px solid {ACCENT}")
+    el(172, 630, 1000, 34, "FastAPI · 127.0.0.1:8000", size=25, weight=700, color=ACCENT)
+    el(172, 666, 1000, 30, "모든 /api 요청에 X-API-Token · 원격은 SSH 터널", size=20, color=MUTED)
+    for bx, n, d in [(1240, "번역 API", "뉴스 제목만"), (1520, "Slack", "웹훅 POST")]:
+        el(bx, 612, 250, 92, "", bg="#f6e7cf", radius=12, border="1px dashed #b8731c")
+        el(bx + 20, 630, 210, 34, n, size=23, weight=700, color="#b8731c")
+        el(bx + 20, 666, 210, 30, d, size=19, color=MUTED)
+    el(150, 726, 1050, 80, "", bg=CARD, radius=12, border=f"1px solid {LINE}")
+    el(172, 744, 1000, 34, "브라우저 · React 대시보드", size=24, weight=700)
+    el(172, 778, 1000, 28, "5초 폴링 · 토큰 헤더", size=19, color=MUTED)
+    el(1240, 730, 530, 76, "나가는 것은 셋뿐 —<br>공개 피드 · 뉴스 제목 · Slack 웹훅",
+       size=22, color="#b8731c", weight=700, lh=1.5)
+    band("사실은 SQLite에 쌓입니다. 원시 이벤트는 30일, 알림은 90일 보관합니다.")
+
+
+def f13():
+    el(0, 0, W, CONTENT_H, "", bg=BG)
+    head("7장 · 아키텍처 ③", "사건 하나가 지나가는 길")
+    row1 = [("auth.log", "Failed password ×5", None),
+            ("parse_line", "계정 · 주소 · 방식", None),
+            ("Event 로그인 실패", "심각도 '정보' — 사실", None),
+            ("Alert 브루트포스", "30분 안에 5회 초과", WARN),
+            ("fail2ban 차단 요청", "불가하면 '차단 권고'", ACCENT)]
+    row2 = [("auth.log", "Accepted password", None),
+            ("상관 규칙", "실패 이력 + 처음 보는 곳 + root", None),
+            ("Alert 실패 후 성공", "긴급 — 근거는 로그 줄", CRIT),
+            ("DefconWatcher", "SAFE → DEFCON 1", CRIT),
+            ("Slack · 대시보드", "확인하면 단계에서 빠짐", None)]
+    for r, row in enumerate([row1, row2]):
+        by = 258 + r * 244
+        for i, (n, d, tone) in enumerate(row):
+            bx = 150 + i * 330
+            el(bx, by, 300, 150, "", bg=CARD, radius=12,
+               border=f"1.5px solid {tone}" if tone else f"1px solid {LINE}")
+            el(bx + 18, by + 22, 264, 66, n, size=24, weight=700, color=tone or INK, lh=1.3)
+            el(bx + 18, by + 94, 264, 56, d, size=20, color=MUTED, lh=1.4)
+            if i < 4:
+                el(bx + 300, by + 56, 30, 40, "→", size=26,
+                   color=CRIT if r else LINE2, align="center")
+    el(1140, 412, 400, 92, "같은 IP 의 실패 창을 유지한다", size=21, color=MUTED)
+    el(1145, 412, 3, 90, "", bg=LINE2)
+    el(150, 728, 1620, 44,
+       "시뮬레이션 사건은 같은 길을 가되 표시가 붙어 위험 단계·Slack·fail2ban 에 닿지 않는다",
+       size=23, color=MUTED, align="center")
+    band("여기까지는 사실입니다. 이벤트로 남고 심각도는 '정보'입니다. 위험 단계에 영향을 주지 않습니다.")
+
+
+def f14():
+    el(0, 0, W, CONTENT_H, "", bg=BG)
+    head("7장 · 아키텍처 ④", "알림의 생애주기와 위험 단계")
+    pills = [("열림", "아직 아무도 안 봄<br>위험 단계에 반영", CRIT, CARD),
+             ("확인함", "사람이 '봤다' 표시<br>단계에서 빠짐", ACCENT, ACC_SOFT),
+             ("해결됨", "끝난 것<br>90일 뒤 삭제", LINE2, PANEL2)]
+    for i, (n, d, col, bg) in enumerate(pills):
+        bx = 260 + i * 510
+        el(bx, 380, 380, 130, "", bg=bg, radius=65, border=f"2px solid {col}")
+        el(bx, 404, 380, 44, n, size=32, weight=700, color=col if col != LINE2 else INK, align="center")
+        el(bx, 450, 380, 52, d, size=20, color=MUTED, align="center", lh=1.4)
+    for i, lab in enumerate(["확인(ack)", "해결(resolve)"]):
+        el(640 + i * 510, 396, 130, 34, "→", size=30, color=LINE2, align="center")
+        el(618 + i * 510, 434, 174, 30, lab, size=20, color=MUTED, align="center")
+    el(618, 470, 174, 30, "← 심각도 상승", size=20, color=CRIT, align="center")
+    el(450, 596, 1020, 3, "", bg=LINE2)
+    el(450, 610, 1020, 40, "원인이 사라지면 시스템이 스스로 해결로 넘긴다 (자동 해결)",
+       size=22, color=MUTED, align="center")
+    el(260, 300, 380, 60, "같은 지문 재발 → 횟수 +1", size=21, color=MUTED, align="center")
+    el(770, 300, 380, 60, "점검 모드 중 계획된 변경은<br>처음부터 '확인함'", size=21,
+       color=ACCENT, align="center", lh=1.4)
+    el(150, 700, 1620, 44,
+       "DEFCON 1 = 열린 긴급 있음   ·   DEFCON 3 = 열린 경고 있음   ·   SAFE = 열린 것 없음",
+       size=25, weight=700, align="center")
+    el(150, 754, 1620, 40, "침입 신호는 점검 모드와 무관하게 언제나 '열림'",
+       size=22, color=CRIT, align="center")
+    band("알림에는 세 가지 상태가 있습니다. 열림, 확인함, 해결됨.")
+
+
+def f15():
+    el(0, 0, W, CONTENT_H, "", bg=BG)
+    head("7장 · 아키텍처 ⑤", "권한의 경계, 그리고 왜 이 구조인가")
+    el(150, 246, 980, 32, "지킴이는 root 로 돌지 않는다", size=24, weight=700)
+    for i, h_ in enumerate(["경계", "넘는 것", "허용 방법"]):
+        el(150 + [0, 330, 700][i], 292, [320, 360, 280][i], 30, h_, size=19, color=MUTED)
+    rows = [("root 데몬 → secdash", "auth.log 읽기", "adm 그룹"),
+            ("보호 파일 → secdash", "shadow · sudoers · authorized_keys", "CAP_DAC_READ_SEARCH"),
+            ("타 사용자 프로세스", "실행 파일 · 소켓 귀속", "CAP_SYS_PTRACE"),
+            ("secdash → fail2ban", "차단 · 해제 · 조회", "sudo 일곱 명령만"),
+            ("브라우저 → API", "조회 · 확인 · 차단 요청", "X-API-Token · 127.0.0.1"),
+            ("호스트 → 인터넷", "공개 피드 · 제목 · 웹훅", "아웃바운드 HTTPS")]
+    for i, (a, b, c) in enumerate(rows):
+        ry = 336 + i * 74
+        el(150, ry, 980, 1, "", bg=LINE)
+        el(150, ry + 16, 320, 40, a, size=22)
+        el(480, ry + 16, 360, 40, b, size=21, color=MUTED)
+        el(850, ry + 16, 280, 40, c, size=20, color=ACCENT, mono=True)
+    el(150, 780, 980, 34, "쓰기 권한은 어디에도 없다", size=22, color=CRIT)
+    el(1200, 246, 570, 32, "왜 이 구조인가", size=24, weight=700, color=ACCENT)
+    for i, (n, d) in enumerate([
+            ("진실 원천은 하나씩", "해석만 한다. 두 번째 사실을 만들지 않는다."),
+            ("조용히 실패하지 않는다", "읽지 못하는 파일은 '정상'이 아니라 '제한'."),
+            ("사실과 판단을 나눈다", "사람의 시간을 요구하는 것은 알림뿐."),
+            ("호스트 로그는 안에 머문다", "한국어는 서버 안에서 템플릿으로 만든다.")]):
+        ry = 300 + i * 128
+        el(1200, ry, 570, 40, f"{i+1}.  {n}", size=25, weight=700)
+        el(1236, ry + 46, 534, 64, d, size=21, color=MUTED, lh=1.5)
+    band("마지막으로 권한입니다. 지킴이는 root로 돌지 않습니다.")
+
+
+def f16():
     el(0, 0, W, CONTENT_H, "", bg=ACCENT)
     el(PAD, 180, 1400, 100, "기억할 것은 셋", size=78, weight=700, color="#ffffff")
     for i, (n, d) in enumerate([
@@ -375,10 +542,14 @@ FRAMES = [
     ("06-scenario-judge", "f06-judge", 61, f06),
     ("07-can", "f07-can", 50, f07),
     ("08-cannot", "f08-cannot", 52, f08),
-    ("09-install", "f09-install", 47, f09),
+    ("09-install", "f09-install", 62, f09),
     ("10-config", "f10-config", 65, f10),
-    ("11-architecture", "f11-arch", 63, f11),
-    ("12-closing", "f12-closing", 29, f12),
+    ("11-arch-sources", "f11-arch-src", 66, f11),
+    ("12-arch-core", "f12-arch-core", 72, f12),
+    ("13-arch-path", "f13-arch-path", 68, f13),
+    ("14-arch-alert", "f14-arch-alert", 58, f14),
+    ("15-arch-trust", "f15-arch-trust", 62, f15),
+    ("16-closing", "f16-closing", 29, f16),
 ]
 
 TPL = """<!doctype html>
