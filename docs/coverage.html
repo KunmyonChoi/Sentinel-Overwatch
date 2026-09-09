@@ -184,7 +184,10 @@
           <tr><td>탈취한 자격증명으로 접속</td><td><span class="lvl warn">경고</span></td><td>처음 보는 공인 IP 로그인, root 직접 로그인</td><td>이미 알려진 IP(사무실, VPN)에서의 접속은 정상으로 보임</td></tr>
           <tr><td>리버스 셸, 바인드 셸</td><td><span class="lvl crit">긴급/경고</span></td><td>셸의 stdin/stdout 이 소켓(ProcessAudit 30초), 새 리스닝 포트(NetworkWatcher)</td><td>30초 안에 끝나는 셸, 소켓을 직접 잡지 않는 파이썬 C2</td></tr>
           <tr><td>임시 디렉터리에서 페이로드 실행</td><td><span class="lvl warn">경고/긴급</span></td><td>auditd execve 즉시, /tmp·/dev/shm 실행 파일 (root 면 긴급)</td><td>홈이나 /var 아래에서 실행, 인터프리터에 -c 로 넘긴 코드</td></tr>
-          <tr><td>지속성: cron, systemd, SUID, authorized_keys, sudoers, ld.so.preload, 커널 모듈, 계정·그룹 추가</td><td><span class="lvl crit">경고/긴급</span></td><td>무결성 diff, 영속화 스캔(5분), auditd 파일 쓰기 주체, auth.log 계정 변경</td><td>~/.bashrc 같은 사용자 시작 파일, at 작업, 새 사용자 홈의 systemd user 유닛은 다음 주기</td></tr>
+          <tr><td>지속성: cron, systemd, SUID, authorized_keys, sudoers, ld.so.preload, 커널 모듈, 계정·그룹 추가</td><td><span class="lvl crit">경고/긴급</span></td><td>무결성 diff, 영속화 스캔(5분), auditd 파일 쓰기 주체, auth.log 계정 변경(usermod·gpasswd, 추가/제거 구분)</td><td>at 작업, 새 사용자 홈의 systemd user 유닛은 다음 주기</td></tr>
+          <tr><td>의도하지 않은 포트 노출 (전체 인터페이스 바인딩, 방화벽 허용)</td><td><span class="lvl warn">경고</span></td><td>ExposureMonitor(5분)가 현재 리스너 전체를 방화벽 규칙과 대조. '변화'가 아니라 '상태'라 기동 전부터 열려 있던 포트도 잡는다</td><td>방화벽을 읽을 권한이 없으면 '판단 불가'로 표시하고 안전하다고 단정하지 않음. 컨테이너 게시 포트는 아래 항목이 담당</td></tr>
+          <tr><td>세션 탈취용 파일 권한 (world-writable ~/.config·셸 rc·gitconfig, 노출된 개인키)</td><td><span class="lvl crit">경고/긴급</span></td><td>PermissionMonitor(15분)가 홈 설정과 /etc 를 훑는다. autostart 항목·gitconfig 훅 경로를 확인해 '이미 심어졌는지'를 알림 근거로 첨부</td><td>여기서 다루지 않는 경로에 심으면 놓친다. SUID/SGID 는 영속화 스캔이 별도로 담당</td></tr>
+          <tr><td>컨테이너 설정으로 인한 호스트 장악·방화벽 우회</td><td><span class="lvl crit">경고/긴급</span></td><td>ContainerAudit(10분)가 privileged, docker.sock 마운트, 0.0.0.0 게시, host network/pid, 위험 케이퍼빌리티를 점검</td><td>설정만 본다. 컨테이너 안에서 벌어지는 일은 아래 3절 그대로</td></tr>
           <tr><td>권한 상승 시도</td><td><span class="lvl warn">경고/긴급</span></td><td>sudo 실패, su, sudoers 변경, 새 SUID</td><td>커널 취약점으로 곧장 root 가 되면 시도는 안 보이고 사후 흔적만</td></tr>
           <tr><td>내부 정찰 (nmap, masscan, hydra, tcpdump …)</td><td><span class="lvl warn">경고</span></td><td>실행 파일명 정확 일치 (auditd + 샘플링)</td><td>이름을 바꾼 바이너리, 파이썬으로 짠 스캐너</td></tr>
           <tr><td>방어 도구 제거</td><td><span class="lvl crit">긴급</span></td><td>fail2ban·openssh·auditd 등 패키지 제거 이벤트 + 누가 실행했는지</td><td>서비스 중지만 하면 모니터 health 가 "제한"으로 바뀌지만 알림은 아님</td></tr>
@@ -205,7 +208,7 @@
           <thead><tr><th>공격 패턴</th><th>수준</th><th>이유</th><th>메우려면</th></tr></thead>
           <tbody>
           <tr><td>웹 애플리케이션 공격 (SQLi, RCE, 업로드 취약점)</td><td><span class="lvl none">불가</span></td><td>애플리케이션 로그를 보지 않음. 셸이 떨어진 뒤 흔적만 잡음</td><td>앱 로그 소스 추가, WAF</td></tr>
-          <tr><td>컨테이너 내부 공격 (docker)</td><td><span class="lvl none">불가</span></td><td>auditd 규칙이 대화형 세션만 기록해 컨테이너 프로세스 제외. /proc 스캔은 보지만 컨텍스트 없음</td><td>컨테이너용 audit 규칙, Falco 같은 런타임 보안</td></tr>
+          <tr><td>컨테이너 <em>내부</em>에서 벌어지는 공격 (docker)</td><td><span class="lvl none">불가</span></td><td>auditd 규칙이 대화형 세션만 기록해 컨테이너 프로세스 제외. /proc 스캔은 보지만 컨텍스트 없음. 컨테이너 <em>설정</em>은 2절에서 점검하지만, 그 안에서 실행되는 것은 보지 못한다</td><td>컨테이너용 audit 규칙, Falco 같은 런타임 보안</td></tr>
           <tr><td>권한 있는 사용자의 데이터 반출 (SSH·HTTPS 로 파일 복사)</td><td><span class="lvl none">불가</span></td><td>유출 감시(DLP)와 전송량 분석이 없음</td><td>이그레스 필터링, 전송량 기준 알림</td></tr>
           <tr><td>파일리스·메모리 상주 공격</td><td><span class="lvl partial">부분</span></td><td>디스크에 남지 않으면 무결성·SUID 스캔 무력. execve 에 python -c … 로만 남음</td><td>메모리 포렌식, EDR</td></tr>
           <tr><td>커널 루트킷</td><td><span class="lvl partial">부분</span></td><td>/proc 을 속이면 프로세스·소켓 감시가 모두 속음. 모듈 로드 알림이 마지막 기회</td><td>Secure Boot, 모듈 서명 강제, 부팅 무결성 측정</td></tr>
