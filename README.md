@@ -142,4 +142,4 @@ python3 simulate_attack.py                            # 탐지 파이프라인 �
 
 ## 라이선스
 
-Apache License 2.0. [LICENSE](LICENSE) 를 보라.
+Apache License 2.0. [LICENSE](LICENSE) 를 보라. 번들·설치되는 제3자 구성요소와 라이선스는 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) 에 있으며 `deploy/gen-notices.py` 로 생성한다(릴리스 빌드 시 자동).

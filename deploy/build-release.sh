@@ -28,7 +28,8 @@ rsync -a --exclude venv --exclude '*.db*' --exclude .api_token --exclude .env --
     "$ROOT/backend" "$STAGE/"
 rsync -a "$ROOT/frontend/dist" "$STAGE/frontend/"
 rsync -a --exclude build-release.sh "$ROOT/deploy" "$STAGE/"
-cp "$ROOT/README.md" "$STAGE/"
+"$ROOT/backend/venv/bin/python" "$ROOT/deploy/gen-notices.py" >/dev/null 2>&1 || python3 "$ROOT/deploy/gen-notices.py" >/dev/null 2>&1 || true
+cp "$ROOT/README.md" "$ROOT/LICENSE" "$ROOT/THIRD_PARTY_NOTICES.md" "$STAGE/"
 [ -d "$ROOT/docs" ] && rsync -a "$ROOT/docs" "$STAGE/"
 printf '%s\n' "$VERSION" > "$STAGE/VERSION"
 printf 'version=%s\ncommit=%s\nbuilt=%s\n' "$VERSION" "$COMMIT" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$STAGE/RELEASE"
