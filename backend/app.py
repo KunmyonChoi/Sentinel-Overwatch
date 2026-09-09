@@ -263,7 +263,12 @@ class RespondBody(BaseModel):
     note: str = ""
 
 
-_ANSWER_KO = {"mine": "내가 한 일이 맞다", "not_me": "내가 한 일이 아니다", "unsure": "잘 모르겠다"}
+_ANSWER_KO = {
+    "mine": "내가 한 일이 맞다",
+    "not_me": "내가 한 일이 아니다",
+    "unsure": "잘 모르겠다",
+    "fixed": "조치를 마쳤다",
+}
 
 
 @app.post("/api/alerts/respond")
@@ -274,6 +279,8 @@ def respond_alerts(body: RespondBody, db: Session = Depends(get_db)):
       mine    내가 했다     → 확인(ACK). 목록과 DEFCON 에서 빠진다.
       not_me  내가 안 했다  → 열어둔 채 긴급으로 올린다. 본인의 증언이 가장 강한 신호다.
       unsure  잘 모르겠다   → 열어둔 채 '확인 중'으로 표시만 한다. 억지로 판단하게 하지 않는다.
+      fixed   조치를 마쳤다 → 해결(RESOLVE). 확인이 아니라 실제로 끝냈다는 뜻이다.
+                             (전문가 화면의 '해결'과 같은 상태가 된다)
 
     어느 쪽이든 답한 사실 자체를 이벤트로 남긴다. 나중에 도움을 받을 때 근거가 되고,
     '보고도 판단을 미룬 것'과 '아예 열어보지 않은 것'을 구분할 수 있게 된다.
@@ -291,7 +298,10 @@ def respond_alerts(body: RespondBody, db: Session = Depends(get_db)):
         if body.note:
             d["user_note"] = body.note
         a.details = json.dumps(d, ensure_ascii=False)
-        if body.answer == "mine":
+        if body.answer == "fixed":
+            a.status, a.resolved_at, a.resolved_by = "RESOLVED", now, body.by
+            a.resolution_note = body.note or "사용자가 조치를 마침"
+        elif body.answer == "mine":
             a.status, a.acked_at, a.acked_by = "ACKED", now, body.by
             a.resolution_note = body.note or "사용자가 본인이 한 일이라고 확인"
         elif body.answer == "not_me":

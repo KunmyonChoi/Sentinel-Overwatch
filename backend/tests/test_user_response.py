@@ -91,3 +91,14 @@ def test_unknown_ids_are_rejected(client):
 def test_requires_token(client):
     i = _mk()
     assert client.post("/api/alerts/respond", json={"ids": [i], "answer": "mine"}).status_code == 401
+
+
+def test_fixed_resolves_not_just_acks(client):
+    """실제로 끝낸 일은 '확인'이 아니라 '해결'이다. 전문가 화면의 해결과 같은 상태가 된다."""
+    i = _mk(rule="file_permission")
+    r = client.post("/api/alerts/respond", headers=H, json={"ids": [i], "answer": "fixed"})
+    assert r.status_code == 200
+    a = _get(i)
+    assert a.status == "RESOLVED" and a.resolved_by == "사용자"
+    assert "조치" in (a.resolution_note or "")
+    assert _events()[0].description_ko.endswith("답했어요") or "조치를 마쳤다" in _events()[0].description_ko

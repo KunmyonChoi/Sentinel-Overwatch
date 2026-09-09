@@ -5,6 +5,7 @@ import { api, getToken } from '../api';
 import TokenGate from '../components/TokenGate';
 import MaintenanceControl from '../components/MaintenanceControl';
 import Home from './Home';
+import { Icon } from './ui';
 import { doorCount } from './tokens';
 import TaskDetail from './TaskDetail';
 import HistoryView from './HistoryView';
@@ -91,23 +92,51 @@ export default function PlainApp() {
     };
 
     const go = (name) => setView({ name });
+    const atHome = view.name === 'home';
+    const atExpert = view.name === 'expert';
     const openTask = (task) => setView({ name: 'task', task });
 
     return (
         <div className="min-h-screen bg-calm-bg text-calm-ink font-kr">
             {needToken && <TokenGate />}
             <div className="mx-auto max-w-[1080px] min-h-screen bg-calm-bg flex flex-col">
+                {/* 어느 화면에서든 같은 자리. 전문가 화면을 홈까지 돌아가야만 열 수 있으면 안 된다. */}
+                <div className="flex items-center justify-between gap-3 px-6 sm:px-10 py-3.5 border-b border-calm-line">
+                    {atHome ? (
+                        <div className="flex items-center gap-2.5 min-w-0">
+                            <span className="text-calm-accent shrink-0"><Icon name="shield" size={22} /></span>
+                            <span className="text-[16px] font-semibold tracking-tight truncate">내 컴퓨터 지킴이</span>
+                        </div>
+                    ) : (
+                        <button onClick={() => go('home')}
+                            className="h-11 -ml-3 px-3 rounded-lg inline-flex items-center gap-1.5 text-[14px] text-calm-muted hover:bg-calm-panel2 cursor-pointer font-kr">
+                            <Icon name="back" size={17} />돌아가기
+                        </button>
+                    )}
+                    <div className="flex items-center gap-3 shrink-0">
+                        {atHome && (
+                            <span className="hidden sm:flex items-center gap-1.5 text-calm-muted text-[13px]">
+                                <Icon name="clock" size={15} />{lastCheck}
+                            </span>
+                        )}
+                        <button onClick={() => go(atExpert ? 'home' : 'expert')}
+                            className={`h-11 px-3 rounded-lg inline-flex items-center gap-1.5 text-[14px] cursor-pointer font-kr
+                                ${atExpert ? 'text-calm-accent bg-calm-accent-soft' : 'text-calm-muted hover:bg-calm-panel2'}`}>
+                            <Icon name="eye" size={16} />{atExpert ? '쉬운 화면으로' : '자세히 보기'}
+                        </button>
+                    </div>
+                </div>
+
                 {view.name === 'home' && (
-                    <Home status={status} tasks={tasks} facts={facts} lastCheck={lastCheck}
-                        onOpenTask={openTask} onGo={go} />
+                    <Home status={status} tasks={tasks} facts={facts} onOpenTask={openTask} onGo={go} />
                 )}
                 {view.name === 'task' && (
                     <TaskDetail task={tasks.find((t) => t.id === view.task.id) || view.task}
                         onBack={() => go('home')} onChanged={load} host={d.host} accounts={d.accounts} />
                 )}
-                {view.name === 'history' && <HistoryView onBack={() => go('home')} />}
+                {view.name === 'history' && <HistoryView />}
                 {view.name === 'expert' && (
-                    <ExpertView onBack={() => go('home')} stats={d.stats} host={d.host} events={d.events}
+                    <ExpertView stats={d.stats} host={d.host} events={d.events}
                         alerts={d.alerts} onChanged={load} tick={tick} />
                 )}
             </div>

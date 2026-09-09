@@ -33,7 +33,7 @@ export default function AlertsPanel({ alerts, onChanged }) {
     const ackAll = async () => {
         const targets = visible.filter(a => a.status === 'OPEN');
         if (targets.length === 0) return;
-        const note = prompt(`표시된 미확인 알림 ${targets.length}건을 모두 확인 처리합니다. 메모(선택):`, '');
+        const note = prompt(`표시된 미확인 알림 ${targets.length}건을 모두 확인 처리합니다.\n같은 알림이 다시 생겨도 심각도가 오르지 않는 한 다시 알리지 않습니다.\n메모(선택):`, '');
         if (note === null) return;
         setBusy('all');
         try {
@@ -94,6 +94,25 @@ export default function AlertsPanel({ alerts, onChanged }) {
                                             <span className={`${s.text} font-bold text-xs`}>[{s.label}]</span>
                                             {a.count > 1 && <span className={`text-[10px] px-1.5 rounded-full border ${s.text} border-current`}>×{a.count}</span>}
                                             {acked && <span className="text-[10px] px-1 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">확인됨 · {a.acked_by}</span>}
+                                            {/* 쉬운 화면에서 사용자가 답한 것. 심각도만 올라가고 이유가 안 보이면 판단할 수 없다. */}
+                                            {a.details?.user_response === 'not_me' && (
+                                                <span className="text-[10px] px-1 rounded bg-neon-red/20 text-neon-red border border-neon-red/40"
+                                                    title={`사용자가 본인이 한 일이 아니라고 답했습니다 (${a.details.user_response_at || ''})`}>
+                                                    사용자: 내가 한 일 아님
+                                                </span>
+                                            )}
+                                            {a.details?.user_response === 'unsure' && (
+                                                <span className="text-[10px] px-1 rounded bg-yellow-500/20 text-yellow-300 border border-yellow-500/40"
+                                                    title={`사용자가 판단을 보류했습니다 (${a.details.user_response_at || ''})`}>
+                                                    사용자: 확인 중
+                                                </span>
+                                            )}
+                                            {a.details?.user_response === 'mine' && (
+                                                <span className="text-[10px] px-1 rounded bg-gray-700/40 text-gray-400 border border-gray-600"
+                                                    title={`사용자가 본인이 한 일이라고 확인했습니다 (${a.details.user_response_at || ''})`}>
+                                                    사용자: 본인 확인
+                                                </span>
+                                            )}
                                             {a.details?.package && <span className="text-[10px] px-1 rounded bg-gray-700/40 text-gray-400 border border-gray-600">패키지 {a.details.package}</span>}
                                             {a.is_simulation && <span className="text-[10px] px-1 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">TEST DATA</span>}
                                             <span className="text-[10px] text-gray-500 font-mono">{a.rule}</span>
@@ -104,7 +123,7 @@ export default function AlertsPanel({ alerts, onChanged }) {
                                     <div className="flex items-center gap-1 flex-shrink-0">
                                         {!acked && (
                                             <button disabled={busy === a.id} onClick={(e) => { e.stopPropagation(); act(a, 'ack'); }}
-                                                className="text-xs border border-blue-500/50 text-blue-300 hover:bg-blue-500/20 px-2 py-1 rounded flex items-center gap-1" title="확인: 인지했고 대응 중입니다. DEFCON 계산에서 제외됩니다.">
+                                                className="text-xs border border-blue-500/50 text-blue-300 hover:bg-blue-500/20 px-2 py-1 rounded flex items-center gap-1" title="확인: 인지했고 대응 중입니다. DEFCON 계산에서 빠지고, 같은 알림이 다시 생겨도 심각도가 올라가지 않는 한 다시 알리지 않습니다.">
                                                 <Check className="w-3 h-3" /> 확인
                                             </button>
                                         )}

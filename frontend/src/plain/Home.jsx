@@ -42,21 +42,10 @@ function TaskCard({ task, onOpen }) {
     );
 }
 
-export default function Home({ status, tasks, facts, lastCheck, onOpenTask, onGo }) {
+export default function Home({ status, tasks, facts, onOpenTask, onGo }) {
     const hasTasks = tasks.length > 0;
     return (
         <div className="flex flex-col min-h-full">
-            <div className="flex items-center justify-between px-6 sm:px-10 py-5 border-b border-calm-line">
-                <div className="flex items-center gap-2.5">
-                    <span className="text-calm-accent"><Icon name="shield" size={22} /></span>
-                    <span className="text-[16px] font-semibold tracking-tight">내 컴퓨터 지킴이</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-calm-muted text-[13px]">
-                    <Icon name="clock" size={15} />
-                    <span>{lastCheck}</span>
-                </div>
-            </div>
-
             <div className={`flex-1 px-6 sm:px-10 ${hasTasks ? 'pt-8' : 'flex flex-col justify-center'}`}>
                 <StatusHead tone={status.key} icon={status.key === 'ok' ? 'check' : 'alert'}
                     label={status.label} lead={status.lead} big={!hasTasks} />
@@ -81,10 +70,6 @@ export default function Home({ status, tasks, facts, lastCheck, onOpenTask, onGo
                 <button onClick={() => onGo('history')}
                     className="h-11 -ml-3 px-3 rounded-lg inline-flex items-center gap-2 text-[14.5px] text-calm-accent hover:bg-calm-panel2 cursor-pointer font-kr">
                     <Icon name="chart" size={16} />무슨 일이 있었는지 보기
-                </button>
-                <button onClick={() => onGo('expert')}
-                    className="h-11 px-3 rounded-lg inline-flex items-center text-[14.5px] text-calm-muted hover:bg-calm-panel2 cursor-pointer font-kr">
-                    자세히 보기
                 </button>
             </div>
         </div>

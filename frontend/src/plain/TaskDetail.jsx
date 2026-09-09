@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api, fmtDateTime } from '../api';
-import { Icon, Card, Btn, BackLink, BeforeAfter, StatusHead } from './ui';
+import { Icon, Card, Btn, BeforeAfter, StatusHead } from './ui';
 import { TONE, toneOf } from './tokens';
 import { KIND, JUDGE_STEPS } from './tasks';
 import { buildBrief, copyText, downloadText } from './brief';
@@ -45,7 +45,18 @@ function FixFlow({ task, onDone }) {
         try {
             const r = await api(`/api/permissions/fix?apply=${apply}`, { method: 'POST' });
             if (!r.ok) { setError(r); return; }
-            if (apply) { setResult(r); onDone?.(); } else setPreview(r);
+            if (apply) {
+                setResult(r);
+                // 실제로 끝낸 일이다. 확인(ACK)이 아니라 해결(RESOLVE)로 남긴다 —
+                // 전문가 화면의 '해결'과 같은 상태가 되어 두 화면이 어긋나지 않는다.
+                try {
+                    await api('/api/alerts/respond', {
+                        method: 'POST',
+                        body: { ids: task.alerts.map((x) => x.id), answer: 'fixed', by: '사용자' },
+                    });
+                } catch { /* 조치 자체는 성공했다. 상태 기록 실패로 화면을 막지 않는다 */ }
+                onDone?.();
+            } else setPreview(r);
         } catch (e) {
             setError({ error: e.message || '요청이 실패했어요', fix_hint: '' });
         } finally { setBusy(false); }
@@ -435,9 +446,6 @@ export default function TaskDetail({ task, onBack, onChanged, host, accounts }) 
 
     return (
         <div className="flex flex-col min-h-full">
-            <div className="px-6 sm:px-10 py-3.5 border-b border-calm-line">
-                <BackLink onClick={onBack} />
-            </div>
             <div className="flex-1 px-6 sm:px-10 py-7 pb-10">
                 <div className="flex items-start gap-4">
                     <div className={`${TONE[tone].ring} ${TONE[tone].fg} rounded-full flex items-center justify-center shrink-0 mt-0.5`} style={{ width: 46, height: 46 }}>

@@ -17,6 +17,7 @@ export function Icon({ name, size = 20, className = '' }) {
         back: <><path d="M19 12H5" /><path d="m12 19-7-7 7-7" /></>,
         right: <path d="m9 18 6-6-6-6" />,
         down: <path d="m6 9 6 6 6-6" />,
+        up: <path d="m18 15-6-6-6 6" />,
         arrow: <><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></>,
         chart: <><path d="M3 3v18h18" /><path d="m7 14 3.5-4 3 3L18 8" /></>,
         eye: <><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z" /><circle cx="12" cy="12" r="2.5" /></>,

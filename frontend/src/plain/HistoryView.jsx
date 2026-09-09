@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api, fmtTime } from '../api';
-import { Icon, Card, Btn, BackLink } from './ui';
+import { Icon, Card, Btn } from './ui';
 import { EVENT_KO } from './tasks';
 
 // 백엔드가 만든 한국어 문장에 남아 있는 전문용어를 화면에서 마지막으로 걷어낸다.
@@ -66,7 +66,7 @@ function FixedDetail({ ev }) {
     );
 }
 
-export default function HistoryView({ onBack }) {
+export default function HistoryView() {
     const [events, setEvents] = useState(null);
     const [open, setOpen] = useState(null);
 
@@ -99,15 +99,13 @@ export default function HistoryView({ onBack }) {
 
     return (
         <div className="flex flex-col min-h-full">
-            <div className="flex items-center justify-between px-6 sm:px-10 py-3.5 border-b border-calm-line">
-                <BackLink onClick={onBack} />
-                <Btn kind="outline" className="h-11 px-4 text-[14px]" onClick={save}>
-                    <Icon name="save" size={16} />파일로 저장
-                </Btn>
-            </div>
-
             <div className="flex-1 px-6 sm:px-10 py-6 pb-10">
-                <div className="text-[25px] font-semibold tracking-tight">무슨 일이 있었는지</div>
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div className="text-[25px] font-semibold tracking-tight">무슨 일이 있었는지</div>
+                    <Btn kind="outline" className="h-11 px-4 text-[14px]" onClick={save}>
+                        <Icon name="save" size={16} />파일로 저장
+                    </Btn>
+                </div>
                 <div className="text-[14px] text-calm-muted mt-1.5" style={{ wordBreak: 'keep-all' }}>
                     지킴이가 한 일과 컴퓨터에 생긴 일을 시간 순서로 적어둬요. 줄을 누르면 자세히 볼 수 있어요.
                 </div>
