@@ -21,7 +21,12 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from integrations.permissions_scan import human_homes, mode_of, narrow, scan  # noqa: E402
+# 배포 시에는 permissions_scan.py 와 나란히 /usr/local/lib/secdash 에 root 소유로 설치된다.
+# 개발 트리에서는 integrations 패키지 안에 있다. 어느 쪽이든 같은 판정 규칙을 쓴다.
+try:
+    from permissions_scan import human_homes, mode_of, narrow, scan  # noqa: E402
+except ImportError:
+    from integrations.permissions_scan import human_homes, mode_of, narrow, scan  # noqa: E402
 
 DEFAULT_TREES = ["/etc"]
 

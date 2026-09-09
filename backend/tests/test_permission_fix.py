@@ -168,3 +168,54 @@ def test_apply_one_refuses_symlink(tmp_path):
 def test_apply_one_handles_missing_path(tmp_path):
     r = _apply_one()(str(tmp_path / "gone"), 0o600)
     assert r["applied"] is False and r["error"]
+
+
+# --- 래퍼의 소유권 가드: root 로 실행되는 코드는 root 만 쓸 수 있어야 한다 ---
+def _guard(path_to_check: str) -> tuple[int, str]:
+    """fix-permissions.sh 의 정의부만 잘라 must_be_root_owned 를 직접 호출한다."""
+    src = SCRIPT.read_text()
+    defs = src.split("# --- MAIN ---")[0]
+    prog = defs + f'\nmust_be_root_owned "{path_to_check}"\necho OK\n'
+    p = subprocess.run(["bash", "-c", prog], capture_output=True, text=True, timeout=30)
+    return p.returncode, p.stdout + p.stderr
+
+
+def test_guard_rejects_non_root_owned_file(tmp_path):
+    p = tmp_path / "entry.py"
+    p.write_text("print(1)")
+    os.chmod(p, 0o644)          # 소유자는 테스트 실행 계정(비 root)
+    rc, out = _guard(str(p))
+    assert rc != 0 and "root 소유가 아니라" in out
+
+
+def test_guard_rejects_group_or_world_writable(tmp_path, monkeypatch):
+    """소유자가 root 라도 다른 계정이 쓸 수 있으면 거부해야 한다."""
+    p = tmp_path / "entry.py"
+    p.write_text("print(1)")
+    os.chmod(p, 0o666)
+    # 소유권 검사를 통과시키고 쓰기 비트 검사만 보기 위해 stat 을 가로챈다
+    src = SCRIPT.read_text().split("# --- MAIN ---")[0]
+    prog = src + f'\nstat() {{ echo 0; }}\nmust_be_root_owned "{p}"\necho OK\n'
+    r = subprocess.run(["bash", "-c", prog], capture_output=True, text=True, timeout=30)
+    assert r.returncode != 0
+    assert "다른 계정이 쓸 수 있어" in (r.stdout + r.stderr)
+
+
+def test_guard_rejects_missing_path(tmp_path):
+    rc, out = _guard(str(tmp_path / "gone.py"))
+    assert rc != 0 and "필요한 파일이 없습니다" in out
+
+
+def test_guard_accepts_root_owned_readonly_file():
+    """실제로 root 소유 0644 인 파일은 통과해야 한다 (가드가 항상 거부하면 의미가 없다)."""
+    rc, out = _guard("/etc/hostname")
+    assert rc == 0 and "OK" in out
+
+
+def test_wrapper_guards_whole_execution_chain():
+    """래퍼·진입점·스캐너·인터프리터를 모두 검사하는지 소스로 확인한다."""
+    src = SCRIPT.read_text()
+    main = src.split("# --- MAIN ---")[1]
+    assert '"$LIB" "$ENTRY" "$SCANNER" "$PY"' in main
+    assert "/usr/bin/python3" in src, "venv 인터프리터(서비스 계정이 쓸 수 있음)를 쓰면 안 된다"
+    assert "/opt/secdash" not in src, "서비스 계정이 쓸 수 있는 트리의 코드를 root 로 실행하면 안 된다"
