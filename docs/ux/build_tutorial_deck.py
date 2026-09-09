@@ -95,11 +95,11 @@ def text(x, y, w, h, content, *, size=32, weight=400, color=INK, lh=1.5,
     return h
 
 
-def pill(x, y, w, h, label, *, fg, bg, border=None, size=20, **kw):
+def pill(x, y, w, h, label, *, fg, bg, border=None, size=20, pad=56, radius=None, **kw):
     """한 줄짜리 배지. 라벨이 접히지 않도록 폭을 자동으로 넓힌다."""
-    w = max(w, int(_units(label) * size * 1.08) + 56)
+    w = max(w, int(_units(label) * size * 1.08) + pad)
     s = [f"position:absolute", f"left:{x}px", f"top:{y}px", f"width:{w}px", f"height:{h}px",
-         f"background:{bg}", f"border-radius:{h // 2}px",
+         f"background:{bg}", f"border-radius:{h // 2 if radius is None else radius}px",
          f"font-family:{F}", f"font-size:{size}px", f"font-weight:500", f"color:{fg}",
          f"line-height:{h}px", "text-align:center", "white-space:nowrap", "overflow:hidden"]
     if border: s.append(f"border:{border}")
@@ -121,12 +121,21 @@ class Screen:
     def at(self, dx, dy):
         return self.x + dx, self.y + dy
 
-    def topbar(self, left_label, *, right_label="자세히 보기", accent_right=False):
+    def topbar(self, left_label):
+        """왼쪽은 '지금 어디에 있는가', 오른쪽은 '누구를 위한 화면인가'.
+
+        자세히 보기는 여기 넣지 않는다 — 그것도 초보자 화면이라 본문 링크로 간다.
+        성격이 다른 두 전환을 상단 바에 나란히 두면 화면 셋이 동등해 보인다.
+        """
         x, y = self.x, self.y
-        text(x + 26, y + 16, 520, 32, left_label, size=21, weight=600, color=INK)
-        rw = 150
-        text(x + self.w - rw - 26, y + 16, rw, 32, right_label, size=19,
-             color=ACCENT if accent_right else MUTED, align="right")
+        text(x + 26, y + 16, 460, 32, left_label, size=21, weight=600, color=INK)
+        seg, h = 132, 36
+        sx, sy = x + self.w - (seg * 2 + 8) - 22, y + 13
+        box(sx, sy, seg * 2 + 8, h, bg=PANEL2, radius=9, border=f"1px solid {LINE}")
+        for i, (label, on) in enumerate((("쉬운 화면", True), ("전문가 화면", False))):
+            pill(sx + 4 + i * seg, sy + 4, seg, h - 8, label, size=16, pad=12, radius=6,
+                 fg=INK if on else MUTED, bg=PANEL if on else "transparent",
+                 border=f"1px solid {LINE}" if on else None)
 
 
 def notes_col(x, y, w, blocks, *, size=27, gap=18, block_gap=52):
@@ -238,7 +247,8 @@ for i, (lab, val, note) in enumerate([
     text(*s.at(bx + 24, 344), 268, 32, lab, size=20, color=MUTED)
     text(*s.at(bx + 24, 392), 268, 56, val, size=44, weight=700)
     text(*s.at(bx + 24, 458), 268, 60, note, size=19, color=MUTED, lh=1.5)
-text(*s.at(40, 578), 700, 40, "📊  무슨 일이 있었는지 보기", size=22, color=ACCENT)
+text(*s.at(40, 578), 380, 40, "📊  무슨 일이 있었는지 보기", size=22, color=ACCENT)
+text(*s.at(420, 578), 420, 40, "👁  지킴이가 본 것 자세히 보기", size=22, color=ACCENT)
 
 notes_col(1310, 340, 470, [
     ("여기만 보면 됩니다",
@@ -528,7 +538,7 @@ for i, (t_, d_, w_) in enumerate(hist):
 
 # 자세히 보기
 s2 = Screen(1010, 300, 760, 620, name="exp", anim="slideIn", dir="up")
-s2.topbar("←  돌아가기", right_label="쉬운 화면으로", accent_right=True)
+s2.topbar("←  돌아가기")
 text(*s2.at(40, 96), 400, 46, "자세히 보기", size=34, weight=700)
 pill(*s2.at(520, 100), 180, 46, "모두 펼치기", fg=INK, bg=PANEL,
      border=f"1px solid {LINE2}", size=20)
@@ -542,14 +552,14 @@ for i, f_ in enumerate(folds):
     text(*s2.at(640, ry), 40, 34, "⌄", size=22, color=MUTED, align="right")
 
 text(150, 952, 1620, 60,
-     "전문가 화면은 없애지 않았습니다. 어느 화면에서든 오른쪽 위 ‘자세히 보기’로 열립니다.",
+     "전환은 두 종류입니다. 화면 안에서 옮기는 것은 본문 링크로, 전문가 화면으로 바꾸는 것은 오른쪽 위에서.",
      size=30, color=MUTED, anim="fadeIn", name="foot")
 end(BG, """
 왼쪽은 기록입니다. 지킴이가 한 일과 컴퓨터에 생긴 일을 시간 순서로 적어둡니다. 줄을 누르면 자세히 볼 수 있고, 되돌리는 방법도 여기 있습니다.
 
-오른쪽은 자세히 보기입니다. 지킴이가 무엇을 보고 그렇게 판단했는지 전부 여기 있습니다. 예전에 쓰시던 전문가 화면이 하나도 빠짐없이 이 안에 들어 있습니다.
+오른쪽은 자세히 보기입니다. 지킴이가 무엇을 보고 그렇게 판단했는지 전부 여기 있습니다. 이것도 쉬운 화면과 같은 편, 초보자를 위한 화면입니다 — 말투도 그대로고 항목마다 쉬운 말 설명이 붙어 있습니다.
 
-‘모두 펼치기’를 누르면 예전처럼 한 화면에서 전부 볼 수 있습니다. 그리고 이 전환 버튼은 어느 화면에서든 오른쪽 위 같은 자리에 있습니다.
+전환이 두 종류라는 것만 기억하시면 됩니다. 기록이나 자세히 보기로 옮기는 것은 같은 화면 안에서 자리를 옮기는 일이라 본문의 링크로 갑니다. 오른쪽 위의 것은 다릅니다 — 화면 자체를 전문가용으로 바꾸는 버튼이고, 어느 화면에서든 같은 자리에 있습니다.
 """)
 
 # ============================================================ 10. 정리

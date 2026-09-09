@@ -1,6 +1,8 @@
-// 예전 전문가 대시보드. 한 화면에 전부 펼쳐 놓는 레이아웃이라
-// 익숙한 사람에게는 이쪽이 빠르다 — 그래서 없애지 않고 세 번째 화면으로 남겼다.
-// (쉬운 화면 ↔ 자세히 보기 ↔ 이 화면. 전환은 App.jsx 가 기억한다.)
+// 전문가 모드. 예전 대시보드 그대로다 — 한 화면에 전부 펼쳐 놓는 레이아웃이라
+// 익숙한 사람에게는 이쪽이 빠르다.
+//
+// 초보자 모드(쉬운 화면·자세히 보기)와는 ModeSwitch 로만 오간다. 레이아웃도
+// 폴링 주기도 손대지 않았다 — '예전 그대로'가 이 화면의 존재 이유이기 때문이다.
 import React, { useEffect, useRef, useState } from 'react';
 import SystemHealth from './components/SystemHealth';
 import AlertFeed from './components/AlertFeed';
@@ -17,6 +19,7 @@ import ExposurePanel from './components/ExposurePanel';
 import ConfigAuditPanel from './components/ConfigAuditPanel';
 import { api, getToken } from './api';
 import { ShieldAlert } from 'lucide-react';
+import ModeSwitch from './ModeSwitch';
 
 async function loadCore() {
   const [stats, events, alerts] = await Promise.all([
@@ -27,7 +30,7 @@ async function loadCore() {
   return { stats, events, alerts };
 }
 
-export default function Dashboard({ onGo }) {
+export default function Dashboard({ onMode }) {
   const [core, setCore] = useState({ stats: null, events: [], alerts: [] });
   const [host, setHost] = useState(null);
   const [needToken, setNeedToken] = useState(() => !getToken());
@@ -89,17 +92,6 @@ export default function Dashboard({ onGo }) {
           </div>
         </div>
         <div className="flex items-center gap-4 text-sm">
-          {/* 어느 화면에서든 나머지 두 화면이 보이게 한다 — 되돌아갈 길을 찾아 헤매지 않도록. */}
-          <div className="flex items-center gap-2 font-kr">
-            <button onClick={() => onGo('plain')}
-              className="px-3 py-1.5 rounded border border-neon-green/40 text-neon-green/90 hover:bg-neon-green/10 cursor-pointer">
-              쉬운 화면
-            </button>
-            <button onClick={() => onGo('expert')}
-              className="px-3 py-1.5 rounded border border-neon-green/25 text-neon-green/60 hover:bg-neon-green/10 cursor-pointer">
-              자세히 보기
-            </button>
-          </div>
           <MaintenanceControl maintenance={stats?.maintenance} onChanged={refreshNow} />
           {stats && (
             <span className={`px-3 py-1 border rounded font-bold tracking-wider ${badge} ${isDefcon1 ? 'animate-pulse' : ''}`}>
@@ -107,6 +99,8 @@ export default function Dashboard({ onGo }) {
             </span>
           )}
           <span className="text-neon-green/70 font-mono">{new Date().toLocaleTimeString('ko-KR', { hour12: false })}</span>
+          {/* 초보자 화면과 같은 조각, 같은 자리(오른쪽 끝). 여기서 바뀌는 것은 모드뿐이다. */}
+          <ModeSwitch mode="dashboard" onChange={onMode} tone="neon" />
         </div>
       </header>
 

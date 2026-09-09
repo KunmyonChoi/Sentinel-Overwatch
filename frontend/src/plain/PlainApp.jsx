@@ -1,9 +1,12 @@
-// 비전문가용 화면의 껍데기. 자료를 모아 사용자 언어로 바꾸고, 네 화면을 오간다.
+// 초보자 모드의 껍데기. 자료를 모아 사용자 언어로 바꾸고, 이 모드의 네 페이지를 오간다.
+//   home 쉬운 화면 · expert 자세히 보기 · task 할 일 상세 · history 기록
+// 전문가 모드로 가는 것은 페이지 이동이 아니라 모드 전환이라 App 이 맡는다(onMode).
 // 백엔드는 건드리지 않는다 — 지금 있는 엔드포인트만 쓴다.
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { api, getToken } from '../api';
 import TokenGate from '../components/TokenGate';
 import MaintenanceControl from '../components/MaintenanceControl';
+import ModeSwitch from '../ModeSwitch';
 import Home from './Home';
 import { Icon } from './ui';
 import { doorCount } from './tokens';
@@ -21,10 +24,10 @@ function agoKo(iso) {
     return `${Math.round(sec / 86400)}일 전에 확인했어요`;
 }
 
-export default function PlainApp({ mode = 'plain', onGo }) {
-    // 홈과 '자세히 보기'는 App 이 기억하는 화면이라 바깥에서 시작 지점을 받는다.
+export default function PlainApp({ page = 'home', onPage, onMode }) {
+    // 홈과 '자세히 보기'는 머무는 페이지라 App 이 기억한다 — 시작 지점을 받는다.
     // 할 일 상세·기록은 잠깐 들르는 곳이라 여기서만 들고 있는다.
-    const [view, setView] = useState(() => ({ name: mode === 'expert' ? 'expert' : 'home' }));
+    const [view, setView] = useState(() => ({ name: page }));
     const [needToken, setNeedToken] = useState(() => !getToken());
     const [d, setD] = useState({ stats: null, alerts: [], events: [], host: null, exposure: null, blocked: null, monitors: [], accounts: [] });
     const [tick, setTick] = useState(0);
@@ -101,20 +104,20 @@ export default function PlainApp({ mode = 'plain', onGo }) {
 
     const go = (name) => {
         setView({ name });
-        // 홈과 자세히 보기만 기억한다. 상세·기록에서 새로고침하면 홈으로 돌아오는 게 맞다.
-        if (name === 'home') onGo?.('plain');
-        if (name === 'expert') onGo?.('expert');
+        if (name === 'home' || name === 'expert') onPage?.(name);
     };
     const atHome = view.name === 'home';
-    const atExpert = view.name === 'expert';
     const openTask = (task) => setView({ name: 'task', task });
 
     return (
         <div className="min-h-screen bg-calm-bg text-calm-ink font-kr">
             {needToken && <TokenGate />}
             <div className="mx-auto max-w-[1080px] min-h-screen bg-calm-bg flex flex-col">
-                {/* 어느 화면에서든 같은 자리. 전문가 화면을 홈까지 돌아가야만 열 수 있으면 안 된다. */}
+                {/* 왼쪽은 '지금 어디에 있는가', 오른쪽은 '누구를 위한 화면인가'.
+                    성격이 다른 두 전환이라 자리와 모양을 갈라 둔다. */}
                 <div className="flex items-center justify-between gap-3 px-6 sm:px-10 py-3.5 border-b border-calm-line">
+                    {/* 자세히 보기·기록으로 가는 길은 홈 본문에 있다. 같은 모드 안의 페이지 이동이라
+                        모드 전환기 옆에 두면 셋이 동등해 보인다. 여기 왼쪽은 위치만 말한다. */}
                     {atHome ? (
                         <div className="flex items-center gap-2.5 min-w-0">
                             <span className="text-calm-accent shrink-0"><Icon name="shield" size={22} /></span>
@@ -132,16 +135,7 @@ export default function PlainApp({ mode = 'plain', onGo }) {
                                 <Icon name="clock" size={15} />{lastCheck}
                             </span>
                         )}
-                        <button onClick={() => go(atExpert ? 'home' : 'expert')}
-                            className={`h-11 px-3 rounded-lg inline-flex items-center gap-1.5 text-[14px] cursor-pointer font-kr
-                                ${atExpert ? 'text-calm-accent bg-calm-accent-soft' : 'text-calm-muted hover:bg-calm-panel2'}`}>
-                            <Icon name="eye" size={16} />{atExpert ? '쉬운 화면으로' : '자세히 보기'}
-                        </button>
-                        {/* 예전 전문가 화면. 익숙한 사람은 여기서 바로 건너뛴다. */}
-                        <button onClick={() => onGo?.('dashboard')} title="예전 전문가 화면 — 한 화면에 전부 펼쳐 보기"
-                            className="h-11 px-3 rounded-lg inline-flex items-center gap-1.5 text-[14px] cursor-pointer font-kr text-calm-muted hover:bg-calm-panel2">
-                            <Icon name="grid" size={16} /><span className="hidden sm:inline">대시보드</span>
-                        </button>
+                        <ModeSwitch mode="plain" onChange={onMode} />
                     </div>
                 </div>
 

@@ -67,10 +67,16 @@ export default function Home({ status, tasks, facts, onOpenTask, onGo }) {
                 </div>
             </div>
 
-            <div className="flex items-center gap-4 px-6 sm:px-10 py-3.5 border-t border-calm-line">
+            {/* 기록과 자세히 보기는 둘 다 초보자 화면의 다른 페이지다. 그래서 나란히 둔다.
+                모드를 바꾸는 일(전문가 화면)과는 성격이 달라 자리도 다르다 — 그쪽은 오른쪽 위. */}
+            <div className="flex items-center gap-1 flex-wrap px-6 sm:px-10 py-3.5 border-t border-calm-line">
                 <button onClick={() => onGo('history')}
                     className="h-11 -ml-3 px-3 rounded-lg inline-flex items-center gap-2 text-[14.5px] text-calm-accent hover:bg-calm-panel2 cursor-pointer font-kr">
                     <Icon name="chart" size={16} />무슨 일이 있었는지 보기
+                </button>
+                <button onClick={() => onGo('expert')}
+                    className="h-11 px-3 rounded-lg inline-flex items-center gap-2 text-[14.5px] text-calm-accent hover:bg-calm-panel2 cursor-pointer font-kr">
+                    <Icon name="eye" size={16} />지킴이가 본 것 자세히 보기
                 </button>
             </div>
         </div>
