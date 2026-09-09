@@ -23,16 +23,17 @@ function agoKo(iso) {
 export default function PlainApp() {
     const [view, setView] = useState({ name: 'home' });
     const [needToken, setNeedToken] = useState(() => !getToken());
-    const [d, setD] = useState({ stats: null, alerts: [], events: [], host: null, exposure: null, blocked: null, monitors: [] });
+    const [d, setD] = useState({ stats: null, alerts: [], events: [], host: null, exposure: null, blocked: null, monitors: [], accounts: [] });
     const [tick, setTick] = useState(0);
     const alive = useRef(true);
 
     const load = useCallback(async () => {
         if (!getToken()) return;
         const get = (p) => api(p).catch(() => null);
-        const [stats, alerts, events, host, exposure, blocked, monitors] = await Promise.all([
+        const [stats, alerts, events, host, exposure, blocked, monitors, accounts] = await Promise.all([
             get('/api/stats'), get('/api/alerts?status=active'), get('/api/events?limit=60&include_simulation=false'),
             get('/api/host'), get('/api/exposure'), get('/api/blocked'), get('/api/monitors'),
+            get('/api/accounts'),   // 붙여넣기용 글에서 계정 이름을 가리는 데 쓴다
         ]);
         if (!alive.current) return;
         if (stats) setNeedToken(false);
@@ -40,6 +41,7 @@ export default function PlainApp() {
             stats: stats ?? p.stats, alerts: alerts ?? p.alerts, events: events ?? p.events,
             host: host ?? p.host, exposure: exposure ?? p.exposure, blocked: blocked ?? p.blocked,
             monitors: monitors ?? p.monitors,
+            accounts: accounts?.accounts ?? p.accounts,
         }));
         setTick((t) => t + 1);
     }, []);
@@ -101,7 +103,7 @@ export default function PlainApp() {
                 )}
                 {view.name === 'task' && (
                     <TaskDetail task={tasks.find((t) => t.id === view.task.id) || view.task}
-                        onBack={() => go('home')} onChanged={load} host={d.host} />
+                        onBack={() => go('home')} onChanged={load} host={d.host} accounts={d.accounts} />
                 )}
                 {view.name === 'history' && <HistoryView onBack={() => go('home')} />}
                 {view.name === 'expert' && (

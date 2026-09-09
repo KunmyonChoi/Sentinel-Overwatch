@@ -267,10 +267,11 @@ function Evidence({ task }) {
  * 대시보드가 스스로 밖으로 보내는 것은 없다 — 사람이 붙여넣을 때만 나간다.
  * 그 사실을 버튼 옆에 적어둔다. 비전문가는 무엇이 복사되는지 모를 수 있다.
  */
-function AskElsewhere({ task, host }) {
+function AskElsewhere({ task, host, accounts }) {
     const [state, setState] = useState('idle');   // idle | ok | fail
     const [shown, setShown] = useState(false);
-    const brief = buildBrief(task, host);
+    const [mask, setMask] = useState(true);       // 가리는 것이 기본이다
+    const brief = buildBrief(task, host, mask, accounts);
 
     const copy = async () => {
         const ok = await copyText(brief);
@@ -289,10 +290,23 @@ function AskElsewhere({ task, host }) {
                         위 내용을 그대로 복사해서 Claude 같은 AI나 잘 아는 분에게 붙여넣어 물어보세요.
                         무엇을 물어보면 좋을지까지 함께 적어드려요.
                     </div>
-                    <div className="text-[12.5px] text-calm-muted mt-1.5" style={{ wordBreak: 'keep-all' }}>
-                        복사되는 글에는 <b className="text-calm-ink">이 컴퓨터의 파일 이름·주소</b>가 들어 있어요.
-                        지킴이가 알아서 밖으로 보내는 일은 없고, 직접 붙여넣으실 때만 나갑니다.
-                    </div>
+                    <label className="flex items-start gap-2.5 mt-3 cursor-pointer select-none">
+                        <input type="checkbox" checked={mask} onChange={(e) => setMask(e.target.checked)}
+                            className="mt-0.5 w-4 h-4 accent-[#0e7c6b] cursor-pointer shrink-0" />
+                        <span className="text-[13px]" style={{ wordBreak: 'keep-all' }}>
+                            <b>중요한 정보 가리기</b>
+                            <span className="text-calm-muted">
+                                {' '}— 컴퓨터 이름, 계정 이름, 인터넷 주소를 <span className="font-mono">&lt;이렇게&gt;</span> 바꿔서 복사해요.
+                                운영체제·프로그램 이름·포트 번호는 남겨요. 그게 있어야 제대로 된 답을 받을 수 있고, 그것만으로는 이 컴퓨터를 찾아낼 수 없거든요.
+                            </span>
+                        </span>
+                    </label>
+                    {!mask && (
+                        <div className="text-[12.5px] text-calm-warn mt-2 flex items-start gap-1.5" style={{ wordBreak: 'keep-all' }}>
+                            <Icon name="alert" size={14} className="mt-0.5 shrink-0" />
+                            가리지 않고 복사하면 이 컴퓨터의 이름과 주소가 그대로 나갑니다. 믿을 수 있는 곳에만 붙여넣으세요.
+                        </div>
+                    )}
                 </div>
                 <div className="flex flex-col gap-2 shrink-0">
                     <Btn kind="primary" onClick={copy} className="h-11">
@@ -322,7 +336,7 @@ function AskElsewhere({ task, host }) {
     );
 }
 
-export default function TaskDetail({ task, onBack, onChanged, host }) {
+export default function TaskDetail({ task, onBack, onChanged, host, accounts }) {
     const tone = toneOf(task.severity);
     const ackAll = async () => {
         try {
@@ -368,7 +382,7 @@ export default function TaskDetail({ task, onBack, onChanged, host }) {
                 {task.kind === KIND.GUIDE && <GuideFlow task={task} onAck={ackAll} />}
 
                 <Evidence task={task} />
-                <AskElsewhere task={task} host={host} />
+                <AskElsewhere task={task} host={host} accounts={accounts} />
             </div>
         </div>
     );
