@@ -41,7 +41,7 @@ from monitor.fail2ban_sync import Fail2banSync
 from monitor.integrity import IntegrityMonitor, PersistenceMonitor
 from monitor.intel import IntelMonitor
 from monitor.intrusion import AuthLogWatcher, NetworkWatcher
-from monitor.lynis import LynisMonitor
+from monitor.lynis import LynisMonitor, brief_markdown, read_skipped
 from monitor.audit import AuditMonitor
 from monitor.process_audit import ProcessAudit
 from monitor.resource import ResourceMonitor
@@ -327,18 +327,20 @@ def get_stats(db: Session = Depends(get_db)):
 
 
 @app.get("/api/stats/timeline")
-def get_stats_timeline(db: Session = Depends(get_db)):
-    now = utcnow()
-    start = now - timedelta(hours=24)
+def get_stats_timeline(hours: int = 48, db: Session = Depends(get_db)):
+    """시간별 이벤트 수. 구간 시작 시각은 UTC ISO(`ts`)로 내려주고 표시는 프론트엔드가 로컬 시간으로 한다."""
+    hours = max(1, min(hours, 24 * 14))
+    now = utcnow().replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+    start = now - timedelta(hours=hours)
     rows = db.query(Event.timestamp, Event.severity).filter(
         Event.timestamp >= start, Event.event_type != "THREAT_INTEL", Event.is_simulation == False,  # noqa: E712
     ).all()
-    buckets = [{"hour": (start + timedelta(hours=i)).strftime("%H:00"), "critical": 0, "warning": 0, "info": 0} for i in range(24)]
+    buckets = [{"ts": (start + timedelta(hours=i)).isoformat() + "Z", "critical": 0, "warning": 0, "info": 0} for i in range(hours)]
     for ts, sev in rows:
         if not ts:
             continue
         idx = int((ts - start).total_seconds() // 3600)
-        if 0 <= idx < 24:
+        if 0 <= idx < hours:
             key = (sev or "INFO").lower()
             buckets[idx][key if key in ("critical", "warning") else "info"] += 1
     return buckets
@@ -368,7 +370,8 @@ def get_host():
     ok, why, hint = (f2b.health == "ok", f2b.health_reason, f2b.fix_hint) if f2b else Fail2banClient().availability()
     upd = monitor_registry.get("UpdateMonitor", {}).get("instance")
     return {
-        "hostname": socket.gethostname(),
+        "hostname": config.HOSTNAME,
+        "version": config.VERSION,
         "os": platform.platform(),
         "kernel": platform.release(),
         "uptime_hours": round((time.time() - psutil.boot_time()) / 3600, 1),
@@ -401,6 +404,15 @@ def get_hardening():
 def get_accounts():
     """사람 계정과 root 의 잠김/만료, 권한 그룹, 마지막 로그인, SSH 키 보유."""
     return acct.list_accounts()
+
+
+@app.get("/api/hardening/brief")
+def get_hardening_brief(item: str | None = None):
+    """강화 작업 목록을 Claude 등에 붙여넣을 수 있는 마크다운 브리프. item=TEST-ID 로 한 항목만."""
+    inst = monitor_registry.get("LynisMonitor", {}).get("instance")
+    latest = getattr(inst, "latest", None) or {}
+    host = {"hostname": config.HOSTNAME, "os": platform.platform(), "kernel": platform.release(), "role": config.HOST_ROLE}
+    return {"markdown": brief_markdown(latest, read_skipped(), host, item), "item": item}
 
 
 @app.get("/api/summary/korean")
@@ -443,6 +455,10 @@ def get_korean_summary(db: Session = Depends(get_db)):
         parts.append(f"이 서버의 설치 패키지에 영향을 주는 Ubuntu 보안 공지 {usn}건이 있습니다.")
     return {"highlight": " ".join(parts), "defcon": defcon}
 
+
+# --- 문서 정적 서빙 -----------------------------------------------------------
+if config.DOCS_DIR.is_dir():
+    app.mount("/docs", StaticFiles(directory=str(config.DOCS_DIR), html=True), name="docs")
 
 # --- 프론트엔드 정적 서빙 (빌드 결과가 있을 때) -------------------------------
 if config.FRONTEND_DIST.exists() and (config.FRONTEND_DIST / "index.html").exists():

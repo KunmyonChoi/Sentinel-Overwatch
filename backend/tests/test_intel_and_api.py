@@ -69,3 +69,16 @@ def test_summary_and_monitors_endpoints(client):
     assert client.get("/api/monitors", headers=H).json() == []   # lifespan 미실행
     host = client.get("/api/host", headers=H).json()
     assert "privileges" in host and "auth_log_readable" in host["privileges"]
+
+
+def test_timeline_hours_and_utc_timestamps(client, db):
+    from datetime import timedelta
+    now = database.utcnow()
+    db.add(database.Event(event_type="AUTH_FAILURE", severity="WARNING", source="t", description="x", timestamp=now - timedelta(hours=30)))
+    db.add(database.Event(event_type="AUTH_FAILURE", severity="INFO", source="t", description="y", timestamp=now - timedelta(minutes=5)))
+    db.commit()
+    rows = client.get("/api/stats/timeline?hours=48", headers=H).json()
+    assert len(rows) == 48 and rows[0]["ts"].endswith("Z")
+    assert sum(r["warning"] for r in rows) == 1 and sum(r["info"] for r in rows) == 1
+    assert len(client.get("/api/stats/timeline?hours=24", headers=H).json()) == 24
+    assert sum(r["warning"] for r in client.get("/api/stats/timeline?hours=24", headers=H).json()) == 0   # 30시간 전 이벤트는 24h 창 밖

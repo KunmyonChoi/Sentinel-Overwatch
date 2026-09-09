@@ -78,7 +78,7 @@ function App() {
             <h1 className="text-3xl font-bold tracking-widest text-neon-green neon-text">SENTINEL // OVERWATCH</h1>
             {host && (
               <div className="text-xs text-gray-500 font-mono mt-1">
-                {host.hostname} · {host.os} · 실행 계정 {host.running_as?.user || host.running_as?.uid}{host.running_as?.root ? ' (root)' : ''}
+                {host.hostname} · v{host.version} · {host.os} · 실행 계정 {host.running_as?.user || host.running_as?.uid}{host.running_as?.root ? ' (root)' : ''}
               </div>
             )}
           </div>

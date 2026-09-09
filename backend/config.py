@@ -82,11 +82,29 @@ USN_MATCH = _env_bool("SECDASH_USN_MATCH", True)
 EVENT_RETENTION_DAYS = _env_int("SECDASH_EVENT_RETENTION_DAYS", 30)
 ALERT_RETENTION_DAYS = _env_int("SECDASH_ALERT_RETENTION_DAYS", 90)
 
+# --- 식별 ---
+import socket as _socket
+HOSTNAME = _env("SECDASH_HOSTNAME", _socket.gethostname())
+def _read_version() -> str:
+    for p in (BASE_DIR.parent / "VERSION", BASE_DIR / "VERSION"):
+        try:
+            return p.read_text(encoding="utf-8").strip()
+        except OSError:
+            continue
+    return "dev"
+VERSION = _read_version()
+
+# 이 서버의 역할 메모 (강화 작업 목록을 Claude 등에 붙여넣을 때 맥락으로 포함됨)
+HOST_ROLE = _env("SECDASH_HOST_ROLE", "")
+
 # --- 알림 속도 제한 ---
 NOTIFY_MAX_PER_MINUTE = _env_int("SECDASH_NOTIFY_MAX_PER_MINUTE", 10)
 
 # --- 프론트엔드 정적 파일 (빌드 결과가 있으면 백엔드가 직접 서빙) ---
 FRONTEND_DIST = Path(_env("SECDASH_FRONTEND_DIST", BASE_DIR.parent / "frontend" / "dist"))
+
+# --- 문서 (docs/architecture.html 등) ---
+DOCS_DIR = Path(_env("SECDASH_DOCS_DIR", BASE_DIR.parent / "docs"))
 
 # --- API 토큰 ---
 API_TOKEN_FILE = Path(_env("SECDASH_API_TOKEN_FILE", BASE_DIR / ".api_token"))

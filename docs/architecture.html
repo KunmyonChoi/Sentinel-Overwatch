@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Sentinel Overwatch (security-dashboard) 시스템 아키텍처: 호스트 진실 원천, 모니터, 사실/판단 분리, 알림 생애주기, 신뢰 경계, 설치와 강화 경로">
+<link rel="icon" type="image/svg+xml" href="/sentinel.svg">
+<title>Sentinel Overwatch 아키텍처</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #f2f5f3;
+    --panel: #ffffff;
+    --panel-2: #e6ede9;
+    --ink: #17221d;
+    --muted: #5d6c65;
+    --line: #b9c6bf;
+    --accent: #0e7c6b;
+    --accent-soft: #d5ece6;
+    --ext: #b8731c;
+    --ext-soft: #f6e7cf;
+    --crit: #b5322a;
+    --warn: #b98a12;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1513;
+      --panel: #171f1c;
+      --panel-2: #1f2a26;
+      --ink: #e4ebe7;
+      --muted: #95a59d;
+      --line: #35443e;
+      --accent: #3fb59e;
+      --accent-soft: #163b34;
+      --ext: #e0a24d;
+      --ext-soft: #3b2d14;
+      --crit: #e2675d;
+      --warn: #d9ab2e;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1513;
+    --panel: #171f1c;
+    --panel-2: #1f2a26;
+    --ink: #e4ebe7;
+    --muted: #95a59d;
+    --line: #35443e;
+    --accent: #3fb59e;
+    --accent-soft: #163b34;
+    --ext: #e0a24d;
+    --ext-soft: #3b2d14;
+    --crit: #e2675d;
+    --warn: #d9ab2e;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    word-break: keep-all;
+  }
+  code, .mono, svg text.mono { font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace; }
+
+  .page { max-width: 1160px; margin: 0 auto; padding: 40px 24px 72px; display: grid; gap: 40px; }
+  header { display: grid; gap: 10px; max-width: 70ch; }
+  .eyebrow { font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+  h1 { font-size: 30px; font-weight: 600; line-height: 1.25; margin: 0; text-wrap: balance; }
+  h2 { font-size: 19px; font-weight: 600; margin: 0 0 6px; text-wrap: balance; }
+  p { margin: 0; }
+  .lead { color: var(--muted); }
+
+  section { display: grid; gap: 14px; }
+  figure { margin: 0; display: grid; gap: 10px; }
+  .frame { border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 18px 16px; overflow-x: auto; }
+  figure svg { display: block; width: 100%; height: auto; min-width: 720px; color: var(--ink); }
+  figcaption { color: var(--muted); font-size: 13.5px; max-width: 80ch; }
+
+  /* SVG 구성요소 */
+  svg text { fill: var(--ink); font-family: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; }
+  svg .t { font-size: 12.5px; font-weight: 600; }
+  svg .d { font-size: 10.5px; fill: var(--muted); }
+  svg .lbl { font-size: 10.5px; fill: var(--muted); }
+  svg .lbl-ext { font-size: 10.5px; fill: var(--ext); }
+  svg .hdr { font-size: 11px; font-weight: 500; fill: var(--muted); letter-spacing: .06em; }
+  svg .box { fill: var(--panel); stroke: var(--line); stroke-width: 1.2; }
+  svg .box-mon { fill: var(--panel); stroke: var(--accent); stroke-width: 1.4; }
+  svg .box-store { fill: var(--panel-2); stroke: var(--line); stroke-width: 1.2; }
+  svg .box-core { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.4; }
+  svg .box-ext { fill: var(--ext-soft); stroke: var(--ext); stroke-width: 1.4; stroke-dasharray: 5 3; }
+  svg .box-crit { fill: var(--panel); stroke: var(--crit); stroke-width: 1.6; }
+  svg .box-warn { fill: var(--panel); stroke: var(--warn); stroke-width: 1.6; }
+  svg .edge { stroke: currentColor; stroke-width: 1.2; fill: none; }
+  svg .edge-ext { stroke: var(--ext); stroke-width: 1.2; fill: none; stroke-dasharray: 5 3; }
+  svg .edge-crit { stroke: var(--crit); stroke-width: 1.4; fill: none; }
+  svg .bus { stroke: var(--accent); stroke-width: 3; fill: none; }
+  svg .boundary { fill: none; stroke: var(--accent); stroke-width: 1.2; stroke-dasharray: 7 5; opacity: .8; }
+  svg .t-crit { fill: var(--crit); }
+  svg .t-warn { fill: var(--warn); }
+  svg .t-acc { fill: var(--accent); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 18px; font-size: 12.5px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 8px; }
+  .sw { width: 22px; height: 12px; border-radius: 2px; border: 1.4px solid var(--accent); background: var(--panel); }
+  .sw.core { background: var(--accent-soft); }
+  .sw.store { background: var(--panel-2); border-color: var(--line); }
+  .sw.ext { background: var(--ext-soft); border-color: var(--ext); border-style: dashed; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr; gap: 28px; }
+  @media (min-width: 900px) { .grid-2 { grid-template-columns: 3fr 2fr; } }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-weight: 600; font-size: 12px; letter-spacing: .04em; color: var(--muted); }
+  td code { font-size: 12px; background: var(--panel-2); padding: 1px 5px; border-radius: 3px; }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+
+  ul.rules { margin: 0; padding-left: 18px; display: grid; gap: 6px; max-width: 80ch; }
+  ul.rules li::marker { color: var(--accent); }
+</style>
+<style>
+  /* 독립 문서용 기본값 (아티팩트 호스트가 제공하던 리셋) */
+  html { color-scheme: light dark; }
+  body { margin: 0; }
+  img { max-width: 100%; }
+</style>
+</head>
+<body>
+
+
+<div class="page">
+  <header>
+    <div class="eyebrow">security-dashboard · v1.0.0 · 2026-09-09</div>
+    <h1>Sentinel Overwatch 아키텍처</h1>
+    <p class="lead">검증된 호스트 도구를 진실 원천으로 두고, 그 위에서 사실(Event)과 판단(Alert)을 분리해 한국어로 조치를 안내하는 뷰·트리아지 계층. 아래 그림은 데이터가 어디서 들어와 어디로 나가는지, 계획된 변경이 어떻게 걸러지는지, 그리고 무엇이 호스트 밖으로 나가는지를 보여준다.</p>
+  </header>
+
+  <section>
+    <h2>1. 시스템 구성과 데이터 흐름</h2>
+    <div class="legend">
+      <span><i class="sw"></i> 모니터 (사실 수집)</span>
+      <span><i class="sw core"></i> 판단·전달 핵심</span>
+      <span><i class="sw store"></i> 저장소</span>
+      <span><i class="sw ext"></i> 인터넷 경계 밖</span>
+    </div>
+    <figure>
+      <div class="frame">
+        <svg viewBox="0 0 1130 800" role="img" aria-label="호스트 진실 원천이 열한 개 모니터를 거쳐 이벤트 버스로 모이고, 사실은 SQLite 에, 판단은 알림 엔진에 저장되며, 알림 엔진과 DEFCON 감시가 속도 제한된 알림 큐를 통해 Slack 으로 나가고, 토큰으로 보호된 API 가 브라우저 대시보드에 데이터를 준다. 인터넷 밖으로 나가는 것은 Ubuntu USN 과 뉴스 피드 읽기, 뉴스 제목 번역, Slack 웹훅뿐이다.">
+          <defs>
+            <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <polygon points="0,0 10,5 0,10" fill="currentColor"></polygon>
+            </marker>
+            <marker id="ah-ext" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <polygon points="0,0 10,5 0,10" fill="var(--ext)"></polygon>
+            </marker>
+          </defs>
+
+          <!-- 계층 헤더 -->
+          <text x="24" y="44" class="hdr">호스트 진실 원천 (root 소유 데몬·로그·/proc)</text>
+
+          <!-- Layer 1: sources -->
+          <rect x="24" y="56" width="170" height="62" rx="4" class="box"></rect>
+          <text x="109" y="80" text-anchor="middle" class="t mono">auth.log · audit.log</text>
+          <text x="109" y="98" text-anchor="middle" class="d">rsyslog · auditd (execve, 파일 쓰기)</text>
+
+          <rect x="208" y="56" width="170" height="62" rx="4" class="box"></rect>
+          <text x="293" y="80" text-anchor="middle" class="t mono">dpkg.log · apt</text>
+          <text x="293" y="98" text-anchor="middle" class="d">패키지 변경 · 미적용 업데이트</text>
+
+          <rect x="392" y="56" width="170" height="62" rx="4" class="box"></rect>
+          <text x="477" y="80" text-anchor="middle" class="t mono">/proc (psutil)</text>
+          <text x="477" y="98" text-anchor="middle" class="d">소켓 · 프로세스 · fd · 리소스</text>
+
+          <rect x="576" y="56" width="170" height="62" rx="4" class="box"></rect>
+          <text x="661" y="80" text-anchor="middle" class="t mono">/etc · cron · systemd · Lynis</text>
+          <text x="661" y="98" text-anchor="middle" class="d">sudoers, keys, modprobe.d · SUID · 감사 보고서</text>
+
+          <rect x="760" y="56" width="170" height="62" rx="4" class="box"></rect>
+          <text x="845" y="80" text-anchor="middle" class="t mono">fail2ban (jail sshd)</text>
+          <text x="845" y="98" text-anchor="middle" class="d">차단의 진실 원천 · root 소켓</text>
+
+          <rect x="944" y="56" width="170" height="62" rx="4" class="box-ext"></rect>
+          <text x="1029" y="80" text-anchor="middle" class="t">Ubuntu USN · 뉴스 RSS</text>
+          <text x="1029" y="98" text-anchor="middle" class="d">공개 URL 읽기만 · 전송 없음</text>
+
+          <!-- Layer 1 → 2 arrows -->
+          <line x1="109" y1="118" x2="109" y2="188" class="edge" marker-end="url(#ah)"></line>
+          <text x="116" y="150" class="lbl">tail · 로테이션 감지</text>
+          <text x="116" y="163" class="lbl">audit 레코드 묶음</text>
+          <line x1="293" y1="118" x2="293" y2="188" class="edge" marker-end="url(#ah)"></line>
+          <text x="300" y="156" class="lbl">tail · apt list 6h</text>
+          <line x1="477" y1="118" x2="477" y2="188" class="edge" marker-end="url(#ah)"></line>
+          <text x="484" y="156" class="lbl">15–30s 샘플링</text>
+          <line x1="661" y1="118" x2="661" y2="188" class="edge" marker-end="url(#ah)"></line>
+          <text x="668" y="150" class="lbl">sha256 60s · 스캔 5m</text>
+          <text x="668" y="163" class="lbl">Lynis 보고서 diff (일 1회)</text>
+          <line x1="845" y1="118" x2="845" y2="188" class="edge" marker-start="url(#ah)" marker-end="url(#ah)"></line>
+          <text x="852" y="150" class="lbl mono">sudo -n fail2ban-client</text>
+          <text x="852" y="163" class="lbl">banned · banip · unbanip</text>
+          <line x1="1029" y1="118" x2="1029" y2="188" class="edge-ext" marker-end="url(#ah-ext)"></line>
+          <text x="1036" y="156" class="lbl-ext">1h · JSON/RSS GET</text>
+
+          <!-- Backend boundary -->
+          <rect x="8" y="178" width="1114" height="502" rx="8" class="boundary"></rect>
+          <text x="20" y="196" class="hdr t-acc">secdash.service · User=secdash (adm) · CAP_DAC_READ_SEARCH · CAP_SYS_PTRACE · CAP_NET_ADMIN · 127.0.0.1:8000</text>
+
+          <!-- Layer 2: monitors -->
+          <rect x="24" y="206" width="170" height="66" rx="4" class="box-mon"></rect>
+          <text x="109" y="228" text-anchor="middle" class="t">AuthLog · Audit</text>
+          <text x="109" y="244" text-anchor="middle" class="d">실패 창 집계 · 실패 후 성공 · 새 IP</text>
+          <text x="109" y="258" text-anchor="middle" class="d">execve 즉시 탐지 · 누가 썼나</text>
+
+          <rect x="208" y="206" width="170" height="66" rx="4" class="box-mon"></rect>
+          <text x="293" y="228" text-anchor="middle" class="t">UpdateMonitor</text>
+          <text x="293" y="244" text-anchor="middle" class="d">설치/제거/업그레이드</text>
+          <text x="293" y="258" text-anchor="middle" class="d">보안 업데이트 미적용</text>
+
+          <rect x="392" y="206" width="170" height="66" rx="4" class="box-mon"></rect>
+          <text x="477" y="228" text-anchor="middle" class="t">Network · Process · Resource</text>
+          <text x="477" y="244" text-anchor="middle" class="d">새 리스너(프로세스 귀속) · 리버스 셸</text>
+          <text x="477" y="258" text-anchor="middle" class="d">/tmp 실행 · 리소스 · NTP 동기화</text>
+
+          <rect x="576" y="206" width="170" height="66" rx="4" class="box-mon"></rect>
+          <text x="661" y="228" text-anchor="middle" class="t">Integrity · Persistence · Lynis</text>
+          <text x="661" y="244" text-anchor="middle" class="d">DB 기준선 · diff · 패키지 소유 상관</text>
+          <text x="661" y="258" text-anchor="middle" class="d">새 경고만 알림 · 지수 하락 알림</text>
+
+          <rect x="760" y="206" width="170" height="66" rx="4" class="box-mon"></rect>
+          <text x="845" y="228" text-anchor="middle" class="t">Fail2banSync · BanManager</text>
+          <text x="845" y="244" text-anchor="middle" class="d">sshd·recidive 30s 동기화</text>
+          <text x="845" y="258" text-anchor="middle" class="d">연동 불가 시 "차단 권고"</text>
+
+          <rect x="944" y="206" width="170" height="66" rx="4" class="box-mon"></rect>
+          <text x="1029" y="228" text-anchor="middle" class="t">IntelMonitor</text>
+          <text x="1029" y="244" text-anchor="middle" class="d">USN 영향 패키지 ↔ dpkg 설치 버전</text>
+          <text x="1029" y="258" text-anchor="middle" class="d">로컬 비교 · 뉴스 수집</text>
+
+          <!-- Layer 2 → bus -->
+          <line x1="109" y1="272" x2="109" y2="308" class="edge"></line>
+          <line x1="293" y1="272" x2="293" y2="308" class="edge"></line>
+          <line x1="477" y1="272" x2="477" y2="308" class="edge"></line>
+          <line x1="661" y1="272" x2="661" y2="308" class="edge"></line>
+          <line x1="845" y1="272" x2="845" y2="308" class="edge"></line>
+          <line x1="1029" y1="272" x2="1029" y2="308" class="edge"></line>
+          <line x1="60" y1="308" x2="1080" y2="308" class="bus"></line>
+          <text x="60" y="326" class="lbl">11개 모니터: health(ok/degraded/down) 노출 · 사실은 log_event, 판단은 raise_alert · 패키지 작업의 부산물·mask·snap 은 사실로만 남김</text>
+
+          <!-- bus → layer 3 -->
+          <line x1="272" y1="308" x2="272" y2="356" class="edge" marker-end="url(#ah)"></line>
+          <text x="280" y="346" class="lbl">log_event · Event(사실)</text>
+          <line x1="661" y1="308" x2="661" y2="356" class="edge" marker-end="url(#ah)"></line>
+          <text x="669" y="346" class="lbl">raise_alert · Alert(판단)</text>
+          <line x1="1047" y1="308" x2="1047" y2="356" class="edge" marker-end="url(#ah)"></line>
+          <text x="1055" y="346" class="lbl">logging</text>
+
+          <!-- Layer 3 -->
+          <rect x="24" y="358" width="496" height="168" rx="4" class="box-store"></rect>
+          <text x="40" y="382" class="t">SQLite (WAL · busy timeout 30s)</text>
+          <text x="40" y="404" class="d mono">events            원시 이벤트 · description_ko · is_simulation · 30일 보존</text>
+          <text x="40" y="420" class="d mono">alerts            OPEN/ACKED/RESOLVED · fingerprint · count · action_ko</text>
+          <text x="40" y="436" class="d mono">integrity_baselines  파일·cron·systemd·SUID 기준선 + 스냅샷(diff 용)</text>
+          <text x="40" y="452" class="d mono">known_login_ips · known_listeners   처음 보는 IP · 리스너 기준선</text>
+          <text x="40" y="468" class="d mono">blocked_ips       fail2ban 미러 (jail 별) · RECOMMENDED</text>
+          <text x="40" y="484" class="d mono">maintenance_windows  점검 모드 창 (시간·메모·선언자)</text>
+          <text x="40" y="500" class="d mono">translation_cache 뉴스 번역·긴급도 (인텔 전용)</text>
+
+          <rect x="580" y="358" width="160" height="80" rx="4" class="box-core"></rect>
+          <text x="660" y="380" text-anchor="middle" class="t">알림 엔진</text>
+          <text x="660" y="397" text-anchor="middle" class="d">fingerprint 중복 억제 · 상승 시 재오픈</text>
+          <text x="660" y="411" text-anchor="middle" class="d">점검 모드: 계획 변경은 자동 ACK</text>
+          <text x="660" y="425" text-anchor="middle" class="d">ack · ack-all · resolve · auto_resolve</text>
+
+          <rect x="580" y="456" width="160" height="70" rx="4" class="box-core"></rect>
+          <text x="660" y="478" text-anchor="middle" class="t">DefconWatcher</text>
+          <text x="660" y="495" text-anchor="middle" class="d">10s · 미확인 알림만 집계</text>
+          <text x="660" y="509" text-anchor="middle" class="d">SAFE / DEFCON 3 / DEFCON 1</text>
+
+          <rect x="800" y="358" width="160" height="168" rx="4" class="box-core"></rect>
+          <text x="880" y="382" text-anchor="middle" class="t">알림 큐 (Notifier)</text>
+          <text x="880" y="400" text-anchor="middle" class="d">워커 스레드 1개</text>
+          <text x="880" y="414" text-anchor="middle" class="d">분당 10건 · 초과분 집계</text>
+          <text x="880" y="428" text-anchor="middle" class="d">모니터를 막지 않음</text>
+          <text x="880" y="452" text-anchor="middle" class="d">새 알림 · 심각도 상승</text>
+          <text x="880" y="466" text-anchor="middle" class="d">DEFCON 상승 · 복구</text>
+
+          <rect x="980" y="358" width="134" height="80" rx="4" class="box-store"></rect>
+          <text x="1047" y="380" text-anchor="middle" class="t">파일 로그</text>
+          <text x="1047" y="397" text-anchor="middle" class="d mono">security.log (30일)</text>
+          <text x="1047" y="411" text-anchor="middle" class="d mono">critical.log · daily/</text>
+          <text x="1047" y="425" text-anchor="middle" class="d">사후 분석용</text>
+
+          <!-- Layer 3 arrows -->
+          <line x1="580" y1="398" x2="522" y2="398" class="edge" marker-end="url(#ah)"></line>
+          <text x="551" y="392" text-anchor="middle" class="lbl">alerts</text>
+          <line x1="580" y1="496" x2="522" y2="496" class="edge" marker-end="url(#ah)"></line>
+          <text x="551" y="490" text-anchor="middle" class="lbl">읽기</text>
+          <line x1="740" y1="398" x2="798" y2="398" class="edge" marker-end="url(#ah)"></line>
+          <text x="769" y="392" text-anchor="middle" class="lbl">enqueue</text>
+          <line x1="740" y1="496" x2="798" y2="496" class="edge" marker-end="url(#ah)"></line>
+          <text x="769" y="490" text-anchor="middle" class="lbl">전이</text>
+
+          <!-- Layer 3 → 4 -->
+          <line x1="272" y1="526" x2="272" y2="574" class="edge" marker-start="url(#ah)" marker-end="url(#ah)"></line>
+          <text x="280" y="554" class="lbl">조회 · ack/resolve · 차단/해제 요청</text>
+          <line x1="880" y1="526" x2="880" y2="574" class="edge-ext" marker-end="url(#ah-ext)"></line>
+          <text x="888" y="554" class="lbl-ext">webhook POST</text>
+
+          <!-- Layer 4 -->
+          <rect x="24" y="576" width="496" height="84" rx="4" class="box-core"></rect>
+          <text x="40" y="600" class="t">FastAPI · uvicorn 127.0.0.1:8000</text>
+          <text x="40" y="618" class="d">모든 /api/* 에 X-API-Token 미들웨어 (커스텀 헤더 → preflight → CSRF 차단)</text>
+          <text x="40" y="634" class="d mono">stats · alerts(+ack-all) · maintenance · accounts · hardening · host · blocked · intel</text>
+          <text x="40" y="650" class="d">frontend/dist 를 정적 서빙 · 한국어 문장은 korean.py 템플릿 · 점검 모드 시작/종료</text>
+
+          <rect x="580" y="576" width="160" height="84" rx="4" class="box-ext"></rect>
+          <text x="660" y="600" text-anchor="middle" class="t">번역 · 긴급도 API</text>
+          <text x="660" y="618" text-anchor="middle" class="d">Claude → Google 폴백</text>
+          <text x="660" y="632" text-anchor="middle" class="d">뉴스 제목만 전송</text>
+          <text x="660" y="646" text-anchor="middle" class="d">urgency enum 검증</text>
+
+          <rect x="800" y="576" width="160" height="84" rx="4" class="box-ext"></rect>
+          <text x="880" y="600" text-anchor="middle" class="t">Slack</text>
+          <text x="880" y="618" text-anchor="middle" class="d">Incoming Webhook</text>
+          <text x="880" y="632" text-anchor="middle" class="d">[호스트명] 제목 · 요약 · 조치</text>
+          <text x="880" y="646" text-anchor="middle" class="d">점검 모드 중엔 발송 안 함</text>
+
+          <line x1="520" y1="618" x2="578" y2="618" class="edge-ext" marker-end="url(#ah-ext)"></line>
+          <text x="549" y="612" text-anchor="middle" class="lbl-ext">/api/intel</text>
+
+          <!-- Layer 4 → 5 -->
+          <line x1="272" y1="660" x2="272" y2="708" class="edge" marker-start="url(#ah)" marker-end="url(#ah)"></line>
+          <text x="280" y="688" class="lbl">JSON · 5s 폴링 · X-API-Token</text>
+
+          <!-- Layer 5: browser -->
+          <rect x="24" y="710" width="496" height="70" rx="4" class="box"></rect>
+          <text x="40" y="734" class="t">브라우저 · React 대시보드</text>
+          <text x="40" y="752" class="d">알림 확인/해결 · 점검 모드 · 계정 상태(잠금/되살리기) · 강화 작업 목록 · USB 차단 상태 · 모니터 health</text>
+          <text x="40" y="768" class="d mono">원격: ssh -L 8000:127.0.0.1:8000 서버</text>
+
+          <text x="560" y="740" class="d">호스트 밖으로 나가는 것은 세 가지뿐:</text>
+          <text x="560" y="756" class="d">공개 피드 GET · 뉴스 제목 번역 · Slack 웹훅.</text>
+          <text x="560" y="772" class="d">auth.log 줄, sudo 명령, 패키지 목록은 나가지 않는다.</text>
+        </svg>
+      </div>
+      <figcaption>데이터는 위에서 아래로만 흐른다. 호스트 데몬과 로그(1층)를 열한 모니터가 읽고(2층), 사실은 SQLite 에, 판단은 알림 엔진에 쌓인다(3층). API 는 저장소만 읽고 쓰며(4층), 브라우저는 API 만 본다(5층). 점선 상자만이 인터넷 경계를 넘는다.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>2. 사건 하나가 지나가는 길: SSH 브루트포스</h2>
+    <figure>
+      <div class="frame">
+        <svg viewBox="0 0 1130 250" role="img" aria-label="auth.log 의 실패 줄이 파싱되어 INFO 이벤트가 되고, 30분 창에서 5회를 넘으면 WARNING 알림과 fail2ban 차단이 일어나며, 같은 IP 에서 로그인이 성공하면 CRITICAL 알림이 되어 DEFCON 1 과 Slack 알림으로 이어진다.">
+          <defs>
+            <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <polygon points="0,0 10,5 0,10" fill="currentColor"></polygon>
+            </marker>
+            <marker id="ah2-crit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <polygon points="0,0 10,5 0,10" fill="var(--crit)"></polygon>
+            </marker>
+          </defs>
+
+          <!-- Row 1 -->
+          <rect x="16" y="28" width="196" height="64" rx="4" class="box"></rect>
+          <text x="114" y="50" text-anchor="middle" class="t mono">auth.log</text>
+          <text x="114" y="67" text-anchor="middle" class="d mono">Failed password for root</text>
+          <text x="114" y="81" text-anchor="middle" class="d mono">from 203.0.113.9 ×5</text>
+
+          <line x1="212" y1="60" x2="252" y2="60" class="edge" marker-end="url(#ah2)"></line>
+          <rect x="254" y="28" width="176" height="64" rx="4" class="box-mon"></rect>
+          <text x="342" y="50" text-anchor="middle" class="t">parse_line</text>
+          <text x="342" y="67" text-anchor="middle" class="d">user · ip(v4/v6) · method</text>
+          <text x="342" y="81" text-anchor="middle" class="d">정확 일치 · substring 아님</text>
+
+          <line x1="430" y1="60" x2="470" y2="60" class="edge" marker-end="url(#ah2)"></line>
+          <rect x="472" y="28" width="176" height="64" rx="4" class="box-store"></rect>
+          <text x="560" y="50" text-anchor="middle" class="t">Event AUTH_FAILURE</text>
+          <text x="560" y="67" text-anchor="middle" class="d">severity INFO (사실)</text>
+          <text x="560" y="81" text-anchor="middle" class="d">DEFCON 에 영향 없음</text>
+
+          <line x1="648" y1="60" x2="688" y2="60" class="edge" marker-end="url(#ah2)"></line>
+          <rect x="690" y="28" width="176" height="64" rx="4" class="box-warn"></rect>
+          <text x="778" y="50" text-anchor="middle" class="t t-warn">Alert brute_force</text>
+          <text x="778" y="67" text-anchor="middle" class="d">30분 창 ≥ 5회 → WARNING</text>
+          <text x="778" y="81" text-anchor="middle" class="d">fingerprint brute_force:ip</text>
+
+          <line x1="866" y1="60" x2="906" y2="60" class="edge" marker-end="url(#ah2)"></line>
+          <rect x="908" y="28" width="206" height="64" rx="4" class="box-core"></rect>
+          <text x="1011" y="50" text-anchor="middle" class="t">BanManager → fail2ban</text>
+          <text x="1011" y="67" text-anchor="middle" class="d mono">set sshd banip 203.0.113.9</text>
+          <text x="1011" y="81" text-anchor="middle" class="d">불가 시 RECOMMENDED + 명령 표시</text>
+
+          <!-- Row 2 -->
+          <rect x="16" y="150" width="196" height="64" rx="4" class="box"></rect>
+          <text x="114" y="172" text-anchor="middle" class="t mono">auth.log</text>
+          <text x="114" y="189" text-anchor="middle" class="d mono">Accepted password for root</text>
+          <text x="114" y="203" text-anchor="middle" class="d mono">from 203.0.113.9</text>
+
+          <line x1="212" y1="182" x2="252" y2="182" class="edge" marker-end="url(#ah2)"></line>
+          <rect x="254" y="150" width="176" height="64" rx="4" class="box-mon"></rect>
+          <text x="342" y="172" text-anchor="middle" class="t">상관 규칙</text>
+          <text x="342" y="189" text-anchor="middle" class="d">같은 IP 에 실패 이력 있음</text>
+          <text x="342" y="203" text-anchor="middle" class="d">+ 처음 보는 IP · root 로그인</text>
+
+          <line x1="430" y1="182" x2="470" y2="182" class="edge-crit" marker-end="url(#ah2-crit)"></line>
+          <rect x="472" y="150" width="176" height="64" rx="4" class="box-crit"></rect>
+          <text x="560" y="172" text-anchor="middle" class="t t-crit">Alert login_after_failures</text>
+          <text x="560" y="189" text-anchor="middle" class="d">CRITICAL · 근거 = 로그 줄</text>
+          <text x="560" y="203" text-anchor="middle" class="d">조치: who · pkill -u · 키 점검</text>
+
+          <line x1="648" y1="182" x2="688" y2="182" class="edge-crit" marker-end="url(#ah2-crit)"></line>
+          <rect x="690" y="150" width="176" height="64" rx="4" class="box-core"></rect>
+          <text x="778" y="172" text-anchor="middle" class="t">DefconWatcher</text>
+          <text x="778" y="189" text-anchor="middle" class="d">미확인 CRITICAL 존재</text>
+          <text x="778" y="203" text-anchor="middle" class="d t-crit">SAFE → DEFCON 1</text>
+
+          <line x1="866" y1="182" x2="906" y2="182" class="edge-crit" marker-end="url(#ah2-crit)"></line>
+          <rect x="908" y="150" width="206" height="64" rx="4" class="box-ext"></rect>
+          <text x="1011" y="172" text-anchor="middle" class="t">Slack · 대시보드</text>
+          <text x="1011" y="189" text-anchor="middle" class="d">🔴 [CRITICAL] 실패 후 로그인 성공</text>
+          <text x="1011" y="203" text-anchor="middle" class="d">확인(ack) 하면 DEFCON 에서 제외</text>
+
+          <!-- vertical link -->
+          <line x1="778" y1="92" x2="778" y2="148" class="edge" stroke-dasharray="3 3"></line>
+          <text x="786" y="124" class="lbl">같은 IP 의 실패 창 유지</text>
+          <text x="16" y="128" class="lbl">시뮬레이션([SIMULATION] 태그)은 같은 길을 가되 is_simulation=1 로 표시되어 DEFCON · Slack · fail2ban 에 닿지 않는다.</text>
+        </svg>
+      </div>
+      <figcaption>같은 로그 파일에서 시작하지만 첫 줄은 사실(INFO)에 그치고, 창 집계를 넘긴 순간에만 경고 알림과 차단 요청이 생긴다. 실패 이력이 있는 IP 의 성공 로그인은 곧바로 긴급 알림이며, DEFCON 전이와 Slack 발송은 GET 핸들러가 아니라 감시 스레드가 담당한다.</figcaption>
+    </figure>
+  </section>
+
+  <div class="grid-2">
+    <section>
+      <h2>3. 알림의 생애주기와 DEFCON</h2>
+      <figure>
+        <div class="frame">
+          <svg viewBox="0 0 640 230" role="img" aria-label="알림은 OPEN 에서 시작해 확인하면 ACKED, 해결하면 RESOLVED 가 된다. 심각도가 오르면 ACKED 에서 다시 OPEN 으로 돌아가고, 조건이 사라지면 시스템이 자동으로 RESOLVED 처리한다. DEFCON 은 OPEN 상태의 알림만 센다.">
+            <defs>
+              <marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <polygon points="0,0 10,5 0,10" fill="currentColor"></polygon>
+              </marker>
+            </defs>
+            <rect x="20" y="70" width="150" height="60" rx="30" class="box-crit"></rect>
+            <text x="95" y="96" text-anchor="middle" class="t t-crit">OPEN</text>
+            <text x="95" y="114" text-anchor="middle" class="d">미확인 · DEFCON 에 반영</text>
+
+            <rect x="245" y="70" width="150" height="60" rx="30" class="box-core"></rect>
+            <text x="320" y="96" text-anchor="middle" class="t">ACKED</text>
+            <text x="320" y="114" text-anchor="middle" class="d">대응 중 · DEFCON 제외</text>
+
+            <rect x="470" y="70" width="150" height="60" rx="30" class="box-store"></rect>
+            <text x="545" y="96" text-anchor="middle" class="t">RESOLVED</text>
+            <text x="545" y="114" text-anchor="middle" class="d">90일 후 삭제</text>
+
+            <line x1="170" y1="92" x2="243" y2="92" class="edge" marker-end="url(#ah3)"></line>
+            <text x="206" y="84" text-anchor="middle" class="lbl">확인(ack)</text>
+            <line x1="395" y1="92" x2="468" y2="92" class="edge" marker-end="url(#ah3)"></line>
+            <text x="431" y="84" text-anchor="middle" class="lbl">해결(resolve)</text>
+
+            <path d="M 243 112 L 170 112" class="edge" marker-end="url(#ah3)"></path>
+            <text x="206" y="126" text-anchor="middle" class="lbl">심각도 상승 → 재오픈</text>
+
+            <path d="M 95 130 L 95 180 L 545 180 L 545 132" class="edge" marker-end="url(#ah3)"></path>
+            <text x="320" y="196" text-anchor="middle" class="lbl">auto_resolve · 조건 해소 (CPU 정상화, 보안 업데이트 적용 등) · 직접 해결도 가능</text>
+
+            <path d="M 60 70 L 60 40 L 130 40 L 130 70" class="edge" marker-end="url(#ah3)"></path>
+            <text x="95" y="30" text-anchor="middle" class="lbl">같은 fingerprint 재발 → count +1</text>
+
+            <path d="M 320 40 L 320 70" class="edge" marker-end="url(#ah3)"></path>
+            <text x="320" y="30" text-anchor="middle" class="lbl">점검 모드 중 계획 변경 → 처음부터 ACKED (Slack 없음)</text>
+            <text x="20" y="220" class="lbl">DEFCON 1 = OPEN CRITICAL 존재 · DEFCON 3 = OPEN WARNING 존재 · SAFE = OPEN 없음 · 침입 신호는 점검 모드와 무관</text>
+          </svg>
+        </div>
+        <figcaption>운영자가 "봤다"고 표시하는 것만으로 레벨이 내려가고, 원인이 재발하면 새 알림 대신 횟수가 올라간다. 점검 모드를 켜 두면 설정·패키지·영속화 알림은 근거만 남기고 ACKED 로 태어난다. 브루트포스, 실패 후 성공, 리버스 셸, 계정 변경 같은 침입 신호는 언제나 OPEN 이다.</figcaption>
+      </figure>
+    </section>
+
+    <section>
+      <h2>4. 왜 이 구조인가</h2>
+      <ul class="rules">
+        <li><strong>진실 원천은 하나씩.</strong> 차단은 fail2ban, 인증은 auth.log, 패키지는 dpkg, 취약점은 USN. 대시보드는 그 관찰을 해석할 뿐 두 번째 사실을 만들지 않는다.</li>
+        <li><strong>조용히 실패하지 않는다.</strong> 모든 모니터는 health 와 해결 명령을 노출한다. 읽지 못하는 파일은 "정상"이 아니라 "제한"이다.</li>
+        <li><strong>사실과 판단의 분리.</strong> 원시 이벤트는 근거로 남고, 알림만이 사람의 시간을 요구한다. 심각도는 알림에만 붙는다.</li>
+        <li><strong>호스트 로그는 안에 머문다.</strong> 한국어는 템플릿으로 만든다. 외부 API 에 나가는 것은 공개 뉴스 제목뿐이다.</li>
+        <li><strong>계획된 변경은 알림이 아니다.</strong> 패키지가 만든 cron·SUID·설정, mask 링크, snap 갱신은 소유 패키지와 최근 패키지 작업을 대조해 사실로만 남긴다. 운영자는 점검 모드로 작업 창을 선언한다. sudoers·sshd_config·authorized_keys·ld.so.preload 와 침입 신호는 예외 없이 알린다.</li>
+        <li><strong>최소 권한.</strong> root 대신 전용 계정 + 세 개의 capability + fail2ban-client 일곱 명령만 허용하는 sudoers.</li>
+      </ul>
+    </section>
+  </div>
+
+  <section>
+    <h2>5. 신뢰 경계와 권한</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>경계</th><th>넘는 것</th><th>허용 방법</th><th>막는 것</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>root 데몬 → secdash 프로세스</td><td>auth.log 읽기</td><td><code>adm</code> 그룹</td><td>쓰기 · 다른 로그</td></tr>
+          <tr><td>보호 파일 → secdash</td><td>/etc/shadow, sudoers, 타 사용자 authorized_keys, cron spool, audit.log, lynis-report.dat</td><td><code>CAP_DAC_READ_SEARCH</code></td><td>쓰기 (ProtectSystem=strict)</td></tr>
+          <tr><td>타 사용자 프로세스 → secdash</td><td>exe · cwd · fd · 소켓 귀속</td><td><code>CAP_SYS_PTRACE</code> · <code>CAP_NET_ADMIN</code></td><td>ptrace attach 는 사용하지 않음</td></tr>
+          <tr><td>secdash → fail2ban</td><td>status · banned · banip · unbanip</td><td><code>sudo -n fail2ban-client</code> (sudoers 일곱 명령)</td><td>그 밖의 모든 root 명령</td></tr>
+          <tr><td>브라우저 → API</td><td>조회 · ack/resolve · 차단/해제</td><td><code>X-API-Token</code> 헤더 · 127.0.0.1 바인드 · SSH 터널</td><td>토큰 없는 요청(401) · 타 출처 CSRF</td></tr>
+          <tr><td>호스트 → 인터넷</td><td>USN JSON · 뉴스 RSS · 뉴스 제목 번역 · Slack 웹훅</td><td>아웃바운드 HTTPS</td><td>로그 줄 · 명령줄 · 패키지 목록 · IP</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>6. 설치와 강화의 경로</h2>
+    <figure>
+      <div class="frame">
+        <svg viewBox="0 0 1130 130" role="img" aria-label="빌드 머신에서 릴리스 압축본을 만들고, 대상 서버에서 install.sh 가 계정·권한·systemd·sudoers 와 fail2ban·auditd·Lynis 설정을 설치하며, 그 뒤 harden.sh 를 dry-run 으로 검토하고 apply 로 적용한다. Lynis 결과는 대시보드로 돌아와 다음 결정을 만든다.">
+          <defs>
+            <marker id="ah6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <polygon points="0,0 10,5 0,10" fill="currentColor"></polygon>
+            </marker>
+          </defs>
+          <rect x="16" y="24" width="200" height="70" rx="4" class="box"></rect>
+          <text x="116" y="48" text-anchor="middle" class="t">빌드 머신</text>
+          <text x="116" y="65" text-anchor="middle" class="d mono">deploy/build-release.sh</text>
+          <text x="116" y="80" text-anchor="middle" class="d">tar.gz + sha256 · dist 포함 · 비밀 제외</text>
+
+          <line x1="216" y1="59" x2="256" y2="59" class="edge" marker-end="url(#ah6)"></line>
+          <text x="236" y="50" text-anchor="middle" class="lbl">scp</text>
+          <rect x="258" y="24" width="240" height="70" rx="4" class="box-core"></rect>
+          <text x="378" y="48" text-anchor="middle" class="t">install.sh (대상 서버)</text>
+          <text x="378" y="65" text-anchor="middle" class="d">secdash 계정 · capability · systemd · sudoers</text>
+          <text x="378" y="80" text-anchor="middle" class="d">apply-host-config: fail2ban·auditd·Lynis 설정</text>
+
+          <line x1="498" y1="59" x2="538" y2="59" class="edge" marker-end="url(#ah6)"></line>
+          <rect x="540" y="24" width="240" height="70" rx="4" class="box-core"></rect>
+          <text x="660" y="48" text-anchor="middle" class="t">harden.sh</text>
+          <text x="660" y="65" text-anchor="middle" class="d">dry-run 으로 변경 목록 검토 → --apply</text>
+          <text x="660" y="80" text-anchor="middle" class="d">서버 역할별 플래그 (USB·GRUB·nginx·CUPS·X11)</text>
+
+          <line x1="780" y1="59" x2="820" y2="59" class="edge" marker-end="url(#ah6)"></line>
+          <rect x="822" y="24" width="292" height="70" rx="4" class="box"></rect>
+          <text x="968" y="48" text-anchor="middle" class="t">Lynis 크론 → 강화 작업 목록</text>
+          <text x="968" y="65" text-anchor="middle" class="d">새 경고·지수 하락만 알림 · 제안은 백로그</text>
+          <text x="968" y="80" text-anchor="middle" class="d mono">lynis-custom.prf: 수용·해결 항목 skip</text>
+
+          <path d="M 968 94 L 968 112 L 660 112 L 660 96" class="edge" marker-end="url(#ah6)"></path>
+          <text x="814" y="124" text-anchor="middle" class="lbl">결정(적용/수용/해결)이 다음 harden.sh 와 프로파일로 되돌아간다</text>
+        </svg>
+      </div>
+      <figcaption>대상 서버에는 git 이나 node 가 필요 없다. 설치 스크립트가 호스트 도구까지 갖추고, 강화는 항상 dry-run 을 먼저 보여준 뒤 적용한다. Lynis 가 남긴 제안은 알림이 아니라 결정 목록이며, 결정은 프로파일과 스크립트 플래그로 기록된다.</figcaption>
+    </figure>
+  </section>
+</div>
+
+</body>
+</html>

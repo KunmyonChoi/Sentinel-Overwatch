@@ -84,6 +84,7 @@ def _post_slack(title: str, message: str, color: str):
     if not config.SLACK_WEBHOOK_URL:
         logger.debug("SLACK_WEBHOOK_URL not set; skipping notification")
         return
+    title = f"[{config.HOSTNAME}] {title}"   # 여러 서버가 같은 웹훅을 쓸 때 출처 구분
     payload = {
         "text": f"*{title}*\n{message}",
         "attachments": [{"color": color, "fields": [{"title": "Alert Details", "value": message, "short": False}]}],

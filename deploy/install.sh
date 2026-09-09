@@ -19,15 +19,23 @@ echo ">> 2/6 전용 계정"
 id secdash >/dev/null 2>&1 || useradd --system --home-dir "$DEST" --shell /usr/sbin/nologin secdash
 usermod -aG adm secdash
 
-echo ">> 3/6 코드 복사 및 빌드"
+echo ">> 3/6 코드 복사 및 빌드 (버전 $(cat "$SRC/VERSION" 2>/dev/null || echo dev))"
 mkdir -p "$DEST"
-rsync -a --delete --exclude venv --exclude node_modules --exclude '*.db*' --exclude .api_token --exclude logs "$SRC/backend" "$SRC/frontend" "$SRC/deploy" "$DEST/"
-python3 -m venv "$DEST/backend/venv"
-"$DEST/backend/venv/bin/pip" install -q -r "$DEST/backend/requirements.txt"
-if command -v npm >/dev/null; then
+rsync -a --delete --exclude venv --exclude node_modules --exclude '*.db*' --exclude .api_token --exclude logs --exclude __pycache__ --exclude .env "$SRC/backend" "$SRC/frontend" "$SRC/deploy" "$DEST/"
+for f in VERSION RELEASE README.md; do [ -f "$SRC/$f" ] && cp "$SRC/$f" "$DEST/"; done
+[ -d "$SRC/docs" ] && rsync -a --delete "$SRC/docs/" "$DEST/docs/"
+[ -x "$DEST/backend/venv/bin/python" ] || python3 -m venv "$DEST/backend/venv"
+if [ -d "$SRC/wheels" ]; then
+    "$DEST/backend/venv/bin/pip" install -q --no-index --find-links "$SRC/wheels" -r "$DEST/backend/requirements.txt"
+else
+    "$DEST/backend/venv/bin/pip" install -q -r "$DEST/backend/requirements.txt"
+fi
+if [ -f "$DEST/frontend/dist/index.html" ]; then
+    echo "   빌드된 프론트엔드 사용 (frontend/dist)"
+elif command -v npm >/dev/null; then
     (cd "$DEST/frontend" && rm -f .env.local && npm ci --silent && npm run build --silent)
 else
-    echo "   npm 이 없어 프론트엔드를 빌드하지 못했습니다. 다른 머신에서 frontend/dist 를 빌드해 복사하세요."
+    echo "   !! frontend/dist 가 없고 npm 도 없습니다. deploy/build-release.sh 로 만든 압축본을 사용하세요."
 fi
 mkdir -p "$DEST/backend/logs"
 chown -R secdash:secdash "$DEST"

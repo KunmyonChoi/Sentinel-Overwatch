@@ -10,6 +10,8 @@ DEST=/opt/secdash
 rsync -a --exclude venv --exclude '*.db*' --exclude .api_token --exclude logs --exclude __pycache__ --exclude .env --exclude tests "$SRC/backend/" "$DEST/backend/"
 [ -d "$SRC/frontend/dist" ] && rsync -a --delete "$SRC/frontend/dist/" "$DEST/frontend/dist/"
 rsync -a "$SRC/deploy/" "$DEST/deploy/"
+[ -d "$SRC/docs" ] && rsync -a --delete "$SRC/docs/" "$DEST/docs/"
+for f in VERSION README.md; do [ -f "$SRC/$f" ] && cp "$SRC/$f" "$DEST/"; done
 if [ "${1:-}" = "--deps" ]; then
     "$DEST/backend/venv/bin/pip" install -q -r "$DEST/backend/requirements.txt"
 fi
@@ -21,7 +23,7 @@ if ! cmp -s "$SRC/deploy/sudoers-secdash" /etc/sudoers.d/secdash; then
     install -m 0440 -o root -g root "$SRC/deploy/sudoers-secdash" /etc/sudoers.d/secdash && visudo -cf /etc/sudoers.d/secdash
 fi
 "$SRC/deploy/apply-host-config.sh" "$SRC"
-chown -R secdash:secdash "$DEST/backend" "$DEST/frontend" 2>/dev/null || true
+chown -R secdash:secdash "$DEST/backend" "$DEST/frontend" "$DEST/docs" 2>/dev/null || true
 systemctl restart secdash
 sleep 6
 systemctl --no-pager --lines=3 status secdash | head -5

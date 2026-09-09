@@ -57,3 +57,4 @@ backend/.api_token
 *_sim
 *.db-wal
 *.db-shm
+dist-release/

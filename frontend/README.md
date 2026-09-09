@@ -1,16 +1,7 @@
-# React + Vite
+# frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sentinel Overwatch 대시보드 UI (React + Vite + Tailwind). 상위 디렉터리의 README.md 를 참고하세요.
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- 개발: 저장소 루트에서 `./start.sh` (백엔드와 함께 실행, `/api` 는 Vite 프록시)
+- 빌드: `npm run build` → `dist/` 를 백엔드가 정적 서빙 (`deploy/build-release.sh` 가 수행)
+- API 토큰은 브라우저 localStorage 에 저장되며, 개발 시 `.env.local` 의 `VITE_API_TOKEN` 으로 자동 주입됩니다.

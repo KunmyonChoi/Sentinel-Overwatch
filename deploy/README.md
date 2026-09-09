@@ -15,14 +15,28 @@
 
 ## 설치
 
+권장: 빌드 머신에서 압축본을 만들어 배포한다. 대상 서버에 git/node 가 필요 없다.
+
+```bash
+deploy/build-release.sh [--wheels]                     # 빌드 머신
+sha256sum -c secdash-<ver>.tar.gz.sha256 && tar xzf secdash-<ver>.tar.gz
+sudo secdash-<ver>/deploy/install.sh                   # 대상 서버
+```
+
+압축본에는 backend, 빌드된 frontend/dist, deploy, VERSION/RELEASE(커밋·빌드 시각)가 들어 있고 venv·DB·토큰·.env·로그는 포함되지 않는다. `--wheels` 로 pip 휠을 넣으면 인터넷이 없는 서버에도 설치된다(같은 아키텍처·파이썬 버전에서 빌드).
+
+서버별로 설치 후 채우는 것: `/etc/secdash/secdash.env`(Slack 웹훅, 토큰 고정 등), `deploy/fail2ban-secdash.conf` 의 `ignoreip`, `harden.sh` 플래그. Slack 알림 제목에는 호스트명이 붙어 여러 서버가 같은 웹훅을 써도 구분된다.
+
+저장소를 직접 clone 한 경우(npm 필요):
+
 ```bash
 sudo deploy/install.sh
 ```
 
 스크립트가 하는 일:
-1. fail2ban / rsyslog 설치·활성화, sshd jail 활성화
+1. fail2ban / rsyslog / auditd / lynis 설치·활성화, 호스트 도구 설정 반영(`apply-host-config.sh`)
 2. 전용 계정 `secdash` 생성 (+ `adm` 그룹: auth.log 읽기)
-3. `/opt/secdash` 에 복사, venv 및 프론트엔드 빌드
+3. `/opt/secdash` 에 복사, venv 생성(휠이 있으면 오프라인 설치), 빌드된 dist 가 없을 때만 npm 빌드
 4. `/etc/secdash/secdash.env` 설정 파일
 5. `/etc/sudoers.d/secdash` (fail2ban-client 만 허용) 와 systemd 유닛 설치
 6. 서비스 시작, API 토큰 출력
@@ -52,11 +66,23 @@ sudo deploy/install.sh
 ## 강화 스크립트 (Lynis 후속)
 
 ```bash
-sudo deploy/harden.sh          # dry-run: 점검 결과와 변경 예정 목록
-sudo deploy/harden.sh --apply  # 적용 (umask 027, sysctl, 코어 덤프, 모듈 차단, 배너, 옛 커널/잔재 정리 등)
+sudo deploy/harden.sh          # dry-run: 점검 결과와 변경 예정 목록 (아무것도 바꾸지 않음)
+sudo deploy/harden.sh --apply  # 적용
 ```
 
-docker 와 충돌하는 rp_filter/ip_forward, 개발을 막는 컴파일러 제한, 원격 재부팅을 막을 수 있는 GRUB 비밀번호는 건드리지 않는다.
+적용 항목: grpck 불일치 시 gshadow 동기화, 진단 패키지(needrestart 등), 옛 커널 정리(실행 중·최신·직전 1개 유지), 홈 디렉터리 750, 비밀번호 만료 정책(365/14), sysctl(docker 와 무관한 것만), login.defs(umask 027 등), 코어 덤프 비활성화, 미사용 프로토콜 모듈 차단, 민감 파일 권한(crontab·sshd_config·grub.cfg 600, cron 디렉터리 700), 로그인 배너, SSH 강화(LogLevel VERBOSE, MaxAuthTries 3, ClientAlive, X11 off), 제거된 패키지 잔재 purge.
+
+선택 플래그:
+
+| 플래그 | 용도 |
+|---|---|
+| `--disable-usb-storage` | USB 저장장치 드라이버 차단 (물리 접근 가능한 서버). 대시보드 시스템 상태 패널에서 상태와 일시 해제 명령 확인 |
+| `--grub-password-hash '<hash>'` | GRUB 메뉴 편집에 비밀번호 (`grub-mkpasswd-pbkdf2` 로 생성). 기본 항목은 unrestricted 라 무인 재부팅은 그대로 |
+| `--remove-nginx` | 서버 블록이 없는 nginx 제거 (서비스 중이면 건너뜀) |
+| `--disable-cups` | CUPS 중지·마스크 |
+| `--keep-x11` | SSH X11Forwarding 유지 |
+
+건드리지 않는 것: docker 와 충돌하는 rp_filter/ip_forward, 개발을 막는 컴파일러 제한, ssh -L 터널에 필요한 AllowTcpForwarding. 패키지를 설치·제거하는 단계는 `autoremove` 를 쓰지 않고 대상을 명시한다.
 
 ## 업데이트
 

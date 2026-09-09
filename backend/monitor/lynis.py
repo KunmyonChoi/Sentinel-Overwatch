@@ -62,6 +62,65 @@ def summarize(data: dict) -> dict:
     }
 
 
+CUSTOM_PRF = "/etc/lynis/custom.prf"
+
+
+def read_skipped(profile_path: str = CUSTOM_PRF) -> list[dict]:
+    """custom.prf 의 skip-test 항목과 바로 위 주석(이유)."""
+    out = []
+    try:
+        with open(profile_path, encoding="utf-8", errors="replace") as f:
+            lines = f.read().splitlines()
+    except OSError:
+        return out
+    pending_comment = []
+    for line in lines:
+        st = line.strip()
+        if st.startswith("#"):
+            pending_comment.append(st.lstrip("# ").strip())
+        elif st.startswith("skip-test="):
+            out.append({"id": st.split("=", 1)[1].strip(), "reason": " ".join(pending_comment)[:200]})
+            pending_comment = []
+        elif not st:
+            pending_comment = []
+    return out
+
+
+def brief_markdown(latest: dict, skipped: list[dict], host: dict, item_id: str | None = None) -> str:
+    """Claude 등 대화형 도구에 붙여넣을 수 있는 자기완결 브리프."""
+    lines = ["# Lynis 강화 작업 목록 검토 요청", ""]
+    lines.append(f"- 호스트: {host.get('hostname', '?')} · {host.get('os', '?')} · 커널 {host.get('kernel', '?')}")
+    if host.get("role"):
+        lines.append(f"- 서버 역할: {host['role']}")
+    lines.append(f"- 감사 시각: {latest.get('started', '?')} · Lynis {latest.get('lynis_version', '?')} · 강화 지수 {latest.get('hardening_index', '?')}/100")
+    lines.append("- 보안 대시보드가 이미 담당: 파일 무결성(diff), auditd execve/파일 쓰기 기록, fail2ban 연동, NTP 동기화 감시, 미적용 보안 업데이트, USN 대조")
+    lines.append("")
+    warnings = [w for w in latest.get("warnings", []) if not item_id or w["id"] == item_id]
+    suggestions = [s for s in latest.get("suggestions", []) if not item_id or s["id"] == item_id]
+    if warnings:
+        lines += ["## 경고", ""]
+        for w in warnings:
+            lines.append(f"- **{w['id']}** {w['message']}" + (f" — {w['details']}" if w.get("details") else "") + (f" (해결: {w['solution']})" if w.get("solution") else ""))
+        lines.append("")
+    if suggestions:
+        lines += ["## 제안", ""]
+        for s in suggestions:
+            lines.append(f"- **{s['id']}** {s['message']}" + (f" — {s['details']}" if s.get("details") else "") + (f" (해결: {s['solution']})" if s.get("solution") else ""))
+        lines.append("")
+    if skipped and not item_id:
+        lines += ["## 이미 결정해 건너뛰는 테스트 (다시 제안하지 말 것)", ""]
+        for k in skipped:
+            lines.append(f"- {k['id']}" + (f": {k['reason']}" if k.get("reason") else ""))
+        lines.append("")
+    lines += ["## 요청", ""]
+    if item_id:
+        lines.append(f"위 {item_id} 항목을 이 서버에서 적용 / 수용 / 이미 해결 중 무엇으로 분류해야 하는지, 적용이라면 부작용과 정확한 명령을 알려줘.")
+    else:
+        lines.append("각 항목을 (1) 지금 적용 (2) 수용하고 skip (3) 이미 다른 방식으로 해결 (4) 판단 필요 로 분류하고, 적용 항목은 부작용과 정확한 명령을 함께 제시해줘. 판단이 필요한 항목은 어떤 정보가 더 필요한지 질문해줘.")
+    lines.append("상세 확인 명령: `sudo lynis show details <TEST-ID>`")
+    return "\n".join(lines)
+
+
 class LynisMonitor(BaseMonitor):
     name = "LynisMonitor"
     label = "보안 감사 (Lynis)"

@@ -45,9 +45,15 @@ export default function SystemHealth({ stats, host }) {
     const isDefcon3 = stats?.status === 'DEFCON 3';
     const statusText = stats ? `${stats.status}` : 'ANALYZING...';
     const [timeline, setTimeline] = useState([]);
+    const [showInfo, setShowInfo] = useState(false);
 
     useEffect(() => {
-        const load = () => api('/api/stats/timeline').then(setTimeline).catch(() => {});
+        const load = () => api('/api/stats/timeline?hours=48').then(rows => setTimeline(rows.map(r => {
+            const d = new Date(r.ts);
+            const hh = String(d.getHours()).padStart(2, '0');
+            const md = `${d.getMonth() + 1}/${d.getDate()}`;
+            return { ...r, hour: `${hh}:00`, tick: d.getHours() === 0 ? md : `${hh}`, label: `${md} ${hh}:00` };
+        }))).catch(() => {});
         load();
         const iv = setInterval(load, 30000);
         return () => clearInterval(iv);
@@ -95,16 +101,21 @@ export default function SystemHealth({ stats, host }) {
             </div>
 
             <div className="mb-2">
-                <div className="text-xs text-gray-500 mb-1 font-mono">이벤트 타임라인 (24H, 시뮬레이션 제외)</div>
+                <div className="flex items-center justify-between mb-1">
+                    <div className="text-xs text-gray-500 font-mono">경고·긴급 타임라인 (48H, 시뮬레이션 제외 · 로컬 시간)</div>
+                    <label className="text-[10px] text-gray-600 flex items-center gap-1 cursor-pointer" title="정보 이벤트는 수가 많아 기본으로 숨깁니다">
+                        <input type="checkbox" checked={showInfo} onChange={e => setShowInfo(e.target.checked)} /> 정보 포함
+                    </label>
+                </div>
                 <div className="h-32 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={timeline} barCategoryGap={1}>
-                            <XAxis dataKey="hour" tick={{ fill: '#6b7280', fontSize: 9 }} axisLine={{ stroke: '#374151' }} tickLine={false} interval={2} />
+                            <XAxis dataKey="tick" tick={{ fill: '#6b7280', fontSize: 9 }} axisLine={{ stroke: '#374151' }} tickLine={false} interval={5} />
                             <YAxis tick={{ fill: '#6b7280', fontSize: 9 }} axisLine={false} tickLine={false} width={24} allowDecimals={false} />
-                            <Tooltip contentStyle={{ backgroundColor: '#0a0a0f', border: '1px solid #00ff41', fontSize: 11 }} labelStyle={{ color: '#9ca3af' }} itemStyle={{ padding: 0 }} />
+                            <Tooltip contentStyle={{ backgroundColor: '#0a0a0f', border: '1px solid #00ff41', fontSize: 11 }} labelStyle={{ color: '#9ca3af' }} itemStyle={{ padding: 0 }} labelFormatter={(_, payload) => payload?.[0]?.payload?.label || ''} />
                             <Bar dataKey="critical" stackId="a" fill="#ff0033" name="긴급" />
-                            <Bar dataKey="warning" stackId="a" fill="#eab308" name="경고" />
-                            <Bar dataKey="info" stackId="a" fill="#00ff4180" name="정보" radius={[2, 2, 0, 0]} />
+                            <Bar dataKey="warning" stackId="a" fill="#eab308" name="경고" radius={showInfo ? 0 : [2, 2, 0, 0]} />
+                            {showInfo && <Bar dataKey="info" stackId="a" fill="#00ff4180" name="정보" radius={[2, 2, 0, 0]} />}
                         </BarChart>
                     </ResponsiveContainer>
                 </div>

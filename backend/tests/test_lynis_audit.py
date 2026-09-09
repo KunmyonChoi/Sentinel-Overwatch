@@ -122,3 +122,18 @@ def test_empty_report_from_aborted_audit_does_not_alert(db, tmp_path):
     assert m.health == "degraded" and "비어" in m.health_reason
     assert db.query(Alert).filter(Alert.rule == "lynis_index_drop").count() == 0
     assert m.latest["hardening_index"] == 64   # 마지막 정상 결과 유지
+
+
+def test_brief_markdown_and_skipped_profile(tmp_path):
+    from monitor.lynis import brief_markdown, read_skipped
+    prf = tmp_path / "custom.prf"
+    prf.write_text("# secdash profile\n\n# FINT-4350 file integrity -> IntegrityMonitor\nskip-test=FINT-4350\n# HRDN-7222 compilers -> dev server\nskip-test=HRDN-7222\n")
+    skipped = read_skipped(str(prf))
+    assert skipped == [{"id": "FINT-4350", "reason": "FINT-4350 file integrity -> IntegrityMonitor"}, {"id": "HRDN-7222", "reason": "HRDN-7222 compilers -> dev server"}]
+    latest = parse_report(REPORT_V1)
+    from monitor.lynis import summarize
+    md = brief_markdown(summarize(latest), skipped, {"hostname": "srv1", "os": "Linux", "kernel": "7.0", "role": "GPU 개발 서버"})
+    assert "서버 역할: GPU 개발 서버" in md and "**KRNL-5830**" in md and "**SSH-7408**" in md and "AllowTcpForwarding" in md
+    assert "FINT-4350" in md and "## 요청" in md
+    one = brief_markdown(summarize(latest), skipped, {"hostname": "srv1"}, item_id="SSH-7408")
+    assert "SSH-7408" in one and "KRNL-5830" not in one and "건너뛰는" not in one
