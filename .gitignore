@@ -71,3 +71,9 @@ docs/ux/mockups/plain-language-screens.html
 
 # 덱 검증용 스크린샷 (build_tutorial_deck.py + verify_deck.py 로 언제든 재생성)
 docs/ux/shots/
+
+# 영상 스케치 미리보기 (build_sketches.py 로 재생성)
+docs/video/*/.sketches/
+docs/video/*/.hyperframes/
+docs/video/*/out/
+docs/video/*/node_modules/

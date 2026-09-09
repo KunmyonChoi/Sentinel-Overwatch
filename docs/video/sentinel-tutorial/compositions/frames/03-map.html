@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>03-map</title>
+  </head>
+  <body>
+    <template>
+      <style>
+        #f03-map { position: relative; width: 1920px; height: 1080px; overflow: hidden;
+                  background: #eef3f0; }
+        #f03-map * { box-sizing: border-box; margin: 0; padding: 0; }
+        #f03-map .clip { position: absolute; inset: 0; }
+      </style>
+      <div id="f03-map" data-composition-id="f03-map" data-start="0"
+           data-width="1920" data-height="1080" data-duration="47">
+        <div class="clip" data-start="0" data-duration="47">
+          <div style="position:absolute;left:0px;top:0px;width:1920px;height:860px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#eef3f0;"></div>
+          <div style="position:absolute;left:150px;top:70px;width:1400px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:30px;font-weight:700;color:#0e7c6b;line-height:1.5;text-align:left;word-break:keep-all;">2장</div>
+          <div style="position:absolute;left:150px;top:112px;width:1500px;height:82px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:62px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;">화면 구성</div>
+          <div style="position:absolute;left:150px;top:250px;width:1060px;height:250px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#f5f8f6;border:1px solid #dfe7e3;border-radius:16px;"></div>
+          <div style="position:absolute;left:178px;top:274px;width:500px;height:36px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:700;color:#0e7c6b;line-height:1.5;text-align:left;word-break:keep-all;">초보자 모드 — 쉬운 화면</div>
+          <div style="position:absolute;left:178px;top:322px;width:230px;height:150px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#ffffff;border:1px dashed #c7d4ce;border-radius:12px;"></div>
+          <div style="position:absolute;left:178px;top:386px;width:230px;height:34px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:center;word-break:keep-all;">홈</div>
+          <div style="position:absolute;left:432px;top:322px;width:230px;height:150px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#ffffff;border:1px dashed #c7d4ce;border-radius:12px;"></div>
+          <div style="position:absolute;left:432px;top:386px;width:230px;height:34px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:center;word-break:keep-all;">할 일 상세</div>
+          <div style="position:absolute;left:686px;top:322px;width:230px;height:150px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#ffffff;border:1px dashed #c7d4ce;border-radius:12px;"></div>
+          <div style="position:absolute;left:686px;top:386px;width:230px;height:34px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:center;word-break:keep-all;">기록</div>
+          <div style="position:absolute;left:940px;top:322px;width:230px;height:150px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#ffffff;border:1px dashed #c7d4ce;border-radius:12px;"></div>
+          <div style="position:absolute;left:940px;top:386px;width:230px;height:34px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:center;word-break:keep-all;">자세히 보기</div>
+          <div style="position:absolute;left:150px;top:560px;width:1060px;height:210px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#0a0f0d;border-radius:16px;"></div>
+          <div style="position:absolute;left:178px;top:584px;width:600px;height:36px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:700;color:#00ff41;line-height:1.5;text-align:left;word-break:keep-all;">전문가 모드 — 대시보드</div>
+          <div style="position:absolute;left:178px;top:632px;width:1004px;height:112px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;border:1px dashed rgba(0,255,65,0.45);border-radius:12px;"></div>
+          <div style="position:absolute;left:178px;top:674px;width:1004px;height:34px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:rgba(0,255,65,0.45);line-height:1.5;text-align:center;word-break:keep-all;">예전 대시보드 그대로 · 패널 11개를 한 화면에</div>
+          <div style="position:absolute;left:1300px;top:250px;width:470px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:28px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;">오른쪽 위에서 바꿉니다</div>
+          <div style="position:absolute;left:1300px;top:312px;width:440px;height:76px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#f5f8f6;border:1px solid #dfe7e3;border-radius:14px;"></div>
+          <div style="position:absolute;left:1310px;top:322px;width:210px;height:56px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:center;word-break:keep-all;background:#ffffff;border:1px solid #dfe7e3;border-radius:10px;line-height:56px;">쉬운 화면</div>
+          <div style="position:absolute;left:1526px;top:322px;width:204px;height:56px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#5c6b64;line-height:1.5;text-align:center;word-break:keep-all;line-height:56px;">전문가 화면</div>
+          <div style="position:absolute;left:1300px;top:424px;width:470px;height:200px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:25px;font-weight:400;color:#5c6b64;line-height:1.7;text-align:left;word-break:keep-all;">고른 화면은 기억됩니다.<br><br>자세히 보기는 여기 없습니다 —<br>그것도 초보자 화면이라<br>홈 본문 링크로 들어갑니다.</div>
+          <div style="position:absolute;left:0px;top:860px;width:1920px;height:220px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#17221d;"></div>
+          <div style="position:absolute;left:150px;top:916px;width:1620px;height:108px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:38px;font-weight:400;color:#ffffff;line-height:1.55;text-align:left;word-break:keep-all;">화면은 두 가지입니다. 쉬운 화면과 전문가 화면. 오른쪽 위에서 언제든 바꿀 수 있고, 고른 화면은 기억됩니다.</div>
+        </div>
+      </div>
+      <script>
+        // 스케치 패스 — 배치만 확인한다. 모션은 빌드 패스에서 붙인다.
+        window.__timelines["f03-map"] = gsap.timeline({ paused: true });
+      </script>
+    </template>
+  </body>
+</html>

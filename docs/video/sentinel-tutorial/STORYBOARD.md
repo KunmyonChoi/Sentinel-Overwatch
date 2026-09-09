@@ -58,7 +58,7 @@ mode: collaborative
 
 ## Frame 1 — 표지
 
-- status: outline
+- status: built
 - src: compositions/frames/01-title.html
 - duration: 17s
 - transition_in: cut
@@ -79,7 +79,7 @@ mode: collaborative
 
 ## Frame 2 — 왜 필요한가
 
-- status: outline
+- status: built
 - src: compositions/frames/02-why.html
 - duration: 49s
 - transition_in: crossfade
@@ -113,7 +113,7 @@ user admin from 203.0.113.9 port 41022 ssh2` 같은 지어낸 줄. 실제 서버
 
 ## Frame 3 — 화면 구성 개요
 
-- status: outline
+- status: built
 - src: compositions/frames/03-map.html
 - duration: 47s
 - transition_in: cut
@@ -143,7 +143,7 @@ user admin from 203.0.113.9 port 41022 ssh2` 같은 지어낸 줄. 실제 서버
 
 ## Frame 4 — 시나리오 하나: 아무 일 없는 날
 
-- status: outline
+- status: built
 - src: compositions/frames/04-scenario-calm.html
 - duration: 34s
 - transition_in: cut
@@ -171,7 +171,7 @@ user admin from 203.0.113.9 port 41022 ssh2` 같은 지어낸 줄. 실제 서버
 
 ## Frame 5 — 시나리오 둘: 손볼 일이 생겼다
 
-- status: outline
+- status: built
 - src: compositions/frames/05-scenario-fix.html
 - duration: 59s
 - transition_in: cut
@@ -205,7 +205,7 @@ user admin from 203.0.113.9 port 41022 ssh2` 같은 지어낸 줄. 실제 서버
 
 ## Frame 6 — 시나리오 셋: 지킴이가 대신 못 하는 일
 
-- status: outline
+- status: built
 - src: compositions/frames/06-scenario-judge.html
 - duration: 61s
 - transition_in: cut
@@ -240,7 +240,7 @@ user admin from 203.0.113.9 port 41022 ssh2` 같은 지어낸 줄. 실제 서버
 
 ## Frame 7 — 할 수 있는 일
 
-- status: outline
+- status: built
 - src: compositions/frames/07-can.html
 - duration: 50s
 - transition_in: cut
@@ -269,7 +269,7 @@ Lynis, USN. 주장에 출처를 붙이는 것이 이 장의 규칙이다.
 
 ## Frame 8 — 할 수 없는 일
 
-- status: outline
+- status: built
 - src: compositions/frames/08-cannot.html
 - duration: 52s
 - transition_in: cut
@@ -301,7 +301,7 @@ Lynis, USN. 주장에 출처를 붙이는 것이 이 장의 규칙이다.
 
 ## Frame 9 — 설치
 
-- status: outline
+- status: built
 - src: compositions/frames/09-install.html
 - duration: 47s
 - transition_in: cut
@@ -336,7 +336,7 @@ sudo secdash-<ver>/deploy/install.sh
 
 ## Frame 10 — 설정
 
-- status: outline
+- status: built
 - src: compositions/frames/10-config.html
 - duration: 65s
 - transition_in: cut
@@ -369,7 +369,7 @@ sudo secdash-<ver>/deploy/install.sh
 
 ## Frame 11 — 아키텍처
 
-- status: outline
+- status: built
 - src: compositions/frames/11-architecture.html
 - duration: 63s
 - transition_in: cut
@@ -404,7 +404,7 @@ sudo secdash-<ver>/deploy/install.sh
 
 ## Frame 12 — 맺음말
 
-- status: outline
+- status: built
 - src: compositions/frames/12-closing.html
 - duration: 29s
 - transition_in: crossfade

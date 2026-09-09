@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>09-install</title>
+  </head>
+  <body>
+    <template>
+      <style>
+        #f09-install { position: relative; width: 1920px; height: 1080px; overflow: hidden;
+                  background: #eef3f0; }
+        #f09-install * { box-sizing: border-box; margin: 0; padding: 0; }
+        #f09-install .clip { position: absolute; inset: 0; }
+      </style>
+      <div id="f09-install" data-composition-id="f09-install" data-start="0"
+           data-width="1920" data-height="1080" data-duration="47">
+        <div class="clip" data-start="0" data-duration="47">
+          <div style="position:absolute;left:0px;top:0px;width:1920px;height:860px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#0a0f0d;"></div>
+          <div style="position:absolute;left:150px;top:70px;width:1400px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:30px;font-weight:700;color:#00ff41;line-height:1.5;text-align:left;word-break:keep-all;">5장</div>
+          <div style="position:absolute;left:150px;top:112px;width:1500px;height:82px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:62px;font-weight:700;color:#00ff41;line-height:1.5;text-align:left;word-break:keep-all;">설치</div>
+          <div style="position:absolute;left:150px;top:250px;width:1620px;height:150px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;border:1px solid rgba(0,255,65,0.45);border-radius:12px;"></div>
+          <div style="position:absolute;left:180px;top:276px;width:1560px;height:40px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:26px;font-weight:400;color:#00ff41;line-height:1.5;text-align:left;word-break:keep-all;">$ deploy/build-release.sh --wheels</div>
+          <div style="position:absolute;left:180px;top:326px;width:1560px;height:40px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:26px;font-weight:400;color:#00ff41;line-height:1.5;text-align:left;word-break:keep-all;">$ sudo secdash-&lt;ver&gt;/deploy/install.sh</div>
+          <div style="position:absolute;left:150px;top:428px;width:700px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:28px;font-weight:700;color:#00ff41;line-height:1.5;text-align:left;word-break:keep-all;">스크립트가 하는 일</div>
+          <div style="position:absolute;left:150px;top:486px;width:1400px;height:36px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:25px;font-weight:400;color:rgba(0,255,65,0.45);line-height:1.5;text-align:left;word-break:keep-all;">✓  호스트 도구 설치·활성화 (fail2ban · rsyslog · auditd · lynis)</div>
+          <div style="position:absolute;left:150px;top:532px;width:1400px;height:36px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:25px;font-weight:400;color:rgba(0,255,65,0.45);line-height:1.5;text-align:left;word-break:keep-all;">✓  전용 계정 secdash 생성</div>
+          <div style="position:absolute;left:150px;top:578px;width:1400px;height:36px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:25px;font-weight:400;color:rgba(0,255,65,0.45);line-height:1.5;text-align:left;word-break:keep-all;">✓  /opt/secdash 복사와 가상환경</div>
+          <div style="position:absolute;left:150px;top:624px;width:1400px;height:36px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:25px;font-weight:400;color:rgba(0,255,65,0.45);line-height:1.5;text-align:left;word-break:keep-all;">✓  설정 파일 /etc/secdash/secdash.env</div>
+          <div style="position:absolute;left:150px;top:670px;width:1400px;height:36px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:25px;font-weight:400;color:rgba(0,255,65,0.45);line-height:1.5;text-align:left;word-break:keep-all;">✓  최소 권한 sudoers 와 systemd 유닛</div>
+          <div style="position:absolute;left:150px;top:716px;width:1400px;height:36px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:25px;font-weight:400;color:rgba(0,255,65,0.45);line-height:1.5;text-align:left;word-break:keep-all;">✓  서비스 시작</div>
+          <div style="position:absolute;left:150px;top:772px;width:800px;height:44px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:26px;font-weight:400;color:#00ff41;line-height:1.5;text-align:left;word-break:keep-all;">API token: ••••••••</div>
+          <div style="position:absolute;left:0px;top:860px;width:1920px;height:220px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#17221d;"></div>
+          <div style="position:absolute;left:150px;top:916px;width:1620px;height:108px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:38px;font-weight:400;color:#ffffff;line-height:1.55;text-align:left;word-break:keep-all;">설치는 두 줄입니다. 빌드 머신에서 압축본을 만들고, 대상 서버에서 설치 스크립트를 실행합니다.</div>
+        </div>
+      </div>
+      <script>
+        // 스케치 패스 — 배치만 확인한다. 모션은 빌드 패스에서 붙인다.
+        window.__timelines["f09-install"] = gsap.timeline({ paused: true });
+      </script>
+    </template>
+  </body>
+</html>
