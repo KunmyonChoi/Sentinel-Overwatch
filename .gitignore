@@ -77,3 +77,5 @@ docs/video/*/.sketches/
 docs/video/*/.hyperframes/
 docs/video/*/out/
 docs/video/*/node_modules/
+docs/video/*/.snap/
+docs/video/*/snapshots/
