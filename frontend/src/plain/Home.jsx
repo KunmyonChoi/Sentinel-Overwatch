@@ -28,7 +28,7 @@ function TaskCard({ task, onOpen }) {
                         </div>
                     )}
                     <div className="flex items-center gap-2.5 mt-5 flex-wrap">
-                        {task.kind === KIND.FIX && <Btn kind="primary" onClick={() => onOpen(task, 'fix')}>{task.fix.verb}</Btn>}
+                        {task.kind === KIND.FIX && <Btn kind="primary" onClick={() => onOpen(task)}>{task.fix.verb}</Btn>}
                         <Btn kind="outline" onClick={() => onOpen(task)}>
                             {task.kind === KIND.FIX ? '무엇이 바뀌는지 먼저 보기'
                                 : task.kind === KIND.JUDGE ? (task.response ? '다시 보기' : '확인하기')
@@ -47,7 +47,8 @@ export default function Home({ status, tasks, facts, onOpenTask, onGo }) {
     return (
         <div className="flex flex-col min-h-full">
             <div className={`flex-1 px-6 sm:px-10 ${hasTasks ? 'pt-8' : 'flex flex-col justify-center'}`}>
-                <StatusHead tone={status.key} icon={status.key === 'ok' ? 'check' : 'alert'}
+                <StatusHead tone={status.key === 'unknown' ? 'flat' : status.key}
+                    icon={status.key === 'ok' ? 'check' : status.key === 'unknown' ? 'clock' : 'alert'}
                     label={status.label} lead={status.lead} big={!hasTasks} />
 
                 {hasTasks && (

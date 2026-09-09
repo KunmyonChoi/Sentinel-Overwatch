@@ -234,8 +234,18 @@ export function buildTasks(alerts) {
   return tasks;
 }
 
-/** DEFCON → 사용자 언어의 3단계 */
-export function statusOf(stats, taskCount) {
+/**
+ * DEFCON → 사용자 언어의 3단계.
+ *
+ * stats 를 못 읽었으면 '이상 없음'이라고 말하면 안 된다. 지킴이가 죽어 있는데
+ * 큰 글씨로 안전하다고 말하는 것이 이 화면이 저지를 수 있는 가장 나쁜 거짓말이다.
+ */
+export function statusOf(stats, taskCount, conn = 'ok') {
+  if (!stats || conn !== 'ok') {
+    return conn === 'down'
+      ? { key: 'unknown', label: '상태를 알 수 없어요', lead: '지킴이와 연결하지 못했어요. 안전한지 아닌지 지금은 말씀드릴 수 없어요.' }
+      : { key: 'unknown', label: '확인하고 있어요', lead: '지킴이에게 지금 상태를 물어보는 중이에요.' };
+  }
   const s = stats?.status;
   if (s === 'DEFCON 1') return { key: 'crit', label: '지금 확인하세요', lead: '바로 살펴봐야 할 일이 있어요.' };
   if (s === 'DEFCON 3' || taskCount > 0) {

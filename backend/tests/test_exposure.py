@@ -254,3 +254,27 @@ def test_stale_alert_from_a_previous_run_is_resolved_after_restart():
     second.setup()
 
     assert _alerts()[0].status == "RESOLVED"
+
+
+def test_tcp_listener_is_never_a_client_socket():
+    """
+    브라우저 계열 이름이라도 TCP 로 듣고 있으면 서비스다.
+    code serve-web 같은 것이 0.0.0.0 에 열려 있는데 문에서 빠지면 노출을 통째로 놓친다.
+    """
+    # 같은 프로그램·같은 포트인데 프로토콜만 다르다. 프로토콜이 판정을 가른다.
+    assert is_client_socket(41000, "firefox", EPH, CLIENTS, "tcp") is False
+    assert is_client_socket(41000, "firefox", EPH, CLIENTS, "udp") is True
+
+
+def test_client_socket_does_not_claim_reachability_when_firewall_unknown():
+    """문으로 세지 않는 것과 '닿을 수 없다'고 단정하는 것은 다르다."""
+    r = classify("0.0.0.0", 56876, "udp", FW_UNKNOWN, EXPECTED,
+                 process="firefox", ephemeral=EPH, client_names=CLIENTS)
+    assert r["state"] == "client" and r["reachable"] is None
+
+
+def test_browser_tcp_listener_is_reported_as_exposed():
+    fw = {**FW_OK, "allowed": [{"port": 41000, "proto": "tcp"}]}
+    r = classify("0.0.0.0", 41000, "tcp", fw, EXPECTED,
+                 process="firefox", ephemeral=EPH, client_names=CLIENTS)
+    assert r["state"] == "exposed", "클라이언트 목록에 있는 이름이어도 TCP 로 들으면 문이다"

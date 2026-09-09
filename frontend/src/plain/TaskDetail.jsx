@@ -34,7 +34,7 @@ const modeKo = (m, isDir) => {
 };
 
 /** 버튼 하나로 끝나는 일: 미리보기 → 적용 → 결과 */
-function FixFlow({ task, onDone }) {
+function FixFlow({ task, onChanged, onBack }) {
     const [preview, setPreview] = useState(null);
     const [result, setResult] = useState(null);
     const [error, setError] = useState(null);
@@ -47,15 +47,18 @@ function FixFlow({ task, onDone }) {
             if (!r.ok) { setError(r); return; }
             if (apply) {
                 setResult(r);
-                // 실제로 끝낸 일이다. 확인(ACK)이 아니라 해결(RESOLVE)로 남긴다 —
-                // 전문가 화면의 '해결'과 같은 상태가 되어 두 화면이 어긋나지 않는다.
-                try {
-                    await api('/api/alerts/respond', {
-                        method: 'POST',
-                        body: { ids: task.alerts.map((x) => x.id), answer: 'fixed', by: '사용자' },
-                    });
-                } catch { /* 조치 자체는 성공했다. 상태 기록 실패로 화면을 막지 않는다 */ }
-                onDone?.();
+                // 실제로 바뀐 것만 해결(RESOLVE)로 닫는다.
+                // 못 고친 파일까지 닫으면 여전히 열려 있는 파일의 알림이 조용히 사라진다.
+                const done = new Set((r.results || []).filter((x) => x.applied).map((x) => x.path));
+                const ids = task.alerts.filter((a) => done.has(a.details?.path)).map((a) => a.id);
+                if (ids.length) {
+                    try {
+                        await api('/api/alerts/respond', {
+                            method: 'POST', body: { ids, answer: 'fixed', by: '사용자' },
+                        });
+                    } catch { /* 조치 자체는 성공했다. 상태 기록 실패로 화면을 막지 않는다 */ }
+                }
+                onChanged?.();          // 목록만 새로 읽는다 — 결과 화면은 사용자가 보고 나간다
             } else setPreview(r);
         } catch (e) {
             setError({ error: e.message || '요청이 실패했어요', fix_hint: '' });
@@ -81,12 +84,21 @@ function FixFlow({ task, onDone }) {
                             after={modeKo(r.after, r.kind === 'world_writable' && !r.path.includes('.'))} />
                     ))}
                 </Card>
+                {(result.results || []).some((r) => !r.applied) && (
+                    <Card tone="warn" className="mt-5 p-5">
+                        <div className="text-[14px] font-semibold text-calm-warn mb-1.5">일부는 바꾸지 못했어요</div>
+                        <div className="text-[14px] text-calm-muted leading-relaxed" style={{ wordBreak: 'keep-all' }}>
+                            바꾸지 못한 것은 목록에 그대로 남겨뒀어요. 다음에 다시 시도하거나, 아래 &lsquo;복사해서 물어보기&rsquo;로 도움을 받으세요.
+                        </div>
+                    </Card>
+                )}
                 <Card className="mt-5 p-5">
                     <div className="text-[14px] font-semibold mb-1.5">혹시 뭔가 안 되나요?</div>
                     <div className="text-[14px] text-calm-muted leading-relaxed max-w-[74ch]" style={{ wordBreak: 'keep-all' }}>
                         이 변경은 <b className="text-calm-ink">기록</b>에 그대로 남아 있어요. 무엇이 어떻게 바뀌었는지 시간과 함께 볼 수 있고, 되돌리는 방법도 거기에 적어뒀어요.
                     </div>
                 </Card>
+                <div className="mt-6"><Btn kind="primary" className="h-11" onClick={onBack}>홈으로</Btn></div>
             </div>
         );
     }
@@ -136,7 +148,7 @@ function FixFlow({ task, onDone }) {
                 <Btn kind="primary" disabled={busy || !preview || !(preview.results || []).length} onClick={() => call(true)}>
                     {busy ? '처리 중이에요…' : task.fix.verb}
                 </Btn>
-                <Btn kind="outline" onClick={onDone}>나중에</Btn>
+                <Btn kind="outline" onClick={onBack}>나중에</Btn>
                 <div className="text-[13px] text-calm-muted ml-1" style={{ wordBreak: 'keep-all' }}>
                     되돌리고 싶으면 기록에서 언제든 확인할 수 있어요.
                 </div>
@@ -473,7 +485,7 @@ export default function TaskDetail({ task, onBack, onChanged, host, accounts }) 
 
                 {/* 질문·선택지가 먼저다. 근거는 길어질 수 있어서, 위로 올리면 답하러 스크롤해야 한다.
                     대신 근거 카드를 바로 아래에 붙이고, 접힌 상태에서도 눈에 띄게 만든다. */}
-                {task.kind === KIND.FIX && <FixFlow task={task} onDone={() => { onChanged?.(); onBack(); }} />}
+                {task.kind === KIND.FIX && <FixFlow task={task} onChanged={onChanged} onBack={onBack} />}
                 {task.kind === KIND.JUDGE && (
                     <JudgeFlow task={task} onAnswered={onChanged} onBack={onBack} host={host} accounts={accounts} />
                 )}

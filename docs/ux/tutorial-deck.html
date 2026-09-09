@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>내 컴퓨터 지킴이 사용 안내</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { width: 1920px; height: 1080px; overflow: hidden; position: relative; background: #12211c; }
+.slide { position: absolute; inset: 0; display: none; overflow: hidden; background: #fff; }
+.slide.active { display: block; }
+</style>
+</head>
+<body>
+
+  <div class="slide active" data-transition="fade" style="width:1920px;height:1080px;background:#eef3f0;font-family:'IBM Plex Sans KR',sans-serif;">
+    <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:#eef3f0;"></div>
+    <div style="position:absolute;left:0px;top:0px;width:22px;height:1080px;background:#0e7c6b;"></div>
+    <div data-anim="fadeIn" data-anim-trigger="auto" data-anim-name="eyebrow" style="position:absolute;left:150px;top:300px;width:1400px;height:64px;font-family:'IBM Plex Sans KR',sans-serif;font-size:38px;font-weight:500;color:#0e7c6b;line-height:1.5;text-align:left;">개인 컴퓨터를 혼자 관리하는 분을 위한</div>
+    <div data-anim="fadeIn" data-anim-trigger="after" data-anim-ref="eyebrow" data-anim-delay="150" data-anim-name="title" style="position:absolute;left:150px;top:372px;width:1560px;height:262px;font-family:'IBM Plex Sans KR',sans-serif;font-size:112px;font-weight:900;color:#17221d;line-height:1.12;text-align:left;">내 컴퓨터 지킴이<br>사용 안내</div>
+    <div data-anim="slideIn" data-anim-dir="up" data-anim-trigger="after" data-anim-ref="title" data-anim-delay="150" style="position:absolute;left:150px;top:668px;width:1400px;height:70px;font-family:'IBM Plex Sans KR',sans-serif;font-size:42px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">보안을 몰라도 됩니다. 화면이 무엇을 해야 할지 알려줍니다.</div>
+    <div style="position:absolute;left:150px;top:830px;width:120px;height:8px;background:#0e7c6b;border-radius:4px;"></div>
+    <script type="text/plain" class="fe-notes">
+안녕하세요. 새로 만든 보안 화면 사용법을 안내드리겠습니다.
+
+이 화면은 보안을 잘 모르는 분이, 물어볼 사람 없이 혼자 판단할 수 있게 만든 것입니다.
+
+오늘은 실제로 쓰게 될 순서 그대로 따라가 보겠습니다.
+    </script>
+  </div>
+  <div class="slide" data-transition="fade" style="width:1920px;height:1080px;background:#ffffff;font-family:'IBM Plex Sans KR',sans-serif;">
+    <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:#ffffff;"></div>
+    <div data-anim="fadeIn" data-anim-trigger="auto" style="position:absolute;left:150px;top:110px;width:1620px;height:123px;font-family:'IBM Plex Sans KR',sans-serif;font-size:76px;font-weight:900;color:#17221d;line-height:1.5;text-align:left;">무엇이 달라졌나</div>
+    <div data-anim="fadeIn" data-anim-name="before" style="position:absolute;left:150px;top:260px;width:760px;height:620px;background:#0d0d0d;border-radius:20px;"></div>
+    <div data-anim-trigger="with" data-anim-ref="before" style="position:absolute;left:190px;top:300px;width:680px;height:48px;font-family:'IBM Plex Sans KR',sans-serif;font-size:28px;font-weight:700;color:#00ff41;line-height:1.5;text-align:left;">이전</div>
+    <div style="position:absolute;left:190px;top:364px;width:320px;height:128px;background:#161616;border:1px solid rgba(0,255,65,0.35);border-radius:6px;"></div>
+    <div style="position:absolute;left:206px;top:378px;width:288px;height:35px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:400;color:#00ff41;line-height:1.5;text-align:left;">패널</div>
+    <div style="position:absolute;left:206px;top:416px;width:288px;height:61px;font-family:'IBM Plex Sans KR',sans-serif;font-size:17px;font-weight:400;color:#6b7280;line-height:1.6;text-align:left;">리스닝 포트 · 루프백<br>DEFCON 3 · 미확인</div>
+    <div style="position:absolute;left:540px;top:364px;width:320px;height:128px;background:#161616;border:1px solid rgba(0,255,65,0.35);border-radius:6px;"></div>
+    <div style="position:absolute;left:556px;top:378px;width:288px;height:35px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:400;color:#00ff41;line-height:1.5;text-align:left;">패널</div>
+    <div style="position:absolute;left:556px;top:416px;width:288px;height:61px;font-family:'IBM Plex Sans KR',sans-serif;font-size:17px;font-weight:400;color:#6b7280;line-height:1.6;text-align:left;">리스닝 포트 · 루프백<br>DEFCON 3 · 미확인</div>
+    <div style="position:absolute;left:190px;top:514px;width:320px;height:128px;background:#161616;border:1px solid rgba(0,255,65,0.35);border-radius:6px;"></div>
+    <div style="position:absolute;left:206px;top:528px;width:288px;height:35px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:400;color:#00ff41;line-height:1.5;text-align:left;">패널</div>
+    <div style="position:absolute;left:206px;top:566px;width:288px;height:61px;font-family:'IBM Plex Sans KR',sans-serif;font-size:17px;font-weight:400;color:#6b7280;line-height:1.6;text-align:left;">리스닝 포트 · 루프백<br>DEFCON 3 · 미확인</div>
+    <div style="position:absolute;left:540px;top:514px;width:320px;height:128px;background:#161616;border:1px solid rgba(0,255,65,0.35);border-radius:6px;"></div>
+    <div style="position:absolute;left:556px;top:528px;width:288px;height:35px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:400;color:#00ff41;line-height:1.5;text-align:left;">패널</div>
+    <div style="position:absolute;left:556px;top:566px;width:288px;height:61px;font-family:'IBM Plex Sans KR',sans-serif;font-size:17px;font-weight:400;color:#6b7280;line-height:1.6;text-align:left;">리스닝 포트 · 루프백<br>DEFCON 3 · 미확인</div>
+    <div style="position:absolute;left:190px;top:664px;width:320px;height:128px;background:#161616;border:1px solid rgba(0,255,65,0.35);border-radius:6px;"></div>
+    <div style="position:absolute;left:206px;top:678px;width:288px;height:35px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:400;color:#00ff41;line-height:1.5;text-align:left;">패널</div>
+    <div style="position:absolute;left:206px;top:716px;width:288px;height:61px;font-family:'IBM Plex Sans KR',sans-serif;font-size:17px;font-weight:400;color:#6b7280;line-height:1.6;text-align:left;">리스닝 포트 · 루프백<br>DEFCON 3 · 미확인</div>
+    <div style="position:absolute;left:540px;top:664px;width:320px;height:128px;background:#161616;border:1px solid rgba(0,255,65,0.35);border-radius:6px;"></div>
+    <div style="position:absolute;left:556px;top:678px;width:288px;height:35px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:400;color:#00ff41;line-height:1.5;text-align:left;">패널</div>
+    <div style="position:absolute;left:556px;top:716px;width:288px;height:61px;font-family:'IBM Plex Sans KR',sans-serif;font-size:17px;font-weight:400;color:#6b7280;line-height:1.6;text-align:left;">리스닝 포트 · 루프백<br>DEFCON 3 · 미확인</div>
+    <div data-anim-trigger="with" data-anim-ref="before" style="position:absolute;left:190px;top:812px;width:680px;height:42px;font-family:'IBM Plex Sans KR',sans-serif;font-size:24px;font-weight:400;color:#9ca3af;line-height:1.5;text-align:left;">패널 11개가 같은 무게로 한 화면에</div>
+    <div data-anim="fadeIn" data-anim-name="after" style="position:absolute;left:1010px;top:260px;width:760px;height:620px;background:#eef3f0;border:1px solid #d7e0db;border-radius:20px;"></div>
+    <div data-anim-trigger="with" data-anim-ref="after" style="position:absolute;left:1050px;top:300px;width:680px;height:48px;font-family:'IBM Plex Sans KR',sans-serif;font-size:28px;font-weight:700;color:#0e7c6b;line-height:1.5;text-align:left;">지금</div>
+    <div data-anim-trigger="with" data-anim-ref="after" style="position:absolute;left:1050px;top:364px;width:100px;height:100px;background:#d5ece6;border-radius:50px;"></div>
+    <div data-anim-trigger="with" data-anim-ref="after" style="position:absolute;left:1050px;top:392px;width:100px;height:73px;font-family:'IBM Plex Sans KR',sans-serif;font-size:44px;font-weight:400;color:#0e7c6b;line-height:1.5;text-align:center;">✓</div>
+    <div data-anim-trigger="with" data-anim-ref="after" style="position:absolute;left:1178px;top:372px;width:560px;height:95px;font-family:'IBM Plex Sans KR',sans-serif;font-size:58px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">이상 없음</div>
+    <div data-anim-trigger="with" data-anim-ref="after" style="position:absolute;left:1178px;top:444px;width:560px;height:48px;font-family:'IBM Plex Sans KR',sans-serif;font-size:28px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">지금 손볼 일이 없어요.</div>
+    <div style="position:absolute;left:1050px;top:552px;width:680px;height:76px;background:#ffffff;border:1px solid #d7e0db;border-radius:12px;"></div>
+    <div style="position:absolute;left:1074px;top:564px;width:460px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">밖에서 들어올 수 있는 문</div>
+    <div style="position:absolute;left:1074px;top:592px;width:460px;height:42px;font-family:'IBM Plex Sans KR',sans-serif;font-size:24px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">1개</div>
+    <div style="position:absolute;left:1050px;top:640px;width:680px;height:76px;background:#ffffff;border:1px solid #d7e0db;border-radius:12px;"></div>
+    <div style="position:absolute;left:1074px;top:652px;width:460px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">밀린 보안 업데이트</div>
+    <div style="position:absolute;left:1074px;top:680px;width:460px;height:42px;font-family:'IBM Plex Sans KR',sans-serif;font-size:24px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">없음</div>
+    <div style="position:absolute;left:1050px;top:728px;width:680px;height:76px;background:#ffffff;border:1px solid #d7e0db;border-radius:12px;"></div>
+    <div style="position:absolute;left:1074px;top:740px;width:460px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">막은 접속 시도</div>
+    <div style="position:absolute;left:1074px;top:768px;width:460px;height:42px;font-family:'IBM Plex Sans KR',sans-serif;font-size:24px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">23번</div>
+    <div data-anim-trigger="with" data-anim-ref="after" style="position:absolute;left:1050px;top:812px;width:680px;height:42px;font-family:'IBM Plex Sans KR',sans-serif;font-size:24px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">상태 한 줄 + 오늘 할 일 + 안심 정보 셋</div>
+    <script type="text/plain" class="fe-notes">
+왼쪽이 이전 화면입니다. 패널 열한 개가 똑같은 크기로 나열돼 있어서, 무엇이 중요한지 알 수 없었습니다.
+
+오른쪽이 지금입니다. 화면이 답하는 질문은 하나입니다. 지금 내가 뭘 해야 하나.
+
+전문가 화면을 없앤 게 아닙니다. 순서를 정해줬을 뿐이고, 원래 화면은 그대로 안에 있습니다.
+    </script>
+  </div>
+  <div class="slide" data-transition="fade" style="width:1920px;height:1080px;background:#eef3f0;font-family:'IBM Plex Sans KR',sans-serif;">
+    <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:#eef3f0;"></div>
+    <div data-anim="fadeIn" data-anim-trigger="auto" style="position:absolute;left:150px;top:96px;width:1000px;height:54px;font-family:'IBM Plex Sans KR',sans-serif;font-size:32px;font-weight:700;color:#0e7c6b;line-height:1.5;text-align:left;">장면 1</div>
+    <div data-anim="fadeIn" data-anim-trigger="auto" style="position:absolute;left:150px;top:152px;width:1100px;height:117px;font-family:'IBM Plex Sans KR',sans-serif;font-size:72px;font-weight:900;color:#17221d;line-height:1.5;text-align:left;">대부분의 날</div>
+    <div data-anim="fadeIn" data-anim-name="home" style="position:absolute;left:150px;top:292px;width:1080px;height:660px;background:#ffffff;border:1px solid #d7e0db;border-radius:18px;box-shadow:0 24px 60px rgba(23,34,29,0.16);"></div>
+    <div style="position:absolute;left:150px;top:292px;width:1080px;height:62px;background:#e6ede9;border-radius:18px;"></div>
+    <div style="position:absolute;left:150px;top:336px;width:1080px;height:18px;background:#e6ede9;"></div>
+    <div style="position:absolute;left:150px;top:353px;width:1080px;height:1px;background:#d7e0db;"></div>
+    <div style="position:absolute;left:176px;top:308px;width:520px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:600;color:#17221d;line-height:1.5;text-align:left;">🛡 내 컴퓨터 지킴이</div>
+    <div style="position:absolute;left:1054px;top:308px;width:150px;height:35px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:right;">자세히 보기</div>
+    <div style="position:absolute;left:206px;top:422px;width:108px;height:108px;background:#d5ece6;border-radius:54px;"></div>
+    <div style="position:absolute;left:206px;top:450px;width:108px;height:86px;font-family:'IBM Plex Sans KR',sans-serif;font-size:52px;font-weight:400;color:#0e7c6b;line-height:1.5;text-align:center;">✓</div>
+    <div style="position:absolute;left:346px;top:430px;width:700px;height:101px;font-family:'IBM Plex Sans KR',sans-serif;font-size:62px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">이상 없음</div>
+    <div style="position:absolute;left:346px;top:510px;width:780px;height:45px;font-family:'IBM Plex Sans KR',sans-serif;font-size:26px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">지금 손볼 일이 없어요. 이 창을 닫으셔도 돼요.</div>
+    <div style="position:absolute;left:190px;top:612px;width:316px;height:216px;background:#ffffff;border:1px solid #d7e0db;border-radius:14px;"></div>
+    <div style="position:absolute;left:214px;top:636px;width:268px;height:66px;font-family:'IBM Plex Sans KR',sans-serif;font-size:20px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">밖에서 들어올 수 있는<br>문</div>
+    <div style="position:absolute;left:214px;top:684px;width:268px;height:73px;font-family:'IBM Plex Sans KR',sans-serif;font-size:44px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">1개</div>
+    <div style="position:absolute;left:214px;top:750px;width:268px;height:35px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">직접 열어두신 것이에요.</div>
+    <div style="position:absolute;left:526px;top:612px;width:316px;height:216px;background:#ffffff;border:1px solid #d7e0db;border-radius:14px;"></div>
+    <div style="position:absolute;left:550px;top:636px;width:268px;height:36px;font-family:'IBM Plex Sans KR',sans-serif;font-size:20px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">밀린 보안 업데이트</div>
+    <div style="position:absolute;left:550px;top:684px;width:268px;height:73px;font-family:'IBM Plex Sans KR',sans-serif;font-size:44px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">없음</div>
+    <div style="position:absolute;left:550px;top:750px;width:268px;height:63px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">오늘 아침에 12개<br>설치됨.</div>
+    <div style="position:absolute;left:862px;top:612px;width:316px;height:216px;background:#ffffff;border:1px solid #d7e0db;border-radius:14px;"></div>
+    <div style="position:absolute;left:886px;top:636px;width:268px;height:36px;font-family:'IBM Plex Sans KR',sans-serif;font-size:20px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">막은 접속 시도</div>
+    <div style="position:absolute;left:886px;top:684px;width:268px;height:73px;font-family:'IBM Plex Sans KR',sans-serif;font-size:44px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">23번</div>
+    <div style="position:absolute;left:886px;top:750px;width:268px;height:35px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">모두 들어오지 못했어요.</div>
+    <div style="position:absolute;left:190px;top:870px;width:700px;height:39px;font-family:'IBM Plex Sans KR',sans-serif;font-size:22px;font-weight:400;color:#0e7c6b;line-height:1.5;text-align:left;">📊 무슨 일이 있었는지 보기</div>
+    <div data-anim="slideIn" data-anim-dir="up" data-anim-name="n1" style="position:absolute;left:1310px;top:340px;width:460px;height:64px;font-family:'IBM Plex Sans KR',sans-serif;font-size:38px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">여기만 보면 됩니다</div>
+    <div data-anim-trigger="with" data-anim-ref="n1" style="position:absolute;left:1310px;top:412px;width:470px;height:236px;font-family:'IBM Plex Sans KR',sans-serif;font-size:27px;font-weight:400;color:#5d6c65;line-height:1.7;text-align:left;">상태 한 줄이 화면에서 가장<br>큽니다.<br>‘이상 없음’이면 정말로<br>아무것도<br>하지 않아도 됩니다.</div>
+    <div data-anim="slideIn" data-anim-dir="up" data-anim-name="n2" style="position:absolute;left:1310px;top:648px;width:460px;height:64px;font-family:'IBM Plex Sans KR',sans-serif;font-size:38px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">숫자 셋의 뜻</div>
+    <div data-anim-trigger="with" data-anim-ref="n2" style="position:absolute;left:1310px;top:720px;width:470px;height:190px;font-family:'IBM Plex Sans KR',sans-serif;font-size:27px;font-weight:400;color:#5d6c65;line-height:1.7;text-align:left;">문 = 밖에서 들어올 수 있는<br>통로.<br>업데이트 = 밀린 보안 수정.<br>막은 시도 = 지킴이가 한 일.</div>
+    <script type="text/plain" class="fe-notes">
+먼저 평소의 화면입니다. 대부분의 날은 이 모습입니다.
+
+가장 큰 글씨가 상태 한 줄입니다. ‘이상 없음’이면 정말로 아무것도 하지 않으셔도 됩니다. 창을 닫으셔도 됩니다.
+
+아래 숫자 세 개는 안심하시라고 두는 것입니다. 밖에서 들어올 수 있는 문이 몇 개인지, 밀린 보안 업데이트가 있는지, 지킴이가 얼마나 막아냈는지.
+    </script>
+  </div>
+  <div class="slide" data-transition="fade" style="width:1920px;height:1080px;background:#eef3f0;font-family:'IBM Plex Sans KR',sans-serif;">
+    <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:#eef3f0;"></div>
+    <div data-anim="fadeIn" data-anim-trigger="auto" style="position:absolute;left:150px;top:96px;width:1000px;height:54px;font-family:'IBM Plex Sans KR',sans-serif;font-size:32px;font-weight:700;color:#b98a12;line-height:1.5;text-align:left;">장면 2</div>
+    <div data-anim="fadeIn" data-anim-trigger="auto" style="position:absolute;left:150px;top:152px;width:1300px;height:117px;font-family:'IBM Plex Sans KR',sans-serif;font-size:72px;font-weight:900;color:#17221d;line-height:1.5;text-align:left;">손볼 일이 생기면</div>
+    <div data-anim="fadeIn" data-anim-name="todo" style="position:absolute;left:150px;top:292px;width:1080px;height:660px;background:#ffffff;border:1px solid #d7e0db;border-radius:18px;box-shadow:0 24px 60px rgba(23,34,29,0.16);"></div>
+    <div style="position:absolute;left:150px;top:292px;width:1080px;height:62px;background:#e6ede9;border-radius:18px;"></div>
+    <div style="position:absolute;left:150px;top:336px;width:1080px;height:18px;background:#e6ede9;"></div>
+    <div style="position:absolute;left:150px;top:353px;width:1080px;height:1px;background:#d7e0db;"></div>
+    <div style="position:absolute;left:176px;top:308px;width:520px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:600;color:#17221d;line-height:1.5;text-align:left;">🛡 내 컴퓨터 지킴이</div>
+    <div style="position:absolute;left:1054px;top:308px;width:150px;height:35px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:right;">자세히 보기</div>
+    <div style="position:absolute;left:190px;top:388px;width:88px;height:88px;background:#f7ecd0;border-radius:44px;"></div>
+    <div style="position:absolute;left:190px;top:410px;width:88px;height:76px;font-family:'IBM Plex Sans KR',sans-serif;font-size:46px;font-weight:900;color:#b98a12;line-height:1.5;text-align:center;">!</div>
+    <div style="position:absolute;left:302px;top:392px;width:700px;height:82px;font-family:'IBM Plex Sans KR',sans-serif;font-size:50px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">살펴보세요</div>
+    <div style="position:absolute;left:302px;top:456px;width:820px;height:42px;font-family:'IBM Plex Sans KR',sans-serif;font-size:24px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">손볼 일이 한 가지 있어요. 오늘 중에 해두는 게 좋아요.</div>
+    <div data-anim-name="card" data-anim="slideIn" data-anim-dir="up" style="position:absolute;left:190px;top:528px;width:1000px;height:250px;background:#ffffff;border:2px solid #b98a12;border-radius:16px;"></div>
+    <div data-anim-trigger="with" data-anim-ref="card" style="position:absolute;left:222px;top:560px;width:62px;height:62px;background:#f7ecd0;border-radius:12px;"></div>
+    <div data-anim-trigger="with" data-anim-ref="card" style="position:absolute;left:222px;top:576px;width:62px;height:51px;font-family:'IBM Plex Sans KR',sans-serif;font-size:30px;font-weight:400;color:#17221d;line-height:1.5;text-align:center;">🔒</div>
+    <div data-anim-trigger="with" data-anim-ref="card" style="position:absolute;left:306px;top:558px;width:820px;height:54px;font-family:'IBM Plex Sans KR',sans-serif;font-size:32px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">다른 사람이 고칠 수 있는 파일이 3개 있어요</div>
+    <div data-anim-trigger="with" data-anim-ref="card" style="position:absolute;left:306px;top:610px;width:830px;height:115px;font-family:'IBM Plex Sans KR',sans-serif;font-size:22px;font-weight:400;color:#5d6c65;line-height:1.65;text-align:left;">이 파일들은 로그인할 때마다 자동으로 실행돼요. 다른 사람이<br>내용을 바꿔 놓으면 내가 로그인할 때 그 프로그램이 내 이름으로<br>함께 실행돼요.</div>
+    <div data-anim-trigger="with" data-anim-ref="card" style="position:absolute;left:306px;top:716px;width:132px;height:52px;background:#0e7c6b;border-radius:26px;font-family:'IBM Plex Sans KR',sans-serif;font-size:23px;font-weight:500;color:#ffffff;line-height:52px;text-align:center;white-space:nowrap;overflow:hidden;">잠그기</div>
+    <div data-anim-trigger="with" data-anim-ref="card" style="position:absolute;left:454px;top:716px;width:340px;height:52px;background:#ffffff;border-radius:26px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:500;color:#17221d;line-height:52px;text-align:center;white-space:nowrap;overflow:hidden;border:1px solid #b9c6bf;">무엇이 바뀌는지 먼저 보기</div>
+    <div data-anim="slideIn" data-anim-dir="up" data-anim-name="p1" style="position:absolute;left:1310px;top:340px;width:470px;height:64px;font-family:'IBM Plex Sans KR',sans-serif;font-size:38px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">할 일이 있을 때만</div>
+    <div data-anim-trigger="with" data-anim-ref="p1" style="position:absolute;left:1310px;top:412px;width:480px;height:374px;font-family:'IBM Plex Sans KR',sans-serif;font-size:27px;font-weight:400;color:#5d6c65;line-height:1.7;text-align:left;">평소에는 이 카드가 아예<br>없습니다.<br>빈 목록도 띄우지 않습니다.<br><br>그래야 카드가 보일 때<br>‘진짜 볼 것이 생겼구나’<br>하고<br>눈이 갑니다.</div>
+    <div data-anim="slideIn" data-anim-dir="up" data-anim-name="p2" style="position:absolute;left:1310px;top:688px;width:470px;height:64px;font-family:'IBM Plex Sans KR',sans-serif;font-size:38px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">급한 정도는 색으로</div>
+    <div data-anim-trigger="with" data-anim-ref="p2" style="position:absolute;left:1310px;top:760px;width:480px;height:98px;font-family:'IBM Plex Sans KR',sans-serif;font-size:27px;font-weight:400;color:#5d6c65;line-height:1.7;text-align:left;">노랑 = 오늘 중에<br>빨강 = 지금 바로</div>
+    <script type="text/plain" class="fe-notes">
+손볼 일이 생기면 이렇게 바뀝니다. 상태 줄이 ‘살펴보세요’가 되고, 그 아래 할 일 카드가 하나 뜹니다.
+
+중요한 건, 할 일이 없을 때는 이 카드가 아예 없다는 점입니다. 빈 목록도 띄우지 않습니다. 그래야 카드가 보이는 날에 눈이 갑니다.
+
+색으로 급한 정도를 구분합니다. 노란색이면 오늘 중에, 빨간색이면 지금 바로 봐주세요.
+    </script>
+  </div>
+  <div class="slide" data-transition="fade" style="width:1920px;height:1080px;background:#ffffff;font-family:'IBM Plex Sans KR',sans-serif;">
+    <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:#ffffff;"></div>
+    <div data-anim="fadeIn" data-anim-trigger="auto" style="position:absolute;left:150px;top:96px;width:1000px;height:54px;font-family:'IBM Plex Sans KR',sans-serif;font-size:32px;font-weight:700;color:#0e7c6b;line-height:1.5;text-align:left;">장면 3</div>
+    <div data-anim="fadeIn" data-anim-trigger="auto" style="position:absolute;left:150px;top:152px;width:1500px;height:111px;font-family:'IBM Plex Sans KR',sans-serif;font-size:68px;font-weight:900;color:#17221d;line-height:1.5;text-align:left;">누르기 전에 무엇이 바뀌는지 봅니다</div>
+    <div data-anim="fadeIn" data-anim-name="prev" style="position:absolute;left:150px;top:300px;width:1180px;height:640px;background:#ffffff;border:1px solid #d7e0db;border-radius:18px;box-shadow:0 24px 60px rgba(23,34,29,0.16);"></div>
+    <div style="position:absolute;left:150px;top:300px;width:1180px;height:62px;background:#e6ede9;border-radius:18px;"></div>
+    <div style="position:absolute;left:150px;top:344px;width:1180px;height:18px;background:#e6ede9;"></div>
+    <div style="position:absolute;left:150px;top:361px;width:1180px;height:1px;background:#d7e0db;"></div>
+    <div style="position:absolute;left:176px;top:316px;width:520px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:600;color:#17221d;line-height:1.5;text-align:left;">← 돌아가기</div>
+    <div style="position:absolute;left:1154px;top:316px;width:150px;height:35px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:right;">자세히 보기</div>
+    <div style="position:absolute;left:198px;top:396px;width:900px;height:64px;font-family:'IBM Plex Sans KR',sans-serif;font-size:38px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">다른 사람이 고칠 수 있는 파일 3개</div>
+    <div style="position:absolute;left:198px;top:468px;width:1084px;height:300px;background:#ffffff;border:1px solid #d7e0db;border-radius:14px;"></div>
+    <div style="position:absolute;left:198px;top:468px;width:1084px;height:60px;background:#e6ede9;border-radius:14px;"></div>
+    <div style="position:absolute;left:198px;top:510px;width:1084px;height:18px;background:#e6ede9;"></div>
+    <div style="position:absolute;left:222px;top:484px;width:700px;height:41px;font-family:'IBM Plex Sans KR',sans-serif;font-size:23px;font-weight:600;color:#17221d;line-height:1.5;text-align:left;">무엇이 바뀌는지 먼저 보여드릴게요</div>
+    <div style="position:absolute;left:222px;top:540px;width:480px;height:33px;font-family:'IBM Plex Sans KR',sans-serif;font-size:18px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">파일</div>
+    <div style="position:absolute;left:742px;top:540px;width:230px;height:33px;font-family:'IBM Plex Sans KR',sans-serif;font-size:18px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">지금</div>
+    <div style="position:absolute;left:1022px;top:540px;width:230px;height:33px;font-family:'IBM Plex Sans KR',sans-serif;font-size:18px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">잠근 뒤</div>
+    <div style="position:absolute;left:222px;top:564px;width:1036px;height:1px;background:#eef2f0;"></div>
+    <div style="position:absolute;left:222px;top:572px;width:480px;height:39px;font-family:'IBM Plex Sans KR',sans-serif;font-size:22px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;">로그인할 때 실행되는 설정</div>
+    <div style="position:absolute;left:742px;top:572px;width:240px;height:69px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">누구나 고칠 수<br>있음</div>
+    <div style="position:absolute;left:988px;top:572px;width:30px;height:39px;font-family:'IBM Plex Sans KR',sans-serif;font-size:22px;font-weight:400;color:#b9c6bf;line-height:1.5;text-align:left;">→</div>
+    <div style="position:absolute;left:1022px;top:572px;width:240px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:600;color:#0e7c6b;line-height:1.5;text-align:left;">나만 고칠 수 있음</div>
+    <div style="position:absolute;left:222px;top:616px;width:1036px;height:1px;background:#eef2f0;"></div>
+    <div style="position:absolute;left:222px;top:624px;width:480px;height:39px;font-family:'IBM Plex Sans KR',sans-serif;font-size:22px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;">터미널을 열 때 실행되는 설정</div>
+    <div style="position:absolute;left:742px;top:624px;width:240px;height:69px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">누구나 고칠 수<br>있음</div>
+    <div style="position:absolute;left:988px;top:624px;width:30px;height:39px;font-family:'IBM Plex Sans KR',sans-serif;font-size:22px;font-weight:400;color:#b9c6bf;line-height:1.5;text-align:left;">→</div>
+    <div style="position:absolute;left:1022px;top:624px;width:240px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:600;color:#0e7c6b;line-height:1.5;text-align:left;">나만 고칠 수 있음</div>
+    <div style="position:absolute;left:222px;top:668px;width:1036px;height:1px;background:#eef2f0;"></div>
+    <div style="position:absolute;left:222px;top:676px;width:480px;height:39px;font-family:'IBM Plex Sans KR',sans-serif;font-size:22px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;">내가 설치한 프로그램 폴더</div>
+    <div style="position:absolute;left:742px;top:676px;width:240px;height:69px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">누구나 넣을 수<br>있음</div>
+    <div style="position:absolute;left:988px;top:676px;width:30px;height:39px;font-family:'IBM Plex Sans KR',sans-serif;font-size:22px;font-weight:400;color:#b9c6bf;line-height:1.5;text-align:left;">→</div>
+    <div style="position:absolute;left:1022px;top:676px;width:240px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:600;color:#0e7c6b;line-height:1.5;text-align:left;">나만 열 수 있음</div>
+    <div style="position:absolute;left:198px;top:732px;width:1084px;height:36px;background:#f7fbf9;"></div>
+    <div style="position:absolute;left:226px;top:738px;width:900px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">✓ 잠그기만 해요. 지금 쓰시던 기능이 안 되는 일은 없어요.</div>
+    <div data-anim="pop" data-anim-name="btn" style="position:absolute;left:198px;top:800px;width:150px;height:56px;background:#0e7c6b;border-radius:28px;font-family:'IBM Plex Sans KR',sans-serif;font-size:24px;font-weight:500;color:#ffffff;line-height:56px;text-align:center;white-space:nowrap;overflow:hidden;">잠그기</div>
+    <div data-anim-trigger="with" data-anim-ref="btn" style="position:absolute;left:364px;top:800px;width:130px;height:56px;background:#ffffff;border-radius:28px;font-family:'IBM Plex Sans KR',sans-serif;font-size:22px;font-weight:500;color:#17221d;line-height:56px;text-align:center;white-space:nowrap;overflow:hidden;border:1px solid #b9c6bf;">나중에</div>
+    <div data-anim="slideIn" data-anim-dir="up" data-anim-name="q1" style="position:absolute;left:1400px;top:360px;width:380px;height:64px;font-family:'IBM Plex Sans KR',sans-serif;font-size:38px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">먼저 보여주고</div>
+    <div data-anim-trigger="with" data-anim-ref="q1" style="position:absolute;left:1400px;top:432px;width:390px;height:316px;font-family:'IBM Plex Sans KR',sans-serif;font-size:26px;font-weight:400;color:#5d6c65;line-height:1.7;text-align:left;">전 → 후를 표로 보여준<br>다음에<br>누르게 합니다.<br><br>뜻을 모르는 채 눌러서<br>필요한 걸 꺼버리는 일을<br>막기 위해서입니다.</div>
+    <div data-anim="slideIn" data-anim-dir="up" data-anim-name="q2" style="position:absolute;left:1400px;top:700px;width:380px;height:64px;font-family:'IBM Plex Sans KR',sans-serif;font-size:38px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">좁히기만 합니다</div>
+    <div data-anim-trigger="with" data-anim-ref="q2" style="position:absolute;left:1400px;top:772px;width:390px;height:139px;font-family:'IBM Plex Sans KR',sans-serif;font-size:26px;font-weight:400;color:#5d6c65;line-height:1.7;text-align:left;">지킴이는 자물쇠를<br>잠그기만 하고<br>열지는 않습니다.</div>
+    <script type="text/plain" class="fe-notes">
+카드를 누르면 상세 화면이 열립니다. 여기서 바로 처리하지 않습니다.
+
+먼저 무엇이 어떻게 바뀌는지 표로 보여드립니다. 왼쪽이 지금, 오른쪽이 잠근 뒤입니다. 이걸 보고 나서 누르시면 됩니다.
+
+그리고 지킴이는 자물쇠를 잠그기만 합니다. 열지는 않습니다. 그래서 이 버튼을 눌러서 쓰던 기능이 안 되는 일은 생기지 않습니다.
+    </script>
+  </div>
+  <div class="slide" data-transition="fade" style="width:1920px;height:1080px;background:#eef3f0;font-family:'IBM Plex Sans KR',sans-serif;">
+    <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:#eef3f0;"></div>
+    <div data-anim="fadeIn" data-anim-trigger="auto" style="position:absolute;left:150px;top:96px;width:1000px;height:54px;font-family:'IBM Plex Sans KR',sans-serif;font-size:32px;font-weight:700;color:#0e7c6b;line-height:1.5;text-align:left;">장면 4</div>
+    <div data-anim="fadeIn" data-anim-trigger="auto" style="position:absolute;left:150px;top:152px;width:1300px;height:117px;font-family:'IBM Plex Sans KR',sans-serif;font-size:72px;font-weight:900;color:#17221d;line-height:1.5;text-align:left;">무엇이 바뀌었는지 다시</div>
+    <div data-anim="fadeIn" data-anim-name="done" style="position:absolute;left:150px;top:300px;width:1080px;height:600px;background:#ffffff;border:1px solid #d7e0db;border-radius:18px;box-shadow:0 24px 60px rgba(23,34,29,0.16);"></div>
+    <div style="position:absolute;left:150px;top:300px;width:1080px;height:62px;background:#e6ede9;border-radius:18px;"></div>
+    <div style="position:absolute;left:150px;top:344px;width:1080px;height:18px;background:#e6ede9;"></div>
+    <div style="position:absolute;left:150px;top:361px;width:1080px;height:1px;background:#d7e0db;"></div>
+    <div style="position:absolute;left:176px;top:316px;width:520px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:600;color:#17221d;line-height:1.5;text-align:left;">← 돌아가기</div>
+    <div style="position:absolute;left:1054px;top:316px;width:150px;height:35px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:right;">자세히 보기</div>
+    <div style="position:absolute;left:198px;top:410px;width:92px;height:92px;background:#d5ece6;border-radius:46px;"></div>
+    <div style="position:absolute;left:198px;top:434px;width:92px;height:70px;font-family:'IBM Plex Sans KR',sans-serif;font-size:42px;font-weight:400;color:#17221d;line-height:1.5;text-align:center;">🔒</div>
+    <div style="position:absolute;left:318px;top:416px;width:700px;height:82px;font-family:'IBM Plex Sans KR',sans-serif;font-size:50px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">잠갔어요</div>
+    <div style="position:absolute;left:318px;top:480px;width:760px;height:44px;font-family:'IBM Plex Sans KR',sans-serif;font-size:25px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">파일 3개를 나만 고칠 수 있게 바꿨어요.</div>
+    <div style="position:absolute;left:198px;top:550px;width:984px;height:190px;background:#ffffff;border:1px solid #d7e0db;border-radius:14px;"></div>
+    <div style="position:absolute;left:198px;top:550px;width:984px;height:46px;background:#e6ede9;border-radius:14px;"></div>
+    <div style="position:absolute;left:198px;top:582px;width:984px;height:14px;background:#e6ede9;"></div>
+    <div style="position:absolute;left:226px;top:562px;width:440px;height:33px;font-family:'IBM Plex Sans KR',sans-serif;font-size:18px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">파일</div>
+    <div style="position:absolute;left:706px;top:562px;width:200px;height:33px;font-family:'IBM Plex Sans KR',sans-serif;font-size:18px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">잠그기 전</div>
+    <div style="position:absolute;left:950px;top:562px;width:200px;height:33px;font-family:'IBM Plex Sans KR',sans-serif;font-size:18px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">지금</div>
+    <div style="position:absolute;left:226px;top:612px;width:440px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;">로그인할 때 실행되는 설정</div>
+    <div style="position:absolute;left:706px;top:612px;width:200px;height:63px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">누구나 고칠 수<br>있음</div>
+    <div style="position:absolute;left:916px;top:612px;width:30px;height:36px;font-family:'IBM Plex Sans KR',sans-serif;font-size:20px;font-weight:400;color:#b9c6bf;line-height:1.5;text-align:left;">→</div>
+    <div style="position:absolute;left:950px;top:612px;width:200px;height:63px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:600;color:#0e7c6b;line-height:1.5;text-align:left;">나만 고칠 수<br>있음</div>
+    <div style="position:absolute;left:226px;top:654px;width:440px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;">터미널을 열 때 실행되는 설정</div>
+    <div style="position:absolute;left:706px;top:654px;width:200px;height:63px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">누구나 고칠 수<br>있음</div>
+    <div style="position:absolute;left:916px;top:654px;width:30px;height:36px;font-family:'IBM Plex Sans KR',sans-serif;font-size:20px;font-weight:400;color:#b9c6bf;line-height:1.5;text-align:left;">→</div>
+    <div style="position:absolute;left:950px;top:654px;width:200px;height:63px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:600;color:#0e7c6b;line-height:1.5;text-align:left;">나만 고칠 수<br>있음</div>
+    <div style="position:absolute;left:226px;top:696px;width:440px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;">내가 설치한 프로그램 폴더</div>
+    <div style="position:absolute;left:706px;top:696px;width:200px;height:63px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">누구나 넣을 수<br>있음</div>
+    <div style="position:absolute;left:916px;top:696px;width:30px;height:36px;font-family:'IBM Plex Sans KR',sans-serif;font-size:20px;font-weight:400;color:#b9c6bf;line-height:1.5;text-align:left;">→</div>
+    <div style="position:absolute;left:950px;top:696px;width:200px;height:35px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:600;color:#0e7c6b;line-height:1.5;text-align:left;">나만 열 수 있음</div>
+    <div style="position:absolute;left:198px;top:766px;width:984px;height:74px;background:#ffffff;border:1px solid #d7e0db;border-radius:14px;"></div>
+    <div style="position:absolute;left:226px;top:780px;width:900px;height:39px;font-family:'IBM Plex Sans KR',sans-serif;font-size:22px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">혹시 뭔가 안 되나요?</div>
+    <div style="position:absolute;left:226px;top:808px;width:920px;height:36px;font-family:'IBM Plex Sans KR',sans-serif;font-size:20px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">이 변경은 기록에 남아 있어요. 되돌리는 방법도 거기에 적어뒀어요.</div>
+    <div data-anim="slideIn" data-anim-dir="up" data-anim-name="r1" style="position:absolute;left:1310px;top:360px;width:470px;height:64px;font-family:'IBM Plex Sans KR',sans-serif;font-size:38px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">약속한 그대로</div>
+    <div data-anim-trigger="with" data-anim-ref="r1" style="position:absolute;left:1310px;top:432px;width:480px;height:227px;font-family:'IBM Plex Sans KR',sans-serif;font-size:26px;font-weight:400;color:#5d6c65;line-height:1.7;text-align:left;">미리보기에서 쓴 문구를<br>결과 화면에서도 똑같이 씁니다.<br><br>말이 달라지면 무엇이 일어났는지<br>대조할 수 없기 때문입니다.</div>
+    <div data-anim="slideIn" data-anim-dir="up" data-anim-name="r2" style="position:absolute;left:1310px;top:672px;width:470px;height:64px;font-family:'IBM Plex Sans KR',sans-serif;font-size:38px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">되돌리는 법도 함께</div>
+    <div data-anim-trigger="with" data-anim-ref="r2" style="position:absolute;left:1310px;top:744px;width:480px;height:139px;font-family:'IBM Plex Sans KR',sans-serif;font-size:26px;font-weight:400;color:#5d6c65;line-height:1.7;text-align:left;">기록 화면에서 언제 무엇이<br>바뀌었는지<br>보고 되돌릴 수 있습니다.</div>
+    <script type="text/plain" class="fe-notes">
+누르고 나면 무엇이 바뀌었는지 다시 보여드립니다.
+
+여기서 쓰는 말은 미리보기에서 쓴 말과 똑같습니다. ‘누구나 고칠 수 있음’이 ‘나만 고칠 수 있음’으로. 말이 달라지면 사용자가 무슨 일이 일어났는지 대조할 수 없습니다.
+
+되돌리는 방법도 함께 알려드립니다. 기록 화면에 그대로 남아 있습니다.
+    </script>
+  </div>
+  <div class="slide" data-transition="fade" style="width:1920px;height:1080px;background:#ffffff;font-family:'IBM Plex Sans KR',sans-serif;">
+    <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:#ffffff;"></div>
+    <div data-anim="fadeIn" data-anim-trigger="auto" style="position:absolute;left:150px;top:90px;width:1000px;height:54px;font-family:'IBM Plex Sans KR',sans-serif;font-size:32px;font-weight:700;color:#b5322a;line-height:1.5;text-align:left;">장면 5</div>
+    <div data-anim="fadeIn" data-anim-trigger="auto" style="position:absolute;left:150px;top:146px;width:1500px;height:111px;font-family:'IBM Plex Sans KR',sans-serif;font-size:68px;font-weight:900;color:#17221d;line-height:1.5;text-align:left;">지킴이가 대신 못 하는 일</div>
+    <div data-anim="fadeIn" data-anim-trigger="auto" style="position:absolute;left:150px;top:250px;width:1560px;height:54px;font-family:'IBM Plex Sans KR',sans-serif;font-size:32px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">본인이 한 일인지 아닌지는 사용자만 알 수 있습니다.</div>
+    <div data-anim="fadeIn" data-anim-name="judge" style="position:absolute;left:150px;top:336px;width:1080px;height:600px;background:#ffffff;border:1px solid #d7e0db;border-radius:18px;box-shadow:0 24px 60px rgba(23,34,29,0.16);"></div>
+    <div style="position:absolute;left:150px;top:336px;width:1080px;height:62px;background:#e6ede9;border-radius:18px;"></div>
+    <div style="position:absolute;left:150px;top:380px;width:1080px;height:18px;background:#e6ede9;"></div>
+    <div style="position:absolute;left:150px;top:397px;width:1080px;height:1px;background:#d7e0db;"></div>
+    <div style="position:absolute;left:176px;top:352px;width:520px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:600;color:#17221d;line-height:1.5;text-align:left;">← 돌아가기</div>
+    <div style="position:absolute;left:1054px;top:352px;width:150px;height:35px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:right;">자세히 보기</div>
+    <div style="position:absolute;left:198px;top:432px;width:300px;height:39px;font-family:'IBM Plex Sans KR',sans-serif;font-size:22px;font-weight:600;color:#b5322a;line-height:1.5;text-align:left;">지금 확인하세요</div>
+    <div style="position:absolute;left:198px;top:468px;width:900px;height:64px;font-family:'IBM Plex Sans KR',sans-serif;font-size:38px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">처음 보는 곳에서 로그인에 성공했어요</div>
+    <div style="position:absolute;left:198px;top:542px;width:984px;height:150px;background:#ffffff;border:1px solid #d7e0db;border-radius:14px;"></div>
+    <div style="position:absolute;left:226px;top:564px;width:130px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">언제</div>
+    <div style="position:absolute;left:370px;top:564px;width:780px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;">오늘 새벽 3시 12분</div>
+    <div style="position:absolute;left:226px;top:606px;width:130px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">어디서</div>
+    <div style="position:absolute;left:370px;top:606px;width:780px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;">해외 · 지금까지 접속한 적 없는 곳</div>
+    <div style="position:absolute;left:226px;top:648px;width:130px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">어떻게</div>
+    <div style="position:absolute;left:370px;top:648px;width:780px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;">미리 등록해 둔 열쇠 파일로 들어왔어요</div>
+    <div style="position:absolute;left:198px;top:720px;width:700px;height:45px;font-family:'IBM Plex Sans KR',sans-serif;font-size:26px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">이때 직접 접속하셨나요?</div>
+    <div data-anim="pop" data-anim-name="ans" style="position:absolute;left:198px;top:770px;width:227px;height:54px;background:#ffffff;border-radius:27px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:500;color:#17221d;line-height:54px;text-align:center;white-space:nowrap;overflow:hidden;border:1px solid #b9c6bf;">네, 제가 했어요</div>
+    <div data-anim-trigger="with" data-anim-ref="ans" style="position:absolute;left:426px;top:770px;width:307px;height:54px;background:#ffffff;border-radius:27px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:500;color:#b5322a;line-height:54px;text-align:center;white-space:nowrap;overflow:hidden;border:1px solid #b5322a;">아니요, 제가 안 했어요</div>
+    <div data-anim-trigger="with" data-anim-ref="ans" style="position:absolute;left:694px;top:770px;width:203px;height:54px;background:#e6ede9;border-radius:27px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:500;color:#5d6c65;line-height:54px;text-align:center;white-space:nowrap;overflow:hidden;">잘 모르겠어요</div>
+    <div style="position:absolute;left:198px;top:844px;width:984px;height:62px;background:#d5ece6;border-radius:12px;"></div>
+    <div style="position:absolute;left:226px;top:858px;width:920px;height:39px;font-family:'IBM Plex Sans KR',sans-serif;font-size:22px;font-weight:600;color:#0e7c6b;line-height:1.5;text-align:left;">👁 지킴이가 본 것 1건 — 열어보기</div>
+    <div data-anim="slideIn" data-anim-dir="up" data-anim-name="j1" style="position:absolute;left:1310px;top:400px;width:470px;height:64px;font-family:'IBM Plex Sans KR',sans-serif;font-size:38px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">세 갈래로 나눈 이유</div>
+    <div data-anim-trigger="with" data-anim-ref="j1" style="position:absolute;left:1310px;top:472px;width:480px;height:360px;font-family:'IBM Plex Sans KR',sans-serif;font-size:26px;font-weight:400;color:#5d6c65;line-height:1.7;text-align:left;">‘아니요’와 ‘모르겠어요’는<br>다음에 할 일이 다릅니다.<br><br>아니요 → 긴급으로 올리고<br>순서대로 안내<br>모르겠어요 → ‘확인 중’으로<br>두고<br>재촉하지 않음</div>
+    <div data-anim="slideIn" data-anim-dir="up" data-anim-name="j2" style="position:absolute;left:1310px;top:770px;width:470px;height:64px;font-family:'IBM Plex Sans KR',sans-serif;font-size:38px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">근거를 먼저 보세요</div>
+    <div data-anim-trigger="with" data-anim-ref="j2" style="position:absolute;left:1310px;top:842px;width:480px;height:139px;font-family:'IBM Plex Sans KR',sans-serif;font-size:26px;font-weight:400;color:#5d6c65;line-height:1.7;text-align:left;">기억이 안 나면 ‘지킴이가 본<br>것’을<br>펼쳐서 확인하고 정하세요.</div>
+    <script type="text/plain" class="fe-notes">
+어떤 일은 지킴이가 대신 고칠 수 없습니다. 본인이 한 일인지 아닌지는 사용자만 알기 때문입니다.
+
+그래서 사실만 보여드리고 물어봅니다. 언제, 어디서, 어떻게 들어왔는지.
+
+답은 셋입니다. ‘아니요’와 ‘모르겠어요’를 나눈 이유는 다음에 할 일이 다르기 때문입니다. 아니라고 하시면 긴급으로 올리고 순서대로 안내하고, 모르겠다고 하시면 ‘확인 중’으로 두고 재촉하지 않습니다.
+
+기억이 잘 안 나시면 아래 ‘지킴이가 본 것’을 펼쳐서 언제 무슨 일이 있었는지 확인하고 정하시면 됩니다.
+    </script>
+  </div>
+  <div class="slide" data-transition="fade" style="width:1920px;height:1080px;background:#12211c;font-family:'IBM Plex Sans KR',sans-serif;">
+    <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:#12211c;"></div>
+    <div data-anim="fadeIn" data-anim-trigger="auto" style="position:absolute;left:150px;top:110px;width:1000px;height:54px;font-family:'IBM Plex Sans KR',sans-serif;font-size:32px;font-weight:700;color:#7fd3c1;line-height:1.5;text-align:left;">장면 6</div>
+    <div data-anim="fadeIn" data-anim-trigger="auto" style="position:absolute;left:150px;top:166px;width:1500px;height:117px;font-family:'IBM Plex Sans KR',sans-serif;font-size:72px;font-weight:900;color:#f2f5f3;line-height:1.5;text-align:left;">그래도 모르겠으면</div>
+    <div data-anim="fadeIn" data-anim-trigger="auto" style="position:absolute;left:150px;top:274px;width:1560px;height:54px;font-family:'IBM Plex Sans KR',sans-serif;font-size:32px;font-weight:400;color:#9fb3ab;line-height:1.5;text-align:left;">설명을 통째로 복사해 다른 곳에 물어볼 수 있습니다.</div>
+    <div data-anim="fadeIn" data-anim-name="copy" style="position:absolute;left:150px;top:366px;width:900px;height:520px;background:#1b2f28;border:1px solid #2f4a41;border-radius:16px;"></div>
+    <div data-anim-trigger="with" data-anim-ref="copy" style="position:absolute;left:186px;top:400px;width:830px;height:47px;font-family:'IBM Plex Sans KR',sans-serif;font-size:27px;font-weight:700;color:#f2f5f3;line-height:1.5;text-align:left;">설명이 어렵거나 더 묻고 싶으면</div>
+    <div data-anim-trigger="with" data-anim-ref="copy" style="position:absolute;left:186px;top:448px;width:840px;height:79px;font-family:'IBM Plex Sans KR',sans-serif;font-size:22px;font-weight:400;color:#9fb3ab;line-height:1.65;text-align:left;">위 내용을 그대로 복사해서 Claude 같은 AI나 잘 아는 분에게<br>붙여넣어 물어보세요. 무엇을 물어보면 좋을지까지 함께 적어드려요.</div>
+    <div data-anim-trigger="with" data-anim-ref="copy" style="position:absolute;left:186px;top:570px;width:40px;height:40px;background:#0e7c6b;border-radius:8px;"></div>
+    <div data-anim-trigger="with" data-anim-ref="copy" style="position:absolute;left:194px;top:576px;width:26px;height:39px;font-family:'IBM Plex Sans KR',sans-serif;font-size:22px;font-weight:400;color:#ffffff;line-height:1.5;text-align:center;">✓</div>
+    <div data-anim-trigger="with" data-anim-ref="copy" style="position:absolute;left:244px;top:570px;width:780px;height:44px;font-family:'IBM Plex Sans KR',sans-serif;font-size:25px;font-weight:700;color:#f2f5f3;line-height:1.5;text-align:left;">중요한 정보 가리기</div>
+    <div data-anim-trigger="with" data-anim-ref="copy" style="position:absolute;left:244px;top:614px;width:790px;height:114px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#9fb3ab;line-height:1.7;text-align:left;">컴퓨터 이름, 계정 이름, 인터넷 주소를 &lt;이렇게&gt; 바꿔서 복사해요.<br>운영체제·프로그램 이름은 남겨요 — 그게 있어야 제대로 된 답을<br>받을 수 있고, 그것만으로는 이 컴퓨터를 찾아낼 수 없거든요.</div>
+    <div data-anim-trigger="with" data-anim-ref="copy" style="position:absolute;left:186px;top:776px;width:170px;height:56px;background:#0e7c6b;border-radius:28px;font-family:'IBM Plex Sans KR',sans-serif;font-size:23px;font-weight:500;color:#ffffff;line-height:56px;text-align:center;white-space:nowrap;overflow:hidden;">복사하기</div>
+    <div data-anim-trigger="with" data-anim-ref="copy" style="position:absolute;left:372px;top:776px;width:306px;height:56px;background:#243c34;border-radius:28px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:500;color:#9fb3ab;line-height:56px;text-align:center;white-space:nowrap;overflow:hidden;">무엇이 복사되는지 보기</div>
+    <div data-anim="slideIn" data-anim-dir="up" data-anim-name="out" style="position:absolute;left:1110px;top:366px;width:660px;height:520px;background:#0f1c18;border:1px solid #2f4a41;border-radius:16px;"></div>
+    <div data-anim-trigger="with" data-anim-ref="out" style="position:absolute;left:1146px;top:398px;width:600px;height:39px;font-family:'IBM Plex Sans KR',sans-serif;font-size:22px;font-weight:700;color:#7fd3c1;line-height:1.5;text-align:left;">복사되는 글</div>
+    <div data-anim-trigger="with" data-anim-ref="out" style="position:absolute;left:1146px;top:444px;width:590px;height:461px;font-family:'IBM Plex Sans KR',sans-serif;font-size:20px;font-weight:400;color:#c6d6d0;line-height:1.75;text-align:left;"># 제 컴퓨터에 이런 알림이 떴는데…<br><br>저는 보안을 잘 모르는 사람이고,<br>제 개인 컴퓨터를 혼자 관리하고 있어요.<br><br>## 보안 프로그램이 실제로 본 것<br>1. 계정 목록 변경됨<br>&nbsp;&nbsp;&nbsp;- <span style="color:#7fd3c1">&lt;사용자 A&gt;</span> 삭제<br>&nbsp;&nbsp;&nbsp;- <span style="color:#7fd3c1">&lt;외부주소 1&gt;</span> 에서 접속<br><br>## 물어보고 싶은 것<br>1. 이게 실제로 위험한 상황인가요?<br>2. 제가 직접 할 수 있는 일은?</div>
+    <script type="text/plain" class="fe-notes">
+설명을 읽어도 모르겠을 때가 있습니다. 그럴 때는 내용을 통째로 복사해서 다른 곳에 물어보실 수 있습니다.
+
+무엇을 물어보면 좋을지까지 같이 적어드립니다. 질문을 만드는 것 자체가 어려우니까요.
+
+그리고 기본으로 중요한 정보를 가립니다. 컴퓨터 이름, 계정 이름, 인터넷 주소는 이렇게 꺾쇠로 바꿔서 나갑니다. 운영체제나 프로그램 이름은 남깁니다. 그게 있어야 제대로 된 답이 오고, 그것만으로는 이 컴퓨터를 찾아낼 수 없기 때문입니다.
+    </script>
+  </div>
+  <div class="slide" data-transition="fade" style="width:1920px;height:1080px;background:#eef3f0;font-family:'IBM Plex Sans KR',sans-serif;">
+    <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:#eef3f0;"></div>
+    <div data-anim="fadeIn" data-anim-trigger="auto" style="position:absolute;left:150px;top:96px;width:1000px;height:54px;font-family:'IBM Plex Sans KR',sans-serif;font-size:32px;font-weight:700;color:#0e7c6b;line-height:1.5;text-align:left;">장면 7</div>
+    <div data-anim="fadeIn" data-anim-trigger="auto" style="position:absolute;left:150px;top:152px;width:1500px;height:111px;font-family:'IBM Plex Sans KR',sans-serif;font-size:68px;font-weight:900;color:#17221d;line-height:1.5;text-align:left;">무슨 일이 있었나 · 근거는 어디에</div>
+    <div data-anim="fadeIn" data-anim-name="hist" style="position:absolute;left:150px;top:300px;width:800px;height:620px;background:#ffffff;border:1px solid #d7e0db;border-radius:18px;box-shadow:0 24px 60px rgba(23,34,29,0.16);"></div>
+    <div style="position:absolute;left:150px;top:300px;width:800px;height:62px;background:#e6ede9;border-radius:18px;"></div>
+    <div style="position:absolute;left:150px;top:344px;width:800px;height:18px;background:#e6ede9;"></div>
+    <div style="position:absolute;left:150px;top:361px;width:800px;height:1px;background:#d7e0db;"></div>
+    <div style="position:absolute;left:176px;top:316px;width:520px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:600;color:#17221d;line-height:1.5;text-align:left;">← 돌아가기</div>
+    <div style="position:absolute;left:774px;top:316px;width:150px;height:35px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:right;">자세히 보기</div>
+    <div style="position:absolute;left:190px;top:396px;width:600px;height:58px;font-family:'IBM Plex Sans KR',sans-serif;font-size:34px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">무슨 일이 있었는지</div>
+    <div style="position:absolute;left:190px;top:458px;width:720px;height:400px;background:#ffffff;border:1px solid #d7e0db;border-radius:14px;"></div>
+    <div style="position:absolute;left:190px;top:458px;width:720px;height:40px;background:#e6ede9;border-radius:14px;"></div>
+    <div style="position:absolute;left:214px;top:466px;width:300px;height:35px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:600;color:#5d6c65;line-height:1.5;text-align:left;">오늘</div>
+    <div style="position:absolute;left:214px;top:500px;width:672px;height:1px;background:#eef2f0;"></div>
+    <div style="position:absolute;left:214px;top:510px;width:90px;height:35px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">15:44</div>
+    <div style="position:absolute;left:318px;top:510px;width:420px;height:69px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;">파일 3개를 나만 고칠 수 있게<br>잠갔어요</div>
+    <div style="position:absolute;left:750px;top:510px;width:130px;height:32px;font-family:'IBM Plex Sans KR',sans-serif;font-size:17px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:right;">내가 함</div>
+    <div style="position:absolute;left:214px;top:582px;width:672px;height:1px;background:#eef2f0;"></div>
+    <div style="position:absolute;left:214px;top:592px;width:90px;height:35px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">15:30</div>
+    <div style="position:absolute;left:318px;top:592px;width:420px;height:69px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;">다른 사람이 고칠 수 있는 파일<br>3개를 찾았어요</div>
+    <div style="position:absolute;left:750px;top:592px;width:130px;height:32px;font-family:'IBM Plex Sans KR',sans-serif;font-size:17px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:right;">자동 점검</div>
+    <div style="position:absolute;left:214px;top:664px;width:672px;height:1px;background:#eef2f0;"></div>
+    <div style="position:absolute;left:214px;top:674px;width:90px;height:35px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">09:12</div>
+    <div style="position:absolute;left:318px;top:674px;width:420px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;">보안 업데이트 12개가 설치됐어요</div>
+    <div style="position:absolute;left:750px;top:674px;width:130px;height:32px;font-family:'IBM Plex Sans KR',sans-serif;font-size:17px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:right;">자동</div>
+    <div style="position:absolute;left:214px;top:746px;width:672px;height:1px;background:#eef2f0;"></div>
+    <div style="position:absolute;left:214px;top:756px;width:90px;height:35px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">어제</div>
+    <div style="position:absolute;left:318px;top:756px;width:420px;height:69px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;">비밀번호를 계속 찍어보던 상대를<br>막았어요</div>
+    <div style="position:absolute;left:750px;top:756px;width:130px;height:32px;font-family:'IBM Plex Sans KR',sans-serif;font-size:17px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:right;">자동 차단</div>
+    <div data-anim="slideIn" data-anim-name="exp" data-anim-dir="up" style="position:absolute;left:1010px;top:300px;width:760px;height:620px;background:#ffffff;border:1px solid #d7e0db;border-radius:18px;box-shadow:0 24px 60px rgba(23,34,29,0.16);"></div>
+    <div style="position:absolute;left:1010px;top:300px;width:760px;height:62px;background:#e6ede9;border-radius:18px;"></div>
+    <div style="position:absolute;left:1010px;top:344px;width:760px;height:18px;background:#e6ede9;"></div>
+    <div style="position:absolute;left:1010px;top:361px;width:760px;height:1px;background:#d7e0db;"></div>
+    <div style="position:absolute;left:1036px;top:316px;width:520px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:600;color:#17221d;line-height:1.5;text-align:left;">← 돌아가기</div>
+    <div style="position:absolute;left:1594px;top:316px;width:150px;height:63px;font-family:'IBM Plex Sans KR',sans-serif;font-size:19px;font-weight:400;color:#0e7c6b;line-height:1.5;text-align:right;">쉬운<br>화면으로</div>
+    <div style="position:absolute;left:1050px;top:396px;width:400px;height:58px;font-family:'IBM Plex Sans KR',sans-serif;font-size:34px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;">자세히 보기</div>
+    <div style="position:absolute;left:1530px;top:400px;width:180px;height:46px;background:#ffffff;border-radius:23px;font-family:'IBM Plex Sans KR',sans-serif;font-size:20px;font-weight:500;color:#17221d;line-height:46px;text-align:center;white-space:nowrap;overflow:hidden;border:1px solid #b9c6bf;">모두 펼치기</div>
+    <div style="position:absolute;left:1050px;top:468px;width:680px;height:390px;background:#ffffff;border:1px solid #d7e0db;border-radius:14px;"></div>
+    <div style="position:absolute;left:1074px;top:490px;width:500px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;">밖에서 들어올 수 있는 문</div>
+    <div style="position:absolute;left:1650px;top:490px;width:40px;height:39px;font-family:'IBM Plex Sans KR',sans-serif;font-size:22px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:right;">⌄</div>
+    <div style="position:absolute;left:1074px;top:540px;width:632px;height:1px;background:#eef2f0;"></div>
+    <div style="position:absolute;left:1074px;top:552px;width:500px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;">파일과 프로그램 설정</div>
+    <div style="position:absolute;left:1650px;top:552px;width:40px;height:39px;font-family:'IBM Plex Sans KR',sans-serif;font-size:22px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:right;">⌄</div>
+    <div style="position:absolute;left:1074px;top:602px;width:632px;height:1px;background:#eef2f0;"></div>
+    <div style="position:absolute;left:1074px;top:614px;width:500px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;">이 컴퓨터를 쓰는 사람</div>
+    <div style="position:absolute;left:1650px;top:614px;width:40px;height:39px;font-family:'IBM Plex Sans KR',sans-serif;font-size:22px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:right;">⌄</div>
+    <div style="position:absolute;left:1074px;top:664px;width:632px;height:1px;background:#eef2f0;"></div>
+    <div style="position:absolute;left:1074px;top:676px;width:500px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;">막은 상대</div>
+    <div style="position:absolute;left:1650px;top:676px;width:40px;height:39px;font-family:'IBM Plex Sans KR',sans-serif;font-size:22px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:right;">⌄</div>
+    <div style="position:absolute;left:1074px;top:726px;width:632px;height:1px;background:#eef2f0;"></div>
+    <div style="position:absolute;left:1074px;top:738px;width:500px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;">지킴이가 보고 있는 것</div>
+    <div style="position:absolute;left:1650px;top:738px;width:40px;height:39px;font-family:'IBM Plex Sans KR',sans-serif;font-size:22px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:right;">⌄</div>
+    <div style="position:absolute;left:1074px;top:788px;width:632px;height:1px;background:#eef2f0;"></div>
+    <div style="position:absolute;left:1074px;top:800px;width:500px;height:38px;font-family:'IBM Plex Sans KR',sans-serif;font-size:21px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;">알림 전체</div>
+    <div style="position:absolute;left:1650px;top:800px;width:40px;height:39px;font-family:'IBM Plex Sans KR',sans-serif;font-size:22px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:right;">⌄</div>
+    <div data-anim="fadeIn" data-anim-name="foot" style="position:absolute;left:150px;top:952px;width:1620px;height:51px;font-family:'IBM Plex Sans KR',sans-serif;font-size:30px;font-weight:400;color:#5d6c65;line-height:1.5;text-align:left;">전문가 화면은 없애지 않았습니다. 어느 화면에서든 오른쪽 위 ‘자세히 보기’로 열립니다.</div>
+    <script type="text/plain" class="fe-notes">
+왼쪽은 기록입니다. 지킴이가 한 일과 컴퓨터에 생긴 일을 시간 순서로 적어둡니다. 줄을 누르면 자세히 볼 수 있고, 되돌리는 방법도 여기 있습니다.
+
+오른쪽은 자세히 보기입니다. 지킴이가 무엇을 보고 그렇게 판단했는지 전부 여기 있습니다. 예전에 쓰시던 전문가 화면이 하나도 빠짐없이 이 안에 들어 있습니다.
+
+‘모두 펼치기’를 누르면 예전처럼 한 화면에서 전부 볼 수 있습니다. 그리고 이 전환 버튼은 어느 화면에서든 오른쪽 위 같은 자리에 있습니다.
+    </script>
+  </div>
+  <div class="slide" data-transition="fade" style="width:1920px;height:1080px;background:#0e7c6b;font-family:'IBM Plex Sans KR',sans-serif;">
+    <div style="position:absolute;left:0px;top:0px;width:1920px;height:1080px;background:#0e7c6b;"></div>
+    <div data-anim="fadeIn" data-anim-trigger="auto" style="position:absolute;left:150px;top:200px;width:1620px;height:136px;font-family:'IBM Plex Sans KR',sans-serif;font-size:84px;font-weight:900;color:#ffffff;line-height:1.5;text-align:left;">기억할 것은 셋</div>
+    <div data-anim="slideIn" data-anim-dir="up" data-anim-name="it0" style="position:absolute;left:150px;top:380px;width:92px;height:92px;background:#0a5f52;border-radius:46px;"></div>
+    <div data-anim-trigger="with" data-anim-ref="it0" style="position:absolute;left:150px;top:402px;width:92px;height:73px;font-family:'IBM Plex Sans KR',sans-serif;font-size:44px;font-weight:900;color:#ffffff;line-height:1.5;text-align:center;">1</div>
+    <div data-anim-trigger="with" data-anim-ref="it0" style="position:absolute;left:288px;top:384px;width:1480px;height:70px;font-family:'IBM Plex Sans KR',sans-serif;font-size:42px;font-weight:700;color:#ffffff;line-height:1.5;text-align:left;">‘이상 없음’이면 아무것도 안 해도 됩니다</div>
+    <div data-anim-trigger="with" data-anim-ref="it0" style="position:absolute;left:288px;top:448px;width:1480px;height:48px;font-family:'IBM Plex Sans KR',sans-serif;font-size:28px;font-weight:400;color:#bfe3da;line-height:1.5;text-align:left;">대부분의 날이 그렇습니다. 창을 닫으셔도 됩니다.</div>
+    <div data-anim="slideIn" data-anim-dir="up" data-anim-name="it1" style="position:absolute;left:150px;top:570px;width:92px;height:92px;background:#0a5f52;border-radius:46px;"></div>
+    <div data-anim-trigger="with" data-anim-ref="it1" style="position:absolute;left:150px;top:592px;width:92px;height:73px;font-family:'IBM Plex Sans KR',sans-serif;font-size:44px;font-weight:900;color:#ffffff;line-height:1.5;text-align:center;">2</div>
+    <div data-anim-trigger="with" data-anim-ref="it1" style="position:absolute;left:288px;top:574px;width:1480px;height:70px;font-family:'IBM Plex Sans KR',sans-serif;font-size:42px;font-weight:700;color:#ffffff;line-height:1.5;text-align:left;">할 일이 뜨면 눌러서 미리보기부터 보세요</div>
+    <div data-anim-trigger="with" data-anim-ref="it1" style="position:absolute;left:288px;top:638px;width:1480px;height:48px;font-family:'IBM Plex Sans KR',sans-serif;font-size:28px;font-weight:400;color:#bfe3da;line-height:1.5;text-align:left;">무엇이 바뀌는지 보고 나서 정하시면 됩니다.</div>
+    <div data-anim="slideIn" data-anim-dir="up" data-anim-name="it2" style="position:absolute;left:150px;top:760px;width:92px;height:92px;background:#0a5f52;border-radius:46px;"></div>
+    <div data-anim-trigger="with" data-anim-ref="it2" style="position:absolute;left:150px;top:782px;width:92px;height:73px;font-family:'IBM Plex Sans KR',sans-serif;font-size:44px;font-weight:900;color:#ffffff;line-height:1.5;text-align:center;">3</div>
+    <div data-anim-trigger="with" data-anim-ref="it2" style="position:absolute;left:288px;top:764px;width:1480px;height:70px;font-family:'IBM Plex Sans KR',sans-serif;font-size:42px;font-weight:700;color:#ffffff;line-height:1.5;text-align:left;">모르겠으면 복사해서 물어보세요</div>
+    <div data-anim-trigger="with" data-anim-ref="it2" style="position:absolute;left:288px;top:828px;width:1480px;height:48px;font-family:'IBM Plex Sans KR',sans-serif;font-size:28px;font-weight:400;color:#bfe3da;line-height:1.5;text-align:left;">중요한 정보는 가려서 나갑니다. 억지로 판단하지 않으셔도 됩니다.</div>
+    <script type="text/plain" class="fe-notes">
+정리하겠습니다. 기억하실 것은 세 가지입니다.
+
+첫째, ‘이상 없음’이면 아무것도 하지 않으셔도 됩니다. 대부분의 날이 그렇습니다.
+
+둘째, 할 일이 뜨면 눌러서 미리보기를 먼저 보세요. 무엇이 바뀌는지 보고 나서 정하시면 됩니다.
+
+셋째, 모르겠으면 복사해서 물어보세요. 중요한 정보는 가려서 나가니 안심하셔도 됩니다. 억지로 혼자 판단하지 않으셔도 됩니다.
+    </script>
+  </div>
+</body>
+</html>

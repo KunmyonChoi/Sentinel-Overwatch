@@ -71,14 +71,39 @@ export function redact(text, host, accounts = []) {
     }
     for (const m of s.matchAll(/\/(?:home|Users)\/([A-Za-z0-9._-]+)/g)) add(m[1]);
 
-    // 긴 이름부터 바꿔야 짧은 이름이 긴 이름의 일부를 먼저 갉아먹지 않는다
+    const esc = (v) => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     for (const n of [...names.keys()].sort((a, b) => b.length - a.length)) {
-        s = s.split(n).join(names.get(n));
+        const label = names.get(n);
+        const N = esc(n);
+        if (n.length >= 5) {
+            // 충분히 긴 이름은 낱말 경계만으로 안전하다
+            s = s.replace(new RegExp(`(?<![A-Za-z0-9_-])${N}(?![A-Za-z0-9_-])`, 'g'), label);
+            continue;
+        }
+        // 짧은 이름은 '사람을 가리키는 자리'에서만 바꾼다.
+        // 그렇지 않으면 dev·git·bin 같은 계정명이 /dev/null, /usr/bin/git 을 갉아먹는다.
+        const spots = [
+            [new RegExp(`(/(?:home|Users)/)${N}(?![A-Za-z0-9_-])`, 'g'), `$1${label}`],
+            [new RegExp(`(^|\\n)${N}(:x:)`, 'g'), `$1${label}$2`],
+            [new RegExp(`([:,])${N}(?=[,\\s]|$)`, 'gm'), `$1${label}`],
+            [new RegExp(`((?:사용자|계정|user|account|for)\\s+)${N}(?![A-Za-z0-9_-])`, 'gi'), `$1${label}`],
+        ];
+        for (const [re, to] of spots) s = s.replace(re, to);
     }
 
     // 3) 장치 주소 → 인터넷 주소(IPv6) → 인터넷 주소(IPv4) 순서 (겹쳐 매칭되지 않게)
     s = s.replace(/\b(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}\b/g, '<장치주소>');
-    s = s.replace(/\b(?:[0-9a-fA-F]{1,4}:){2,7}[0-9a-fA-F]{1,4}\b/g, (m) => (m === '::1' ? m : '<인터넷주소>'));
+    // 콜론 두 개짜리(14:03:21 같은 시각)를 주소로 오인하지 않도록, 콜론 4개 이상이거나
+    // '::' 를 포함할 때만 IPv6 로 본다. 시각을 지우면 사용자가 물어보려던 '언제'가 사라진다.
+    s = s.replace(/\b(?:[0-9a-fA-F]{1,4}:){4,7}[0-9a-fA-F]{1,4}\b/g, '<인터넷주소>');
+    s = s.replace(/\b(?:[0-9a-fA-F]{1,4}:){0,6}(?:[0-9a-fA-F]{1,4})?::(?:[0-9a-fA-F]{1,4}(?::[0-9a-fA-F]{1,4})*)?(\/?)/g,
+                  (m, slash) => {
+                      if (m === '::1') return m;
+                      // /etc/passwd 의 빈 필드도 '1001:1001::/home/...' 처럼 보인다.
+                      // 뒤에 경로가 붙거나 숫자만으로 이루어졌으면 주소가 아니다.
+                      if (slash === '/' || !/[a-fA-F]/.test(m)) return m;
+                      return '<인터넷주소>';
+                  });
 
     const seen = new Map();
     s = s.replace(/\b(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\b/g, (full, a, b) => {
@@ -193,11 +218,16 @@ export async function copyText(text) {
 export function downloadText(filename, text) {
     try {
         const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
+        a.href = url;
         a.download = filename;
+        a.style.display = 'none';
+        // 브라우저에 따라 문서에 붙어 있어야 내려받기가 시작된다.
+        // 해제도 같은 틱에 하면 저장이 중간에 끊긴다.
+        document.body.appendChild(a);
         a.click();
-        URL.revokeObjectURL(a.href);
+        setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 4000);
         return true;
     } catch {
         return false;

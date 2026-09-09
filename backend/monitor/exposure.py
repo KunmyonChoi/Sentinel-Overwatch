@@ -40,18 +40,24 @@ def ephemeral_range(path: str = EPHEMERAL_PATH) -> tuple[int, int]:
         return 32768, 60999
 
 
-def is_client_socket(port: int, process: str | None, ephemeral: tuple[int, int], names: set[str]) -> bool:
+def is_client_socket(port: int, process: str | None, ephemeral: tuple[int, int],
+                     names: set[str], proto: str = "udp") -> bool:
     """
     '나가는 통로'인가.
 
-    두 조건을 모두 만족해야 한다.
-      1. 커널이 나눠주는 임시 포트 범위 안이다.
-      2. 여는 쪽이 클라이언트 프로그램이다 (브라우저, 메신저 등).
+    세 조건을 모두 만족해야 한다.
+      1. UDP 다. 이 규칙이 겨냥한 것은 브라우저의 QUIC·WebRTC 처럼 나가면서 여는 소켓이다.
+         TCP 로 듣고 있으면 그것은 서비스다 — 브라우저 계열 프로그램이라도 마찬가지다.
+         (예: code serve-web 이 0.0.0.0 에 TCP 로 듣는 경우. 문으로 세지 않으면 노출을 놓친다.)
+      2. 커널이 나눠주는 임시 포트 범위 안이다.
+      3. 여는 쪽이 클라이언트 프로그램이다 (브라우저, 메신저 등).
 
     프로세스 이름까지 보는 이유: 임시 포트 범위에 자리잡은 진짜 서비스도 있다.
     예를 들어 Tailscale 의 기본 포트 41641 은 이 범위 안이다. 범위만 보고 걸렀다면
     그런 서비스가 목록에서 사라져 노출을 놓치게 된다.
     """
+    if proto != "udp":
+        return False
     if not process:
         return False                      # 누가 열었는지 모르면 문으로 둔다 (안전한 쪽)
     lo, hi = ephemeral
@@ -91,8 +97,11 @@ def classify(addr: str, port: int, proto: str, fw: dict, expected: set[tuple[int
     reachable = port_reachable(fw, port, proto)
     if (port, proto) in expected:
         return {"state": "expected", "state_ko": "의도된 공개", "reachable": reachable, "severity": "INFO"}
-    if is_client_socket(port, process, ephemeral or ephemeral_range(), client_names or config.CLIENT_PROCESSES):
-        return {"state": "client", "state_ko": "프로그램이 나가면서 잠시 쓰는 통로", "reachable": False, "severity": "INFO"}
+    if is_client_socket(port, process, ephemeral or ephemeral_range(),
+                        client_names or config.CLIENT_PROCESSES, proto):
+        # 문으로 세지 않을 뿐, 도달성을 단정하지는 않는다 (방화벽을 못 읽으면 None 이다)
+        return {"state": "client", "state_ko": "프로그램이 나가면서 잠시 쓰는 통로",
+                "reachable": reachable, "severity": "INFO"}
     if reachable is None:
         return {"state": "unknown", "state_ko": "판단 불가 (방화벽 상태 못 읽음)", "reachable": None, "severity": "WARNING"}
     if reachable:

@@ -26,6 +26,7 @@ export default function PlainApp() {
     const [needToken, setNeedToken] = useState(() => !getToken());
     const [d, setD] = useState({ stats: null, alerts: [], events: [], host: null, exposure: null, blocked: null, monitors: [], accounts: [] });
     const [tick, setTick] = useState(0);
+    const [conn, setConn] = useState('loading');   // loading | ok | down
     const alive = useRef(true);
 
     const load = useCallback(async () => {
@@ -37,7 +38,8 @@ export default function PlainApp() {
             get('/api/accounts'),   // 붙여넣기용 글에서 계정 이름을 가리는 데 쓴다
         ]);
         if (!alive.current) return;
-        if (stats) setNeedToken(false);
+        if (stats) { setNeedToken(false); setConn('ok'); }
+        else setConn('down');   // 못 읽었으면 '이상 없음'이라고 말하지 않는다
         setD((p) => ({
             stats: stats ?? p.stats, alerts: alerts ?? p.alerts, events: events ?? p.events,
             host: host ?? p.host, exposure: exposure ?? p.exposure, blocked: blocked ?? p.blocked,
@@ -63,7 +65,7 @@ export default function PlainApp() {
     }, [load]);
 
     const tasks = buildTasks(d.alerts);
-    const status = statusOf(d.stats, tasks.length);
+    const status = statusOf(d.stats, tasks.length, conn);
 
     // 홈의 안심 정보 세 칸
     const pending = d.host?.pending_updates || {};
@@ -76,11 +78,12 @@ export default function PlainApp() {
     const lastCheck = agoKo((d.monitors || []).map((m) => m.last_check_at).filter(Boolean).sort().at(-1));
 
     const facts = {
-        doors,
-        doorsNote: doors === 0 ? '밖에서 들어올 수 있는 문이 없어요.'
+        doors: d.exposure ? doors : '—',
+        doorsNote: !d.exposure ? '아직 확인하지 못했어요.'
+            : doors === 0 ? '밖에서 들어올 수 있는 문이 없어요.'
             : d.exposure?.firewall?.available === false ? '잠겼는지 확인하지 못했어요. 자세히 보기에서 이유를 볼 수 있어요.'
                 : '직접 열어두신 것이에요.',
-        updates: pending.available === false ? '확인 못 함' : (pending.security ? `${pending.security}개` : '없음'),
+        updates: !d.host ? '—' : pending.available === false ? '확인 못 함' : (pending.security ? `${pending.security}개` : '없음'),
         updatesNote: pending.available === false ? '업데이트 목록을 읽지 못했어요.'
             : pending.security ? '보안에 관한 것이라 먼저 설치하는 게 좋아요.'
                 : pending.total ? `보안과 무관한 업데이트 ${pending.total}개가 남아 있어요.` : '밀린 것이 없어요.',
