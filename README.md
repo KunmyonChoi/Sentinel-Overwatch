@@ -14,7 +14,7 @@
  USN JSON ──┘                                   └─ DEFCON = 미확인 알림에서만 계산
 ```
 
-아키텍처 다이어그램(데이터 흐름, 브루트포스 사건의 경로, 알림 생애주기, 신뢰 경계, 설치·강화 경로)은 [docs/architecture.html](docs/architecture.html) 에 있다. 운영 중인 대시보드에서는 http://127.0.0.1:8000/docs/architecture.html 로도 열린다.
+아키텍처 다이어그램(데이터 흐름, 브루트포스 사건의 경로, 알림 생애주기, 신뢰 경계, 설치·강화 경로): **https://kunmyonchoi.github.io/Sentinel-Overwatch/architecture.html** (원본 [docs/architecture.html](docs/architecture.html), 운영 대시보드에서는 http://127.0.0.1:8000/docs/architecture.html).
 
 ## 원칙
 

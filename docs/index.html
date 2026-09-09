@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sentinel Overwatch 문서</title>
+<link rel="icon" type="image/svg+xml" href="/sentinel.svg">
+<style>
+  :root { --bg:#f2f5f3; --ink:#17221d; --muted:#5d6c65; --accent:#0e7c6b; --line:#b9c6bf; --panel:#fff; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0f1513; --ink:#e4ebe7; --muted:#95a59d; --accent:#3fb59e; --line:#35443e; --panel:#171f1c; } }
+  html { color-scheme: light dark; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif; line-height:1.6; word-break:keep-all; }
+  .page { max-width:760px; margin:0 auto; padding:48px 24px; }
+  .eyebrow { font-family:ui-monospace,monospace; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); }
+  h1 { font-size:28px; margin:8px 0 6px; }
+  p { margin:0 0 18px; color:var(--muted); }
+  ul { list-style:none; padding:0; margin:0; display:grid; gap:12px; }
+  li { border:1px solid var(--line); background:var(--panel); border-radius:6px; padding:14px 16px; }
+  a { color:var(--accent); font-weight:600; text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  small { display:block; color:var(--muted); margin-top:4px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="eyebrow">Sentinel Overwatch · security-dashboard</div>
+  <h1>문서</h1>
+  <p>중요 서버용 보안 관제 대시보드. 검증된 호스트 도구(fail2ban, auth.log, auditd, dpkg/apt, Lynis, Ubuntu USN) 위에서 동작하는 뷰·트리아지 계층.</p>
+  <ul>
+    <li><a href="architecture.html">시스템 아키텍처</a><small>데이터 흐름, 브루트포스 사건의 경로, 알림 생애주기, 신뢰 경계와 권한, 설치·강화 경로</small></li>
+    <li><a href="https://github.com/KunmyonChoi/Sentinel-Overwatch#readme">README</a><small>원칙, 화면 구성, 탐지 항목, 운영 리듬, API, 설정</small></li>
+    <li><a href="https://github.com/KunmyonChoi/Sentinel-Overwatch/blob/main/deploy/README.md">배포 가이드</a><small>릴리스 설치, 권한 모델, 호스트 도구 설정, Lynis 프로파일, 강화 스크립트</small></li>
+  </ul>
+</div>
+</body>
+</html>
