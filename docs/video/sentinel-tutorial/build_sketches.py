@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""스케치 패스 — 장면 16개의 와이어프레임을 뽑는다.
+"""스케치 패스 — 장면 21개의 와이어프레임을 뽑는다.
 
 스케치는 '실제 문구가 들어간 배치도'다. 색은 frame.md 의 바탕·글·강조 셋만
 쓰고, 카드는 빈 상자로 둔다. 모션은 없다(빈 타임라인만 등록한다).
@@ -289,7 +289,7 @@ def station(x, y, w, h, n, title, lines, *, dark=False, accent=False):
 
 def f09():
     el(0, 0, W, CONTENT_H, "", bg=BG)
-    head("5장", "설치")
+    head("6장", "설치")
     xs = [150, 563, 976, 1389]
     station(xs[0], 290, 380, 210, "1", "빌드 머신",
             ["$ deploy/build-release.sh", "tar.gz + sha256", "dist 포함 · 비밀 제외"], dark=True)
@@ -317,7 +317,7 @@ def f09():
 
 def f10():
     el(0, 0, W, CONTENT_H, "", bg=DARK)
-    head("6장", "설정", dark=True)
+    head("7장", "설정", dark=True)
     el(PAD, 240, 1120, 560, "", border=f"1px solid {NEON_DIM}", radius=12)
     el(PAD + 30, 262, 1000, 34, "/etc/secdash/secdash.env", size=22, color=NEON, mono=True)
     lines = [
@@ -347,7 +347,7 @@ def f10():
 
 def f11():
     el(0, 0, W, CONTENT_H, "", bg=BG)
-    head("7장 · 아키텍처 ①", "어디서 들어오나")
+    head("8장 · 아키텍처 ①", "어디서 들어오나")
     el(150, 236, 900, 30, "호스트 진실 원천 — root 소유 데몬·로그·/proc",
        size=21, color=MUTED)
     srcs = [("auth.log · audit.log", "rsyslog · auditd"), ("dpkg.log · apt", "패키지 변경"),
@@ -383,7 +383,7 @@ def f11():
 
 def f12():
     el(0, 0, W, CONTENT_H, "", bg=BG)
-    head("7장 · 아키텍처 ②", "어디에 쌓이고 어디로 나가나")
+    head("8장 · 아키텍처 ②", "어디에 쌓이고 어디로 나가나")
     el(190, 232, 1540, 5, "", bg=ACCENT)
     el(150, 244, 900, 28, "앞 장의 이벤트 버스", size=19, color=ACCENT)
     # SQLite
@@ -428,7 +428,7 @@ def f12():
 
 def f13():
     el(0, 0, W, CONTENT_H, "", bg=BG)
-    head("7장 · 아키텍처 ③", "사건 하나가 지나가는 길")
+    head("8장 · 아키텍처 ③", "사건 하나가 지나가는 길")
     row1 = [("auth.log", "Failed password ×5", None),
             ("parse_line", "계정 · 주소 · 방식", None),
             ("Event 로그인 실패", "심각도 '정보' — 사실", None),
@@ -460,7 +460,7 @@ def f13():
 
 def f14():
     el(0, 0, W, CONTENT_H, "", bg=BG)
-    head("7장 · 아키텍처 ④", "알림의 생애주기와 위험 단계")
+    head("8장 · 아키텍처 ④", "알림의 생애주기와 위험 단계")
     pills = [("열림", "아직 아무도 안 봄<br>위험 단계에 반영", CRIT, CARD),
              ("확인함", "사람이 '봤다' 표시<br>단계에서 빠짐", ACCENT, ACC_SOFT),
              ("해결됨", "끝난 것<br>90일 뒤 삭제", LINE2, PANEL2)]
@@ -489,7 +489,7 @@ def f14():
 
 def f15():
     el(0, 0, W, CONTENT_H, "", bg=BG)
-    head("7장 · 아키텍처 ⑤", "권한의 경계, 그리고 왜 이 구조인가")
+    head("8장 · 아키텍처 ⑤", "권한의 경계, 그리고 왜 이 구조인가")
     el(150, 246, 980, 32, "지킴이는 root 로 돌지 않는다", size=24, weight=700)
     for i, h_ in enumerate(["경계", "넘는 것", "허용 방법"]):
         el(150 + [0, 330, 700][i], 292, [320, 360, 280][i], 30, h_, size=19, color=MUTED)
@@ -533,6 +533,155 @@ def f16():
     band("정리하겠습니다. 이 도구는 세 가지를 지킵니다.")
 
 
+def feat_exposure():
+    el(0, 0, W, CONTENT_H, "", bg=BG)
+    head("5장 · 기능 ①", "문이 실제로 밖에서 닿는가")
+    el(150, 236, 1620, 50, "열려 있다  ≠  밖에서 닿는다", size=32, weight=700, color=ACCENT)
+    states = [("루프백 전용", "이 컴퓨터 안에서만", LINE, PANEL2),
+              ("의도된 공개", "직접 열어두신 것", LINE, PANEL2),
+              ("잠시 쓰는 통로", "프로그램이 나가면서", LINE, PANEL2),
+              ("외부 도달 가능", "경고 — 밖에서 닿는다", WARN, CARD),
+              ("방화벽이 막는 중", "바인딩은 전체지만 막힘", LINE, PANEL2),
+              ("판단 불가", "방화벽 상태를 못 읽음", CRIT, CARD)]
+    for i, (n, d, col, bg) in enumerate(states):
+        bx, by = 150 + (i % 3) * 550, 314 + (i // 3) * 180
+        el(bx, by, 520, 150, "", bg=bg, radius=14,
+           border=f"{'2px' if col != LINE else '1px'} solid {col}")
+        el(bx + 26, by + 26, 468, 46, n, size=32, weight=700,
+           color=col if col != LINE else INK)
+        el(bx + 26, by + 82, 468, 40, d, size=23, color=MUTED)
+    el(150, 700, 1620, 44, "모르는 것을 '안전'이라고 말하지 않는다 — 그게 가장 위험하다",
+       size=28, weight=700, color=CRIT, align="center")
+    el(150, 756, 1620, 40, "다른 계정의 프로세스를 못 볼 때도 모니터가 스스로 '제한됨'이라고 표시한다",
+       size=22, color=MUTED, align="center")
+    band("포트가 열려 있다는 것과, 밖에서 실제로 그 포트에 닿는다는 것은 다른 이야기입니다.")
+
+
+def feat_integrity():
+    el(0, 0, W, CONTENT_H, "", bg=BG)
+    head("5장 · 기능 ②", "건드리면 안 되는 파일이 바뀌었을 때")
+    el(150, 236, 900, 34, "기준선을 저장해두고 비교하는 곳", size=23, color=MUTED)
+    for i, pth in enumerate(["/etc/sudoers", "~/.ssh/authorized_keys", "/etc/cron.d",
+                             "/etc/systemd/system", "/etc/ld.so.preload"]):
+        el(150 + i * 190, 280, 178, 48, pth, size=17, mono=True, align="center",
+           bg=CARD, radius=10, border=f"1px solid {LINE}", extra="line-height:48px")
+    el(150, 348, 900, 34, "설정 파일 60초 · 자동 실행 지점 5분", size=21, color=MUTED)
+    # 차이 카드
+    el(150, 392, 900, 250, "", bg=CARD, radius=14, border=f"1px solid {LINE}")
+    el(174, 414, 850, 36, "무엇이 바뀌었나", size=25, weight=700)
+    for i, (mark, ln, col) in enumerate([(" ", "%admin ALL=(ALL) ALL", MUTED),
+                                         (" ", "%sudo  ALL=(ALL:ALL) ALL", MUTED),
+                                         ("+", "deploy ALL=(ALL) NOPASSWD: ALL", CRIT),
+                                         (" ", "#includedir /etc/sudoers.d", MUTED)]):
+        el(174, 462 + i * 40, 40, 32, mark, size=21, mono=True, weight=700, color=col)
+        el(210, 462 + i * 40, 800, 32, html.escape(ln), size=21, mono=True, color=col)
+    el(174, 604, 850, 30, "SHA-256 기준선과의 차이를 그대로 붙인다", size=20, color=MUTED)
+    # auditd
+    el(1100, 392, 670, 116, "", bg=ACC_SOFT, radius=14, border=f"1.5px solid {ACCENT}")
+    el(1126, 412, 620, 36, "auditd 가 한 줄을 더 붙인다", size=25, weight=700, color=ACCENT)
+    el(1126, 454, 620, 34, "누가 · 어떤 프로그램으로 그 파일에 썼나", size=22, color=MUTED)
+    # 계획 변경 필터
+    el(1100, 528, 670, 114, "", bg=CARD, radius=14, border=f"1px solid {LINE}")
+    el(1126, 548, 620, 36, "정상적인 변경은 거른다", size=25, weight=700)
+    el(1126, 590, 620, 34, "소유 패키지 + 최근 패키지 작업 대조 → 사실로만", size=21, color=MUTED)
+    el(1100, 664, 670, 40, "예외 — 무슨 일이 있어도 알린다", size=23, weight=700, color=CRIT)
+    el(1100, 708, 670, 40, "sudoers · sshd_config · authorized_keys · ld.so.preload",
+       size=20, mono=True, color=CRIT)
+    band("침입자가 자리를 잡을 때 건드리는 곳은 정해져 있습니다.")
+
+
+def feat_fix():
+    el(0, 0, W, CONTENT_H, "", bg=BG)
+    head("5장 · 기능 ③", "지킴이가 직접 잠그는 유일한 곳")
+    el(150, 236, 1620, 40, "스스로 시스템을 바꾸는 곳은 여기 하나뿐이다. 그래서 방어가 네 겹이다.",
+       size=26, color=MUTED)
+    guards = [("경로를 인자로 받지 않는다",
+               "무엇을 고칠지는 root 진입점이 스스로 다시 검사해 정한다",
+               "secdash-fix-permissions --apply"),
+              ("좁히기만 한다",
+               "교집합은 언제나 기존의 부분집합 — 넓어지는 경우가 없다",
+               "new = old & target"),
+              ("심볼릭 링크를 따라가지 않는다",
+               "검사와 적용 사이에 링크로 바뀌어도 가리키는 파일은 안 건드린다",
+               "os.open(O_NOFOLLOW) → fchmod"),
+              ("실행 체인이 전부 root 소유일 때만",
+               "디렉터리 · 진입점 · 스캐너 · 인터프리터 중 하나라도 아니면 거부",
+               "stat -c %u == 0")]
+    for i, (n, d, code) in enumerate(guards):
+        bx, by = 150 + (i % 2) * 830, 300 + (i // 2) * 220
+        el(bx, by, 790, 190, "", bg=CARD, radius=14, border=f"1px solid {LINE}")
+        el(bx + 26, by + 22, 60, 40, f"{i+1}", size=30, weight=700, color=ACCENT)
+        el(bx + 86, by + 22, 680, 44, n, size=29, weight=700)
+        el(bx + 86, by + 74, 680, 60, d, size=21, color=MUTED, lh=1.45)
+        el(bx + 86, by + 140, 680, 34, code, size=20, mono=True, color=ACCENT)
+    el(150, 756, 1620, 44,
+       "조치 기능 자체가 공격면이 되지 않게 — 이건 직접 겪고 고친 것이다",
+       size=27, weight=700, color=CRIT, align="center")
+    band("첫째, 경로를 인자로 받지 않습니다. 무엇을 고칠지는 root 진입점이 스스로 정합니다.")
+
+
+def feat_intel():
+    el(0, 0, W, CONTENT_H, "", bg=BG)
+    head("5장 · 기능 ④", "내 서버에 해당하는 취약점만")
+    el(150, 240, 1620, 40, "보안 공지는 하루에도 여러 건. 대부분은 내 서버와 상관이 없다.",
+       size=26, color=MUTED)
+    el(150, 310, 460, 200, "", bg="#f6e7cf", radius=14, border="1px dashed #b8731c")
+    el(176, 336, 408, 40, "우분투 보안 공지", size=28, weight=700, color="#b8731c")
+    el(176, 386, 408, 100, "한 시간에 한 번 받아온다<br><br>영향 패키지 · 고쳐진 버전",
+       size=22, color=MUTED, lh=1.5)
+    el(630, 386, 60, 46, "→", size=32, color=LINE2, align="center")
+    el(710, 310, 460, 200, "", bg=ACC_SOFT, radius=14, border=f"1.5px solid {ACCENT}")
+    el(736, 336, 408, 40, "설치된 버전과 대조", size=28, weight=700, color=ACCENT)
+    el(736, 386, 408, 100, "dpkg 가 서버 안에서 비교<br><br>version_lt(설치, 고쳐진)",
+       size=22, color=MUTED, lh=1.5, mono=False)
+    el(1190, 386, 60, 46, "→", size=32, color=LINE2, align="center")
+    for i, (n, d, on) in enumerate([("설치 안 됨", "넘어감", False),
+                                    ("이미 고쳐진 버전", "넘어감", False),
+                                    ("낮은 버전", "이 서버에 해당 — 알린다", True)]):
+        by = 310 + i * 70
+        el(1270, by, 500, 58, "", bg=CARD if on else PANEL2, radius=10,
+           border=f"2px solid {CRIT}" if on else f"1px solid {LINE}")
+        el(1294, by + 12, 240, 34, n, size=23, weight=700, color=CRIT if on else MUTED)
+        el(1534, by + 12, 220, 34, d, size=20, color=CRIT if on else MUTED, align="right")
+    el(150, 600, 1620, 44,
+       "대조는 서버 안에서 dpkg 가 한다. 설치된 패키지 목록은 밖으로 나가지 않는다.",
+       size=27, weight=700, align="center")
+    el(150, 660, 1620, 40,
+       "뉴스 제목을 한국어로 옮길 때도, 나가는 것은 공개된 제목뿐이다.",
+       size=23, color=MUTED, align="center")
+    band("지킴이는 우분투 보안 공지를 한 시간에 한 번 받아옵니다.")
+
+
+def feat_maint():
+    el(0, 0, W, CONTENT_H, "", bg=BG)
+    head("5장 · 기능 ⑤", "작업할 때는 점검 모드")
+    el(150, 236, 1620, 40, "감시 기능이 아니라, 감시가 죽지 않게 하는 장치다.",
+       size=26, color=MUTED)
+    el(150, 300, 520, 250, "", bg=CARD, radius=16, border=f"2px solid {ACCENT}")
+    el(178, 328, 464, 40, "점검 모드 선언", size=30, weight=700, color=ACCENT)
+    el(178, 386, 464, 40, "45분", size=44, weight=700)
+    el(178, 448, 464, 76, "메모: 커널 업데이트와 재부팅<br>선언: kunmyon", size=22,
+       color=MUTED, lh=1.6)
+    el(700, 400, 70, 46, "→", size=32, color=LINE2, align="center")
+    el(800, 300, 970, 110, "", bg=ACC_SOFT, radius=14, border=f"1.5px solid {ACCENT}")
+    el(826, 318, 918, 38, "계획된 변경 → 처음부터 '확인함'", size=27, weight=700, color=ACCENT)
+    el(826, 358, 918, 34, "파일 변경 · 자동 실행 지점 · 새 포트 · 패키지 · Lynis · 리소스",
+       size=20, color=MUTED)
+    el(800, 430, 970, 40, "Slack 안 감 · 위험 단계 안 올라감 · 근거는 그대로 남음",
+       size=23, color=MUTED)
+    el(800, 500, 970, 110, "", bg=CARD, radius=14, border=f"2px solid {CRIT}")
+    el(826, 518, 918, 38, "침입 신호 → 언제나 '열림'", size=27, weight=700, color=CRIT)
+    el(826, 558, 918, 34, "브루트포스 · 실패 후 로그인 성공 · 리버스 셸 · 계정 변경",
+       size=20, color=MUTED)
+    el(800, 630, 970, 40, "점검 모드와 무관하다", size=23, color=CRIT)
+    el(150, 700, 1620, 44, "근거는 남는다. 조용해지는 것은 알림뿐이다.",
+       size=28, weight=700, align="center")
+    el(150, 756, 1620, 40,
+       "알림 피로로 사람이 알림을 무시하게 되면, 진짜가 왔을 때도 무시한다",
+       size=22, color=MUTED, align="center")
+    band("다섯째, 점검 모드입니다. 감시 기능이 아니라, 감시가 죽지 않게 하는 장치입니다.")
+
+
 FRAMES = [
     ("01-title", "f01-title", 17, f01),
     ("02-why", "f02-why", 49, f02),
@@ -542,14 +691,19 @@ FRAMES = [
     ("06-scenario-judge", "f06-judge", 61, f06),
     ("07-can", "f07-can", 50, f07),
     ("08-cannot", "f08-cannot", 52, f08),
-    ("09-install", "f09-install", 62, f09),
-    ("10-config", "f10-config", 65, f10),
-    ("11-arch-sources", "f11-arch-src", 66, f11),
-    ("12-arch-core", "f12-arch-core", 72, f12),
-    ("13-arch-path", "f13-arch-path", 68, f13),
-    ("14-arch-alert", "f14-arch-alert", 58, f14),
-    ("15-arch-trust", "f15-arch-trust", 62, f15),
-    ("16-closing", "f16-closing", 29, f16),
+    ("09-feat-exposure", "f09-exposure", 60, feat_exposure),
+    ("10-feat-integrity", "f10-integrity", 64, feat_integrity),
+    ("11-feat-fix", "f11-fix", 68, feat_fix),
+    ("12-feat-intel", "f12-intel", 56, feat_intel),
+    ("13-feat-maintenance", "f13-maint", 58, feat_maint),
+    ("14-install", "f14-install", 62, f09),
+    ("15-config", "f15-config", 65, f10),
+    ("16-arch-sources", "f16-arch-src", 66, f11),
+    ("17-arch-core", "f17-arch-core", 72, f12),
+    ("18-arch-path", "f18-arch-path", 68, f13),
+    ("19-arch-alert", "f19-arch-alert", 58, f14),
+    ("20-arch-trust", "f20-arch-trust", 62, f15),
+    ("21-closing", "f21-closing", 29, f16),
 ]
 
 TPL = """<!doctype html>

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>10-feat-integrity</title>
+  </head>
+  <body>
+    <template>
+      <style>
+        #f10-integrity { position: relative; width: 1920px; height: 1080px; overflow: hidden;
+                  background: #eef3f0; }
+        #f10-integrity * { box-sizing: border-box; margin: 0; padding: 0; }
+        #f10-integrity .clip { position: absolute; inset: 0; }
+      </style>
+      <div id="f10-integrity" data-composition-id="f10-integrity" data-start="0"
+           data-width="1920" data-height="1080" data-duration="64">
+        <div class="clip" data-start="0" data-duration="64">
+          <div style="position:absolute;left:0px;top:0px;width:1920px;height:860px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#eef3f0;"></div>
+          <div style="position:absolute;left:150px;top:70px;width:1400px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:30px;font-weight:700;color:#0e7c6b;line-height:1.5;text-align:left;word-break:keep-all;">5장 · 기능 ②</div>
+          <div style="position:absolute;left:150px;top:112px;width:1500px;height:82px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:62px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;">건드리면 안 되는 파일이 바뀌었을 때</div>
+          <div style="position:absolute;left:150px;top:236px;width:900px;height:34px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:23px;font-weight:400;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;">기준선을 저장해두고 비교하는 곳</div>
+          <div style="position:absolute;left:150px;top:280px;width:178px;height:48px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:17px;font-weight:400;color:#17221d;line-height:1.5;text-align:center;word-break:keep-all;background:#ffffff;border:1px solid #dfe7e3;border-radius:10px;line-height:48px;">/etc/sudoers</div>
+          <div style="position:absolute;left:340px;top:280px;width:178px;height:48px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:17px;font-weight:400;color:#17221d;line-height:1.5;text-align:center;word-break:keep-all;background:#ffffff;border:1px solid #dfe7e3;border-radius:10px;line-height:48px;">~/.ssh/authorized_keys</div>
+          <div style="position:absolute;left:530px;top:280px;width:178px;height:48px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:17px;font-weight:400;color:#17221d;line-height:1.5;text-align:center;word-break:keep-all;background:#ffffff;border:1px solid #dfe7e3;border-radius:10px;line-height:48px;">/etc/cron.d</div>
+          <div style="position:absolute;left:720px;top:280px;width:178px;height:48px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:17px;font-weight:400;color:#17221d;line-height:1.5;text-align:center;word-break:keep-all;background:#ffffff;border:1px solid #dfe7e3;border-radius:10px;line-height:48px;">/etc/systemd/system</div>
+          <div style="position:absolute;left:910px;top:280px;width:178px;height:48px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:17px;font-weight:400;color:#17221d;line-height:1.5;text-align:center;word-break:keep-all;background:#ffffff;border:1px solid #dfe7e3;border-radius:10px;line-height:48px;">/etc/ld.so.preload</div>
+          <div style="position:absolute;left:150px;top:348px;width:900px;height:34px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:21px;font-weight:400;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;">설정 파일 60초 · 자동 실행 지점 5분</div>
+          <div style="position:absolute;left:150px;top:392px;width:900px;height:250px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#ffffff;border:1px solid #dfe7e3;border-radius:14px;"></div>
+          <div style="position:absolute;left:174px;top:414px;width:850px;height:36px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:25px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;">무엇이 바뀌었나</div>
+          <div style="position:absolute;left:174px;top:462px;width:40px;height:32px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:21px;font-weight:700;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;"> </div>
+          <div style="position:absolute;left:210px;top:462px;width:800px;height:32px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:21px;font-weight:400;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;">%admin ALL=(ALL) ALL</div>
+          <div style="position:absolute;left:174px;top:502px;width:40px;height:32px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:21px;font-weight:700;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;"> </div>
+          <div style="position:absolute;left:210px;top:502px;width:800px;height:32px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:21px;font-weight:400;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;">%sudo  ALL=(ALL:ALL) ALL</div>
+          <div style="position:absolute;left:174px;top:542px;width:40px;height:32px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:21px;font-weight:700;color:#b3261e;line-height:1.5;text-align:left;word-break:keep-all;">+</div>
+          <div style="position:absolute;left:210px;top:542px;width:800px;height:32px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:21px;font-weight:400;color:#b3261e;line-height:1.5;text-align:left;word-break:keep-all;">deploy ALL=(ALL) NOPASSWD: ALL</div>
+          <div style="position:absolute;left:174px;top:582px;width:40px;height:32px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:21px;font-weight:700;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;"> </div>
+          <div style="position:absolute;left:210px;top:582px;width:800px;height:32px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:21px;font-weight:400;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;">#includedir /etc/sudoers.d</div>
+          <div style="position:absolute;left:174px;top:604px;width:850px;height:30px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:20px;font-weight:400;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;">SHA-256 기준선과의 차이를 그대로 붙인다</div>
+          <div style="position:absolute;left:1100px;top:392px;width:670px;height:116px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#d9ece7;border:1.5px solid #0e7c6b;border-radius:14px;"></div>
+          <div style="position:absolute;left:1126px;top:412px;width:620px;height:36px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:25px;font-weight:700;color:#0e7c6b;line-height:1.5;text-align:left;word-break:keep-all;">auditd 가 한 줄을 더 붙인다</div>
+          <div style="position:absolute;left:1126px;top:454px;width:620px;height:34px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:22px;font-weight:400;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;">누가 · 어떤 프로그램으로 그 파일에 썼나</div>
+          <div style="position:absolute;left:1100px;top:528px;width:670px;height:114px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#ffffff;border:1px solid #dfe7e3;border-radius:14px;"></div>
+          <div style="position:absolute;left:1126px;top:548px;width:620px;height:36px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:25px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;">정상적인 변경은 거른다</div>
+          <div style="position:absolute;left:1126px;top:590px;width:620px;height:34px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:21px;font-weight:400;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;">소유 패키지 + 최근 패키지 작업 대조 → 사실로만</div>
+          <div style="position:absolute;left:1100px;top:664px;width:670px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:23px;font-weight:700;color:#b3261e;line-height:1.5;text-align:left;word-break:keep-all;">예외 — 무슨 일이 있어도 알린다</div>
+          <div style="position:absolute;left:1100px;top:708px;width:670px;height:40px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:20px;font-weight:400;color:#b3261e;line-height:1.5;text-align:left;word-break:keep-all;">sudoers · sshd_config · authorized_keys · ld.so.preload</div>
+          <div style="position:absolute;left:0px;top:860px;width:1920px;height:220px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#17221d;"></div>
+          <div style="position:absolute;left:150px;top:916px;width:1620px;height:108px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:38px;font-weight:400;color:#ffffff;line-height:1.55;text-align:left;word-break:keep-all;">침입자가 자리를 잡을 때 건드리는 곳은 정해져 있습니다.</div>
+        </div>
+      </div>
+      <script>
+        // 스케치 패스 — 배치만 확인한다. 모션은 빌드 패스에서 붙인다.
+        window.__timelines["f10-integrity"] = gsap.timeline({ paused: true });
+      </script>
+    </template>
+  </body>
+</html>

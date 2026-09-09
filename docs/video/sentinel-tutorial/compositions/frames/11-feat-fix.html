@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>11-feat-fix</title>
+  </head>
+  <body>
+    <template>
+      <style>
+        #f11-fix { position: relative; width: 1920px; height: 1080px; overflow: hidden;
+                  background: #eef3f0; }
+        #f11-fix * { box-sizing: border-box; margin: 0; padding: 0; }
+        #f11-fix .clip { position: absolute; inset: 0; }
+      </style>
+      <div id="f11-fix" data-composition-id="f11-fix" data-start="0"
+           data-width="1920" data-height="1080" data-duration="68">
+        <div class="clip" data-start="0" data-duration="68">
+          <div style="position:absolute;left:0px;top:0px;width:1920px;height:860px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#eef3f0;"></div>
+          <div style="position:absolute;left:150px;top:70px;width:1400px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:30px;font-weight:700;color:#0e7c6b;line-height:1.5;text-align:left;word-break:keep-all;">5장 · 기능 ③</div>
+          <div style="position:absolute;left:150px;top:112px;width:1500px;height:82px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:62px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;">지킴이가 직접 잠그는 유일한 곳</div>
+          <div style="position:absolute;left:150px;top:236px;width:1620px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;">스스로 시스템을 바꾸는 곳은 여기 하나뿐이다. 그래서 방어가 네 겹이다.</div>
+          <div style="position:absolute;left:150px;top:300px;width:790px;height:190px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#ffffff;border:1px solid #dfe7e3;border-radius:14px;"></div>
+          <div style="position:absolute;left:176px;top:322px;width:60px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:30px;font-weight:700;color:#0e7c6b;line-height:1.5;text-align:left;word-break:keep-all;">1</div>
+          <div style="position:absolute;left:236px;top:322px;width:680px;height:44px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:29px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;">경로를 인자로 받지 않는다</div>
+          <div style="position:absolute;left:236px;top:374px;width:680px;height:60px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:21px;font-weight:400;color:#5c6b64;line-height:1.45;text-align:left;word-break:keep-all;">무엇을 고칠지는 root 진입점이 스스로 다시 검사해 정한다</div>
+          <div style="position:absolute;left:236px;top:440px;width:680px;height:34px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:20px;font-weight:400;color:#0e7c6b;line-height:1.5;text-align:left;word-break:keep-all;">secdash-fix-permissions --apply</div>
+          <div style="position:absolute;left:980px;top:300px;width:790px;height:190px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#ffffff;border:1px solid #dfe7e3;border-radius:14px;"></div>
+          <div style="position:absolute;left:1006px;top:322px;width:60px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:30px;font-weight:700;color:#0e7c6b;line-height:1.5;text-align:left;word-break:keep-all;">2</div>
+          <div style="position:absolute;left:1066px;top:322px;width:680px;height:44px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:29px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;">좁히기만 한다</div>
+          <div style="position:absolute;left:1066px;top:374px;width:680px;height:60px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:21px;font-weight:400;color:#5c6b64;line-height:1.45;text-align:left;word-break:keep-all;">교집합은 언제나 기존의 부분집합 — 넓어지는 경우가 없다</div>
+          <div style="position:absolute;left:1066px;top:440px;width:680px;height:34px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:20px;font-weight:400;color:#0e7c6b;line-height:1.5;text-align:left;word-break:keep-all;">new = old & target</div>
+          <div style="position:absolute;left:150px;top:520px;width:790px;height:190px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#ffffff;border:1px solid #dfe7e3;border-radius:14px;"></div>
+          <div style="position:absolute;left:176px;top:542px;width:60px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:30px;font-weight:700;color:#0e7c6b;line-height:1.5;text-align:left;word-break:keep-all;">3</div>
+          <div style="position:absolute;left:236px;top:542px;width:680px;height:44px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:29px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;">심볼릭 링크를 따라가지 않는다</div>
+          <div style="position:absolute;left:236px;top:594px;width:680px;height:60px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:21px;font-weight:400;color:#5c6b64;line-height:1.45;text-align:left;word-break:keep-all;">검사와 적용 사이에 링크로 바뀌어도 가리키는 파일은 안 건드린다</div>
+          <div style="position:absolute;left:236px;top:660px;width:680px;height:34px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:20px;font-weight:400;color:#0e7c6b;line-height:1.5;text-align:left;word-break:keep-all;">os.open(O_NOFOLLOW) → fchmod</div>
+          <div style="position:absolute;left:980px;top:520px;width:790px;height:190px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#ffffff;border:1px solid #dfe7e3;border-radius:14px;"></div>
+          <div style="position:absolute;left:1006px;top:542px;width:60px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:30px;font-weight:700;color:#0e7c6b;line-height:1.5;text-align:left;word-break:keep-all;">4</div>
+          <div style="position:absolute;left:1066px;top:542px;width:680px;height:44px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:29px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;">실행 체인이 전부 root 소유일 때만</div>
+          <div style="position:absolute;left:1066px;top:594px;width:680px;height:60px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:21px;font-weight:400;color:#5c6b64;line-height:1.45;text-align:left;word-break:keep-all;">디렉터리 · 진입점 · 스캐너 · 인터프리터 중 하나라도 아니면 거부</div>
+          <div style="position:absolute;left:1066px;top:660px;width:680px;height:34px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:20px;font-weight:400;color:#0e7c6b;line-height:1.5;text-align:left;word-break:keep-all;">stat -c %u == 0</div>
+          <div style="position:absolute;left:150px;top:756px;width:1620px;height:44px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:27px;font-weight:700;color:#b3261e;line-height:1.5;text-align:center;word-break:keep-all;">조치 기능 자체가 공격면이 되지 않게 — 이건 직접 겪고 고친 것이다</div>
+          <div style="position:absolute;left:0px;top:860px;width:1920px;height:220px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#17221d;"></div>
+          <div style="position:absolute;left:150px;top:916px;width:1620px;height:108px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:38px;font-weight:400;color:#ffffff;line-height:1.55;text-align:left;word-break:keep-all;">첫째, 경로를 인자로 받지 않습니다. 무엇을 고칠지는 root 진입점이 스스로 정합니다.</div>
+        </div>
+      </div>
+      <script>
+        // 스케치 패스 — 배치만 확인한다. 모션은 빌드 패스에서 붙인다.
+        window.__timelines["f11-fix"] = gsap.timeline({ paused: true });
+      </script>
+    </template>
+  </body>
+</html>

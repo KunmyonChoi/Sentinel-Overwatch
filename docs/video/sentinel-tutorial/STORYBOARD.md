@@ -1,8 +1,8 @@
 ---
 format: 1920x1080
-duration: 14m10s
+duration: 19m17s
 message: "보안을 몰라도, 내 컴퓨터에 무슨 일이 있었는지 알고 스스로 조치할 수 있다"
-arc: "왜 필요한가 → 화면 구성 → 시나리오 셋 → 할 수 있는 일과 없는 일 → 설치 → 설정 → 아키텍처 다섯 장 → 맺음말"
+arc: "왜 필요한가 → 화면 구성 → 시나리오 셋 → 할 수 있는 일과 없는 일 → 중요 기능 다섯 → 설치 → 설정 → 아키텍처 다섯 → 맺음말"
 audience: "개인 컴퓨터나 작은 서버를 혼자 관리하는 비전문가, 그리고 이 도구를 검토하는 사람"
 mode: collaborative
 ---
@@ -47,7 +47,7 @@ mode: collaborative
 
 ## 구조
 
-장면 16개, 각각 별도 하위 컴포지션. 전환은 기본 `crossfade` 0.4s,
+장면 21개, 각각 별도 하위 컴포지션. 전환은 기본 `crossfade` 0.4s,
 장(chapter)이 바뀌는 자리만 `cut`으로 끊어 챕터 경계를 느끼게 한다.
 
 4장(할 수 있는 일/없는 일)은 한 장면에 88초가 필요해 둘로 나눴다. 자막만
@@ -57,7 +57,12 @@ mode: collaborative
 7장(아키텍처)은 다섯 장이다. 아키텍처 문서의 다이어그램 §1~§5 를 순서대로
 설명하기 때문이다. §1(시스템 구성)은 5개 층이 한 화면에 다 들어가면 글씨가
 영상에서 읽히지 않아 위(원천·모니터)와 아래(저장·판단·전달)로 나눴다.
-§6(설치와 강화의 경로)은 아키텍처가 아니라 설치 이야기라 5장으로 옮겼다.
+§6(설치와 강화의 경로)은 아키텍처가 아니라 설치 이야기라 설치 장으로 옮겼다.
+
+5장(특히 중요한 기능)은 4장의 목록에서 다섯을 골라 깊이 들어간다. 고른 기준은
+'위협을 실제로 막는가' 또는 '이게 없으면 감시가 오래가지 못하는가'다.
+목록 → 깊이 순서라, 4장을 본 사람이 '그래서 그게 어떻게 되는데'라고 물을
+자리에 놓았다.
 
 **다이어그램을 그대로 옮기지 않는다.** 원본은 문서용이라 보조 설명이 10~12px 다.
 영상에서는 읽히지 않으므로 상자당 제목과 한 줄까지만 남기고 나머지는 자막이
@@ -308,10 +313,196 @@ Lynis, USN. 주장에 출처를 붙이는 것이 이 장의 규칙이다.
 
 ---
 
-## Frame 9 — 설치
+## Frame 9 — 기능 ① 문이 실제로 밖에서 닿는가
 
 - status: built
-- src: compositions/frames/09-install.html
+- src: compositions/frames/09-feat-exposure.html
+- duration: 60s
+- transition_in: cut
+- scene: 상태 여섯 가지. '판단 불가'만 다른 색.
+- blueprint: grid-card-assemble
+- rules: anchored-layout-expand
+- source: backend/monitor/exposure.py classify() · backend/integrations/firewall.py port_reachable()
+- voiceover: |
+    기능 다섯 가지를 자세히 보겠습니다. 첫째, 열린 문입니다.
+
+    포트가 열려 있다는 것과, 밖에서 실제로 그 포트에 닿는다는 것은 다른
+    이야기입니다. 대부분의 도구는 열린 포트만 세고 끝냅니다.
+
+    지킴이는 방화벽 규칙을 읽어서 이 포트에 실제로 밖에서 닿는지 대조합니다.
+    그래서 상태가 여섯 가지로 나뉩니다.
+
+    루프백 전용. 의도된 공개. 프로그램이 나가면서 잠시 쓰는 통로.
+    외부 도달 가능 — 이건 경고입니다. 방화벽이 막는 중 — 바인딩은 전체지만
+    막혀 있습니다.
+
+    그리고 여섯 번째, 판단 불가입니다. 방화벽 상태를 읽지 못하면
+    '안전'이라고 말하지 않습니다. '확인 못 함'이라고 말하고 경고로 올립니다.
+
+    모르는 것을 괜찮다고 하는 것이 가장 위험합니다. 다른 계정의 프로세스를
+    볼 수 없을 때도 모니터가 스스로 '제한됨'이라고 표시합니다.
+
+위쪽에 대비 한 줄 — '열려 있다 ≠ 밖에서 닿는다'. 아래 상태 카드 여섯 개를
+2행 3열로. 다섯은 회색·초록 계열이고 **'판단 불가'만 노랑 테두리**다.
+이 장의 요점이 여섯 번째이므로, 앞의 다섯은 한 문단에 다 도착하고
+여섯 번째만 따로 도착한다.
+
+---
+
+## Frame 10 — 기능 ② 건드리면 안 되는 파일이 바뀌었을 때
+
+- status: built
+- src: compositions/frames/10-feat-integrity.html
+- duration: 64s
+- transition_in: cut
+- scene: 감시 경로 다섯 → 차이 카드 → 누가 썼나 → 계획된 변경 거르기.
+- blueprint: transcript-scroll-artifact-reveal
+- rules: anchored-layout-expand, discrete-text-sequence
+- source: backend/monitor/integrity.py · monitor/audit.py · deploy/audit-secdash.rules
+- voiceover: |
+    둘째, 변조 탐지입니다.
+
+    침입자가 자리를 잡을 때 건드리는 곳은 정해져 있습니다. sudoers,
+    authorized_keys, cron, systemd 유닛, 그리고 ld.so.preload.
+
+    이 파일들의 SHA-256을 기준선으로 저장해두고 주기적으로 비교합니다.
+    설정 파일은 60초마다, 자동 실행 지점은 5분마다입니다.
+
+    바뀌면 무엇이 바뀌었는지 차이를 그대로 붙여줍니다. 어느 줄이 늘었는지
+    보입니다.
+
+    여기에 auditd가 한 줄을 더 붙입니다. 누가, 어떤 프로그램으로 그 파일에
+    썼는가. 변경만 아는 것과 누가 했는지 아는 것은 다릅니다.
+
+    그런데 파일은 정상적인 이유로도 바뀝니다. 패키지를 설치하면 cron이 생기고
+    유닛이 늘어납니다. 그래서 바뀐 파일의 소유 패키지를 찾고, 최근에 그 패키지
+    작업이 있었는지 대조합니다. 설명되는 변경은 사실로만 남기고 알리지 않습니다.
+
+    다만 sudoers, sshd_config, authorized_keys, ld.so.preload는 예외입니다.
+    이 넷은 무슨 일이 있어도 알립니다.
+
+왼쪽 위에 감시 경로 다섯 개(고정폭). 그 아래 차이 카드 — `+` 로 시작하는 줄
+하나가 빨강으로 들어와 있다. 오른쪽 위에 auditd 첨부 카드('누가 · 무엇으로').
+오른쪽 아래에 필터 카드 — '설명되는 변경은 사실로만'과 그 아래 예외 넷을
+빨강으로. 예외 넷이 마지막에 도착한다.
+
+---
+
+## Frame 11 — 기능 ③ 지킴이가 직접 잠그는 유일한 곳
+
+- status: built
+- src: compositions/frames/11-feat-fix.html
+- duration: 68s
+- transition_in: cut
+- scene: 방어 네 겹. 2행 2열.
+- blueprint: grid-card-assemble
+- rules: anchored-layout-expand
+- source: backend/integrations/permissions_scan.py narrow() · backend/fix_permissions.py · deploy/fix-permissions.sh
+- voiceover: |
+    셋째, 파일 권한 조치입니다. 지킴이가 스스로 시스템을 바꾸는 곳은
+    여기 하나뿐입니다. 그래서 이 하나에 방어를 네 겹 걸었습니다.
+
+    첫째, 경로를 인자로 받지 않습니다. 무엇을 고칠지는 root 권한으로 도는
+    진입점이 스스로 다시 검사해서 정합니다. 밖에서 '이 파일을 고쳐라'라고
+    시킬 수 없습니다.
+
+    둘째, 좁히기만 합니다. 새 권한은 기존 권한과 목표 권한의 교집합입니다.
+    교집합은 언제나 기존의 부분집합이라, 어떤 경우에도 권한이 넓어지지 않습니다.
+
+    셋째, 심볼릭 링크를 따라가지 않습니다. 검사한 뒤 적용하기 전 사이에
+    대상이 링크로 바뀌어도, 링크가 가리키는 파일은 건드리지 않습니다.
+
+    넷째, 실행 체인이 전부 root 소유일 때만 돕니다. 디렉터리, 진입점, 스캐너,
+    파이썬 인터프리터 — 하나라도 다른 계정이 쓸 수 있으면 실행을 거부하고
+    고치는 명령을 알려줍니다.
+
+    이 네 번째가 왜 필요한지는 직접 겪었습니다. 대시보드 계정이 쓸 수 있는
+    파일을 root로 실행하면, 그 계정이 뚫리는 순간 그대로 root가 됩니다.
+    조치 기능 자체가 공격면이 되는 것입니다.
+
+방어 넷을 2행 2열 큰 카드로. 각 카드에 번호 · 한 줄 제목 · 코드 한 줄.
+②는 `new = old & target` 을 그대로 보여준다 — 수식 하나가 설명보다 강하다.
+마지막 문단에서 카드 넷이 살짝 물러나고 아래 한 줄이 붉게 걸린다:
+'조치 기능 자체가 공격면이 되지 않게'.
+
+---
+
+## Frame 12 — 기능 ④ 내 서버에 해당하는 취약점만
+
+- status: built
+- src: compositions/frames/12-feat-intel.html
+- duration: 56s
+- transition_in: cut
+- scene: 공지 → 고쳐진 버전 → 설치된 버전 대조 → 세 갈래.
+- blueprint: spatial-pan-stations
+- rules: anchored-layout-expand
+- source: backend/monitor/intel.py match_usn() · backend/integrations/apt.py version_lt()
+- voiceover: |
+    넷째, 취약점입니다.
+
+    보안 공지는 하루에도 여러 건 나옵니다. 전부 읽을 수는 없고,
+    대부분은 내 서버와 상관이 없습니다.
+
+    지킴이는 우분투 보안 공지를 한 시간에 한 번 받아옵니다. 공지에는 어떤
+    패키지의 어느 버전에서 고쳐졌는지가 적혀 있습니다.
+
+    그것을 이 서버에 실제로 설치된 버전과 비교합니다. 설치돼 있지 않으면
+    넘어가고, 이미 고쳐진 버전이면 넘어갑니다. 설치돼 있으면서 아직 낮은
+    버전일 때만 올립니다.
+
+    비교는 서버 안에서 dpkg가 합니다. 밖으로 나가는 것은 공지를 받아오는
+    요청뿐이고, 설치된 패키지 목록은 나가지 않습니다.
+
+    뉴스 제목을 한국어로 옮길 때도, 나가는 것은 공개된 제목뿐입니다.
+
+가로 세 정거장: 공지(점선 주황 = 인터넷 밖) → 대조(초록) → 결과.
+결과는 세 갈래로 갈라진다 — '설치 안 됨 · 넘어감', '이미 고쳐짐 · 넘어감',
+'낮은 버전 · 알림'. 세 번째만 색이 있다.
+맨 아래 한 줄: '대조는 서버 안에서 dpkg 가 한다. 패키지 목록은 나가지 않는다.'
+
+---
+
+## Frame 13 — 기능 ⑤ 작업할 때는 점검 모드
+
+- status: built
+- src: compositions/frames/13-feat-maintenance.html
+- duration: 58s
+- transition_in: cut
+- scene: 창 선언 카드, 그리고 알림이 갈리는 두 갈래.
+- blueprint: comparison-split
+- rules: anchored-layout-expand
+- source: backend/alerts.py MAINTENANCE_RULE_PREFIXES · start_maintenance()
+- voiceover: |
+    다섯째, 점검 모드입니다. 이건 감시 기능이 아니라, 감시가 죽지 않게 하는
+    장치입니다.
+
+    서버를 손보면 알림이 쏟아집니다. 패키지를 깔면 파일이 바뀌고, 서비스를
+    띄우면 포트가 열립니다. 전부 지킴이가 잡아야 할 일이지만, 지금은 내가
+    하고 있는 일입니다.
+
+    이게 반복되면 사람은 알림을 무시하게 됩니다. 그러면 진짜가 왔을 때도
+    무시합니다.
+
+    그래서 작업 전에 창을 선언합니다. 몇 분 동안, 무엇을 하려는지 메모와 함께.
+
+    그동안 계획된 변경으로 생기는 알림은 처음부터 '확인함'으로 태어납니다.
+    근거는 그대로 남지만 Slack은 가지 않고 위험 단계도 올라가지 않습니다.
+
+    다만 예외가 있습니다. 브루트포스, 실패 후 로그인 성공, 리버스 셸,
+    계정 변경 같은 침입 신호는 점검 모드와 무관하게 언제나 열립니다.
+    작업 중이라고 침입까지 조용해지면 안 되니까요.
+
+왼쪽에 선언 카드(45분 · '커널 업데이트와 재부팅' 메모). 오른쪽에서 알림이
+두 갈래로 갈린다 — 위는 계획된 변경 목록이 '확인함'으로, 아래는 침입 신호
+목록이 '열림'으로. 아래 갈래만 빨강이고, 마지막 문단에서 도착한다.
+가운데 한 줄: '근거는 남는다. 조용해지는 것은 알림뿐이다.'
+
+---
+
+## Frame 14 — 설치
+
+- status: built
+- src: compositions/frames/14-install.html
 - duration: 62s
 - transition_in: cut
 - scene: 빌드 머신 → install.sh → harden.sh → Lynis, 그리고 되돌아오는 화살표.
@@ -342,10 +533,10 @@ Lynis, USN. 주장에 출처를 붙이는 것이 이 장의 규칙이다.
 
 ---
 
-## Frame 10 — 설정
+## Frame 15 — 설정
 
 - status: built
-- src: compositions/frames/10-config.html
+- src: compositions/frames/15-config.html
 - duration: 65s
 - transition_in: cut
 - scene: secdash.env 한 파일. 서버마다 채우는 세 줄만 밝아진다.
@@ -375,10 +566,10 @@ Lynis, USN. 주장에 출처를 붙이는 것이 이 장의 규칙이다.
 
 ---
 
-## Frame 11 — 아키텍처 ① 어디서 들어오나
+## Frame 16 — 아키텍처 ① 어디서 들어오나
 
 - status: built
-- src: compositions/frames/11-arch-sources.html
+- src: compositions/frames/16-arch-sources.html
 - duration: 66s
 - transition_in: cut
 - scene: 진실 원천 여섯 + 모니터 여섯 묶음 + 이벤트 버스. 위에서 아래로.
@@ -414,10 +605,10 @@ Lynis, USN. 주장에 출처를 붙이는 것이 이 장의 규칙이다.
 
 ---
 
-## Frame 12 — 아키텍처 ② 어디에 쌓이고 어디로 나가나
+## Frame 17 — 아키텍처 ② 어디에 쌓이고 어디로 나가나
 
 - status: built
-- src: compositions/frames/12-arch-core.html
+- src: compositions/frames/17-arch-core.html
 - duration: 72s
 - transition_in: crossfade
 - scene: SQLite · 알림 엔진 · DefconWatcher · 알림 큐 · API · 브라우저. 인터넷 경계는 점선.
@@ -451,10 +642,10 @@ DefconWatcher, 오른쪽에 알림 큐. 그 아래 API 띠, 맨 아래 브라우
 
 ---
 
-## Frame 13 — 아키텍처 ③ 사건 하나가 지나가는 길
+## Frame 18 — 아키텍처 ③ 사건 하나가 지나가는 길
 
 - status: built
-- src: compositions/frames/13-arch-path.html
+- src: compositions/frames/18-arch-path.html
 - duration: 68s
 - transition_in: cut
 - scene: 브루트포스 두 줄. 위는 사실 → 경고 → 차단, 아래는 성공 → 긴급 → Slack.
@@ -489,10 +680,10 @@ DefconWatcher, 오른쪽에 알림 큐. 그 아래 API 띠, 맨 아래 브라우
 
 ---
 
-## Frame 14 — 아키텍처 ④ 알림의 생애주기와 위험 단계
+## Frame 19 — 아키텍처 ④ 알림의 생애주기와 위험 단계
 
 - status: built
-- src: compositions/frames/14-arch-alert.html
+- src: compositions/frames/19-arch-alert.html
 - duration: 58s
 - transition_in: cut
 - scene: 열림 → 확인함 → 해결됨. 되돌아가는 화살표 둘.
@@ -527,10 +718,10 @@ DefconWatcher, 오른쪽에 알림 큐. 그 아래 API 띠, 맨 아래 브라우
 
 ---
 
-## Frame 15 — 아키텍처 ⑤ 권한의 경계, 그리고 왜 이 구조인가
+## Frame 20 — 아키텍처 ⑤ 권한의 경계, 그리고 왜 이 구조인가
 
 - status: built
-- src: compositions/frames/15-arch-trust.html
+- src: compositions/frames/20-arch-trust.html
 - duration: 62s
 - transition_in: cut
 - scene: 왼쪽에 경계 표, 오른쪽에 설계 원칙 네 줄.
@@ -563,10 +754,10 @@ DefconWatcher, 오른쪽에 알림 큐. 그 아래 API 띠, 맨 아래 브라우
 
 ---
 
-## Frame 16 — 맺음말
+## Frame 21 — 맺음말
 
 - status: built
-- src: compositions/frames/16-closing.html
+- src: compositions/frames/21-closing.html
 - duration: 29s
 - transition_in: crossfade
 - scene: 지키는 원칙 셋. 초록 바탕에 흰 글씨.
