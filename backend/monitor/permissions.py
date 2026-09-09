@@ -8,7 +8,7 @@
 권한을 좁히는 것만으로는 부족하다. 이미 심어진 것이 있는지(autostart 항목, gitconfig 훅 경로)를
 함께 확인해 알림의 근거로 붙인다.
 """
-from alerts import auto_resolve, raise_alert
+from alerts import auto_resolve, open_fingerprints, raise_alert
 from integrations.permissions_scan import (  # noqa: F401  (재수출: 기존 임포트 경로 유지)
     ETC_MAX_DEPTH,
     HOME_SECRETS,
@@ -46,6 +46,7 @@ class PermissionMonitor(BaseMonitor):
         return scan_paths(self.homes(), self.trees)
 
     def setup(self):
+        self._open = open_fingerprints("file_permission")
         self.tick()
 
     def tick(self):

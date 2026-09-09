@@ -22,7 +22,7 @@ NetworkWatcher 는 '새로 열린 포트'(변화)를 본다. 이 모니터는 '�
 import psutil
 
 import config
-from alerts import auto_resolve, raise_alert
+from alerts import auto_resolve, open_fingerprints, raise_alert
 from integrations.firewall import FirewallClient, port_reachable
 from monitor.base import BaseMonitor
 from monitor.intrusion import _proc_info
@@ -177,6 +177,8 @@ class ExposureMonitor(BaseMonitor):
 
     # --- 수명 주기 ---
     def setup(self):
+        # 재시작해도 '내가 올린 알림'을 기억한다. 그래야 사라진 조건을 정리할 수 있다.
+        self._open = open_fingerprints("exposed_port")
         self.tick()
 
     def tick(self):
@@ -227,7 +229,7 @@ class ExposureMonitor(BaseMonitor):
             )
 
         for fp in sorted(self._open - current):
-            auto_resolve(fp, "포트가 닫혔거나 루프백으로 축소됨")
+            auto_resolve(fp, "이제 문으로 세지 않음 (닫혔거나, 루프백이거나, 나가는 통로)")
             self._open.discard(fp)
 
         # 닫힌 포트는 알림이 아니라 사실 기록으로 남긴다 (조치의 결과를 확인할 수 있게)

@@ -235,3 +235,22 @@ def test_client_sockets_do_not_raise_alerts():
     mon.snapshot = lambda: _snapshot_from(mon, listeners, fw)
     mon.tick()
     assert _alerts() == [], "브라우저가 나가면서 연 통로로 사용자를 놀라게 하면 안 된다"
+
+
+def test_stale_alert_from_a_previous_run_is_resolved_after_restart():
+    """
+    재시작 전에 올라간 알림도 조건이 사라지면 정리되어야 한다.
+    '내가 올린 것'을 메모리에만 두면, 재시작하는 순간 이미 없어진 문제의 알림이 영원히 남는다.
+    (브라우저가 잠깐 연 포트에 대한 알림 4건이 지워지지 않던 실제 사례)
+    """
+    fw = {**FW_OK, "allowed": [{"port": 22, "proto": "tcp"}, {"port": 9000, "proto": "tcp"}]}
+    first = _mon([{**L_DEV, "port": 9000}], fw=fw)
+    first.tick()
+    assert _alerts()[0].status == "OPEN"
+
+    # 프로세스가 다시 뜬 상황: 새 모니터는 메모리에 아무 기억이 없다
+    second = ExposureMonitor(firewall=FakeFirewall(fw), expected="22/tcp")
+    second.snapshot = lambda: _snapshot_from(second, [L_SSH], fw)   # 그 포트는 이제 없다
+    second.setup()
+
+    assert _alerts()[0].status == "RESOLVED"

@@ -9,7 +9,7 @@ ufw 보다 먼저 평가되기 때문에, `ufw deny incoming` 만 보고 안전�
 
 docker 를 쓸 수 없는 호스트에서는 health=degraded 로 표시하고 조용히 넘어간다 (컨테이너를 안 쓰는 것은 정상이다).
 """
-from alerts import auto_resolve, raise_alert
+from alerts import auto_resolve, open_fingerprints, raise_alert
 from integrations.containers import DockerClient, actionable
 from monitor.base import BaseMonitor
 
@@ -27,6 +27,7 @@ class ContainerAudit(BaseMonitor):
         self._open: set[str] = set()
 
     def setup(self):
+        self._open = open_fingerprints("container_config")
         self.tick()
 
     def tick(self):
