@@ -16,6 +16,8 @@
 
 아키텍처 다이어그램(데이터 흐름, 브루트포스 사건의 경로, 알림 생애주기, 신뢰 경계, 설치·강화 경로): **https://kunmyonchoi.github.io/Sentinel-Overwatch/architecture.html** (원본 [docs/architecture.html](docs/architecture.html), 운영 대시보드에서는 http://127.0.0.1:8000/docs/architecture.html).
 
+방어 범위(차단·탐지·불가로 나눈 공격 패턴과 다음 조치): **https://kunmyonchoi.github.io/Sentinel-Overwatch/coverage.html** (원본 [docs/coverage.html](docs/coverage.html)).
+
 ## 원칙
 
 1. **조용히 실패하지 않는다.** 로그를 못 읽거나 fail2ban 을 제어할 수 없으면 모니터 상태가 `제한/중단` 으로 바뀌고 해결 명령이 표시된다. 테스트 파일로 대체하지 않는다.

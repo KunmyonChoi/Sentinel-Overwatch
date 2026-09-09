@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Sentinel Overwatch 가 차단·탐지하는 공격 패턴과 방어할 수 없는 패턴의 구분">
+<link rel="icon" type="image/svg+xml" href="/sentinel.svg">
+<title>Sentinel Overwatch 방어 범위</title>
+<style>
+  :root {
+    --bg: #f2f5f3;
+    --panel: #ffffff;
+    --panel-2: #e6ede9;
+    --ink: #17221d;
+    --muted: #5d6c65;
+    --line: #b9c6bf;
+    --accent: #0e7c6b;
+    --accent-soft: #d5ece6;
+    --ext: #b8731c;
+    --ext-soft: #f6e7cf;
+    --crit: #b5322a;
+    --warn: #b98a12;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1513;
+      --panel: #171f1c;
+      --panel-2: #1f2a26;
+      --ink: #e4ebe7;
+      --muted: #95a59d;
+      --line: #35443e;
+      --accent: #3fb59e;
+      --accent-soft: #163b34;
+      --ext: #e0a24d;
+      --ext-soft: #3b2d14;
+      --crit: #e2675d;
+      --warn: #d9ab2e;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1513;
+    --panel: #171f1c;
+    --panel-2: #1f2a26;
+    --ink: #e4ebe7;
+    --muted: #95a59d;
+    --line: #35443e;
+    --accent: #3fb59e;
+    --accent-soft: #163b34;
+    --ext: #e0a24d;
+    --ext-soft: #3b2d14;
+    --crit: #e2675d;
+    --warn: #d9ab2e;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    word-break: keep-all;
+  }
+  code, .mono, svg text.mono { font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace; }
+
+  .page { max-width: 1160px; margin: 0 auto; padding: 40px 24px 72px; display: grid; gap: 40px; }
+  header { display: grid; gap: 10px; max-width: 70ch; }
+  .eyebrow { font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+  h1 { font-size: 30px; font-weight: 600; line-height: 1.25; margin: 0; text-wrap: balance; }
+  h2 { font-size: 19px; font-weight: 600; margin: 0 0 6px; text-wrap: balance; }
+  p { margin: 0; }
+  .lead { color: var(--muted); }
+
+  section { display: grid; gap: 14px; }
+  figure { margin: 0; display: grid; gap: 10px; }
+  .frame { border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 18px 16px; overflow-x: auto; }
+  figure svg { display: block; width: 100%; height: auto; min-width: 720px; color: var(--ink); }
+  figcaption { color: var(--muted); font-size: 13.5px; max-width: 80ch; }
+
+  /* SVG 구성요소 */
+  svg text { fill: var(--ink); font-family: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; }
+  svg .t { font-size: 12.5px; font-weight: 600; }
+  svg .d { font-size: 10.5px; fill: var(--muted); }
+  svg .lbl { font-size: 10.5px; fill: var(--muted); }
+  svg .lbl-ext { font-size: 10.5px; fill: var(--ext); }
+  svg .hdr { font-size: 11px; font-weight: 500; fill: var(--muted); letter-spacing: .06em; }
+  svg .box { fill: var(--panel); stroke: var(--line); stroke-width: 1.2; }
+  svg .box-mon { fill: var(--panel); stroke: var(--accent); stroke-width: 1.4; }
+  svg .box-store { fill: var(--panel-2); stroke: var(--line); stroke-width: 1.2; }
+  svg .box-core { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.4; }
+  svg .box-ext { fill: var(--ext-soft); stroke: var(--ext); stroke-width: 1.4; stroke-dasharray: 5 3; }
+  svg .box-crit { fill: var(--panel); stroke: var(--crit); stroke-width: 1.6; }
+  svg .box-warn { fill: var(--panel); stroke: var(--warn); stroke-width: 1.6; }
+  svg .edge { stroke: currentColor; stroke-width: 1.2; fill: none; }
+  svg .edge-ext { stroke: var(--ext); stroke-width: 1.2; fill: none; stroke-dasharray: 5 3; }
+  svg .edge-crit { stroke: var(--crit); stroke-width: 1.4; fill: none; }
+  svg .bus { stroke: var(--accent); stroke-width: 3; fill: none; }
+  svg .boundary { fill: none; stroke: var(--accent); stroke-width: 1.2; stroke-dasharray: 7 5; opacity: .8; }
+  svg .t-crit { fill: var(--crit); }
+  svg .t-warn { fill: var(--warn); }
+  svg .t-acc { fill: var(--accent); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 18px; font-size: 12.5px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 8px; }
+  .sw { width: 22px; height: 12px; border-radius: 2px; border: 1.4px solid var(--accent); background: var(--panel); }
+  .sw.core { background: var(--accent-soft); }
+  .sw.store { background: var(--panel-2); border-color: var(--line); }
+  .sw.ext { background: var(--ext-soft); border-color: var(--ext); border-style: dashed; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr; gap: 28px; }
+  @media (min-width: 900px) { .grid-2 { grid-template-columns: 3fr 2fr; } }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-weight: 600; font-size: 12px; letter-spacing: .04em; color: var(--muted); }
+  td code { font-size: 12px; background: var(--panel-2); padding: 1px 5px; border-radius: 3px; }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+
+  ul.rules { margin: 0; padding-left: 18px; display: grid; gap: 6px; max-width: 80ch; }
+  ul.rules li::marker { color: var(--accent); }
+</style>
+
+<style>
+  .lvl { display:inline-block; font-size:11px; font-weight:600; padding:1px 7px; border-radius:999px; border:1px solid; white-space:nowrap; }
+  .lvl.block { color:var(--accent); border-color:var(--accent); background:var(--accent-soft); }
+  .lvl.detect { color:var(--warn); border-color:var(--warn); }
+  .lvl.partial { color:var(--ext); border-color:var(--ext); }
+  .lvl.none { color:var(--crit); border-color:var(--crit); }
+  .lvl.crit { color:var(--crit); border-color:var(--crit); }
+  .lvl.warn { color:var(--warn); border-color:var(--warn); }
+  .lvl.info { color:var(--muted); border-color:var(--line); }
+  td:first-child { font-weight:600; min-width:14ch; }
+  .callout { border-left:3px solid var(--accent); background:var(--panel); padding:12px 16px; border-radius:0 6px 6px 0; max-width:80ch; }
+  .callout strong { color:var(--accent); }
+  nav.toc { display:flex; flex-wrap:wrap; gap:8px 18px; font-size:13px; }
+  nav.toc a { color:var(--accent); text-decoration:none; font-weight:600; }
+  nav.toc a:hover { text-decoration:underline; }
+  .back { font-size:13px; color:var(--muted); }
+  .back a { color:var(--accent); text-decoration:none; }
+</style>
+<style>
+  html { color-scheme: light dark; }
+  body { margin: 0; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <div class="eyebrow">security-dashboard · v1.0.0 · 2026-09-09</div>
+    <h1>방어 범위: 무엇을 막고, 무엇을 알리고, 무엇을 못 보는가</h1>
+    <p class="lead">이 시스템은 차단보다 탐지와 트리아지가 본업이다. 실제로 막는 것은 fail2ban 과 harden.sh 가 적용한 설정이고, 나머지는 일어난 사실을 근거와 함께 사람에게 빨리 알리는 것이다. 아래 표는 공격 패턴을 그 기준으로 정직하게 나눈 것이며, 기대치를 팀이 공유하기 위한 문서다.</p>
+    <nav class="toc"><a href="#block">1. 차단·예방</a><a href="#detect">2. 탐지</a><a href="#none">3. 불가·부분</a><a href="#boundary">4. 경계선과 다음 조치</a></nav>
+    <div class="back"><a href="architecture.html">← 시스템 아키텍처</a> · <a href="index.html">문서 목차</a></div>
+  </header>
+
+  <section id="block">
+    <h2>1. 차단·예방되는 패턴</h2>
+    <p class="lead">공격이 성립하지 않거나 자동으로 끊긴다. 운영자 개입이 필요 없다.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>공격 패턴</th><th>수준</th><th>무엇이 막는가</th><th>한계</th></tr></thead>
+          <tbody>
+          <tr><td>SSH 비밀번호 브루트포스, 사전 공격</td><td><span class="lvl block">차단</span></td><td>fail2ban(3회 실패 차단, 재범 시 최대 1주), recidive jail, MaxAuthTries 3</td><td>분산 소스에서 IP당 두어 번씩 시도하는 저속 공격은 임계 아래로 지나감. 대시보드는 계정 기준 집계로 경고는 함</td></tr>
+          <tr><td>잠긴·미사용 계정으로 로그인</td><td><span class="lvl block">차단</span></td><td>미사용 계정 잠금+만료, 퇴직 계정 삭제. 계정 상태 패널</td><td>활성 관리자 계정의 자격증명 유출은 막지 못함</td></tr>
+          <tr><td>콘솔에서 GRUB 편집으로 single-user 진입</td><td><span class="lvl block">차단</span></td><td>GRUB 비밀번호 (기본 항목은 unrestricted)</td><td>디스크 탈거, Live USB 부팅은 못 막음 → 전체 디스크 암호화, BIOS 비밀번호</td></tr>
+          <tr><td>USB 저장장치로 데이터 반출·악성 파일 반입</td><td><span class="lvl block">차단</span></td><td>usb-storage 모듈 차단 (해제 시 auditd 가 모듈 로드 기록)</td><td>키보드로 위장한 USB(HID 주입)는 저장장치가 아니라 대상 아님</td></tr>
+          <tr><td>미사용 프로토콜(dccp/sctp/rds/tipc) 커널 취약점</td><td><span class="lvl block">차단</span></td><td>modprobe 차단</td><td>사용 중인 프로토콜의 취약점은 해당 없음</td></tr>
+          <tr><td>코어 덤프에서 비밀 추출</td><td><span class="lvl block">차단</span></td><td>코어 덤프 비활성화</td><td>—</td></tr>
+          <tr><td>다른 사용자 홈 열람, 느슨한 파일 권한</td><td><span class="lvl block">차단</span></td><td>홈 750, umask 027, crontab·sshd_config·grub.cfg 600, cron 디렉터리 700</td><td>이미 root 면 무의미</td></tr>
+          <tr><td>알려진 취약점을 노린 공격</td><td><span class="lvl partial">예방</span></td><td>unattended-upgrades 자동 보안 패치, USN ↔ 설치 버전 대조 알림, 미적용 업데이트 알림</td><td>공개 후 패치까지의 창(zero-day)은 열려 있음</td></tr>
+          <tr><td>ICMP 리다이렉트, 소스 라우팅, SYN flood 일부</td><td><span class="lvl block">차단</span></td><td>sysctl 강화</td><td>DDoS 자체는 막지 못함</td></tr>
+          </tbody>
+        </table>
+      </div>
+  </section>
+
+  <section id="detect">
+    <h2>2. 탐지되어 알림이 올라오는 패턴</h2>
+    <p class="lead">대시보드가 알림과 "지금 할 일"을 만들고, 대응은 운영자가 한다. 등급은 알림 심각도다.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>공격 패턴</th><th>등급</th><th>탐지 방법</th><th>놓치는 경우</th></tr></thead>
+          <tbody>
+          <tr><td>브루트포스 뒤 로그인 성공</td><td><span class="lvl crit">긴급</span></td><td>같은 IP 의 실패 이력 + 로그인 성공 (AuthLogWatcher)</td><td>다른 IP 로 실패한 뒤 새 IP 로 성공하면 "새 IP 로그인" 경고로만</td></tr>
+          <tr><td>탈취한 자격증명으로 접속</td><td><span class="lvl warn">경고</span></td><td>처음 보는 공인 IP 로그인, root 직접 로그인</td><td>이미 알려진 IP(사무실, VPN)에서의 접속은 정상으로 보임</td></tr>
+          <tr><td>리버스 셸, 바인드 셸</td><td><span class="lvl crit">긴급/경고</span></td><td>셸의 stdin/stdout 이 소켓(ProcessAudit 30초), 새 리스닝 포트(NetworkWatcher)</td><td>30초 안에 끝나는 셸, 소켓을 직접 잡지 않는 파이썬 C2</td></tr>
+          <tr><td>임시 디렉터리에서 페이로드 실행</td><td><span class="lvl warn">경고/긴급</span></td><td>auditd execve 즉시, /tmp·/dev/shm 실행 파일 (root 면 긴급)</td><td>홈이나 /var 아래에서 실행, 인터프리터에 -c 로 넘긴 코드</td></tr>
+          <tr><td>지속성: cron, systemd, SUID, authorized_keys, sudoers, ld.so.preload, 커널 모듈, 계정·그룹 추가</td><td><span class="lvl crit">경고/긴급</span></td><td>무결성 diff, 영속화 스캔(5분), auditd 파일 쓰기 주체, auth.log 계정 변경</td><td>~/.bashrc 같은 사용자 시작 파일, at 작업, 새 사용자 홈의 systemd user 유닛은 다음 주기</td></tr>
+          <tr><td>권한 상승 시도</td><td><span class="lvl warn">경고/긴급</span></td><td>sudo 실패, su, sudoers 변경, 새 SUID</td><td>커널 취약점으로 곧장 root 가 되면 시도는 안 보이고 사후 흔적만</td></tr>
+          <tr><td>내부 정찰 (nmap, masscan, hydra, tcpdump …)</td><td><span class="lvl warn">경고</span></td><td>실행 파일명 정확 일치 (auditd + 샘플링)</td><td>이름을 바꾼 바이너리, 파이썬으로 짠 스캐너</td></tr>
+          <tr><td>방어 도구 제거</td><td><span class="lvl crit">긴급</span></td><td>fail2ban·openssh·auditd 등 패키지 제거 이벤트 + 누가 실행했는지</td><td>서비스 중지만 하면 모니터 health 가 "제한"으로 바뀌지만 알림은 아님</td></tr>
+          <tr><td>크립토마이너, 포크 폭탄</td><td><span class="lvl warn">경고</span></td><td>CPU 지속 90%, 프로세스 급증, 상위 프로세스 첨부</td><td>CPU 를 낮게 쓰는 마이너</td></tr>
+          <tr><td>시간 조작으로 로그 교란</td><td><span class="lvl warn">경고</span></td><td>NTP 동기화 끊김 (timedatectl)</td><td>—</td></tr>
+          <tr><td>서비스 중지 중 파일 변조</td><td><span class="lvl crit">긴급</span></td><td>시작 시 DB 기준선과 비교</td><td>변조 후 기준선 DB 까지 바꾸면 못 잡음 (root 필요)</td></tr>
+          <tr><td>아웃바운드 C2 연결</td><td><span class="lvl info">정보만</span></td><td>처음 보는 외부 IP 연결에 프로세스명 첨부 (라이브 피드)</td><td>알림이 아님. HTTPS 로 클라우드에 비콘하면 정상 트래픽과 구분 불가</td></tr>
+          </tbody>
+        </table>
+      </div>
+  </section>
+
+  <section id="none">
+    <h2>3. 방어도 탐지도 못 하는 패턴</h2>
+    <p class="lead">설계 범위 밖이거나 호스트 안에서는 볼 수 없는 것. "부분"은 사후 흔적만 잡히는 경우다.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>공격 패턴</th><th>수준</th><th>이유</th><th>메우려면</th></tr></thead>
+          <tbody>
+          <tr><td>웹 애플리케이션 공격 (SQLi, RCE, 업로드 취약점)</td><td><span class="lvl none">불가</span></td><td>애플리케이션 로그를 보지 않음. 셸이 떨어진 뒤 흔적만 잡음</td><td>앱 로그 소스 추가, WAF</td></tr>
+          <tr><td>컨테이너 내부 공격 (docker)</td><td><span class="lvl none">불가</span></td><td>auditd 규칙이 대화형 세션만 기록해 컨테이너 프로세스 제외. /proc 스캔은 보지만 컨텍스트 없음</td><td>컨테이너용 audit 규칙, Falco 같은 런타임 보안</td></tr>
+          <tr><td>권한 있는 사용자의 데이터 반출 (SSH·HTTPS 로 파일 복사)</td><td><span class="lvl none">불가</span></td><td>유출 감시(DLP)와 전송량 분석이 없음</td><td>이그레스 필터링, 전송량 기준 알림</td></tr>
+          <tr><td>파일리스·메모리 상주 공격</td><td><span class="lvl partial">부분</span></td><td>디스크에 남지 않으면 무결성·SUID 스캔 무력. execve 에 python -c … 로만 남음</td><td>메모리 포렌식, EDR</td></tr>
+          <tr><td>커널 루트킷</td><td><span class="lvl partial">부분</span></td><td>/proc 을 속이면 프로세스·소켓 감시가 모두 속음. 모듈 로드 알림이 마지막 기회</td><td>Secure Boot, 모듈 서명 강제, 부팅 무결성 측정</td></tr>
+          <tr><td>제로데이 커널·sshd 취약점</td><td><span class="lvl none">불가</span></td><td>패치가 없음. 성공 뒤 지속성 단계에서만 탐지</td><td>노출 면 축소 (키 인증만, 포트 노출 최소화)</td></tr>
+          <tr><td>공급망: 악성 pip/npm/.deb 패키지</td><td><span class="lvl partial">부분</span></td><td>설치 이벤트는 남지만 정상 설치와 구분 못 함</td><td>패키지 서명 검증, 사설 미러, SBOM 대조</td></tr>
+          <tr><td>피싱·소셜 엔지니어링으로 관리자 자격 획득</td><td><span class="lvl none">불가</span></td><td>호스트 밖의 사건. 새 IP 로그인 경고가 유일한 신호</td><td>하드웨어 키 2단계 인증</td></tr>
+          <tr><td>네트워크 계층 공격 (ARP 스푸핑, MITM, DDoS)</td><td><span class="lvl none">불가</span></td><td>호스트 소켓 테이블만 봄</td><td>네트워크 IDS, 상위 방화벽</td></tr>
+          <tr><td>물리 공격: 디스크 탈거, 콜드부트</td><td><span class="lvl none">불가</span></td><td>부팅 이후만 감시</td><td>전체 디스크 암호화, TPM</td></tr>
+          <tr><td>root 획득 이후의 흔적 삭제</td><td><span class="lvl partial">부분</span></td><td>로그·DB·알림 모두 로컬. Slack 에 이미 나간 알림만 남음</td><td>외부 로그 호스트 (Lynis LOGG-2154)</td></tr>
+          <tr><td>대시보드 자체 정지</td><td><span class="lvl none">불가</span></td><td>secdash 를 죽이면 아무도 알리지 않음 (재시작은 실패 시에만)</td><td>외부 헬스체크(dead man's switch), 주기 하트비트</td></tr>
+          </tbody>
+        </table>
+      </div>
+  </section>
+
+  <section id="boundary">
+    <h2>4. 경계선과 다음 조치</h2>
+    <div class="callout">
+      <p><strong>이 시스템의 가치는 공격자가 root 를 얻기 전, 또는 얻는 순간의 흔적을 사람에게 보내는 것에 있다.</strong> root 를 얻은 뒤에는 호스트 안의 모든 감시(로그, DB, 모니터, auditd)가 조작될 수 있다. 그 이후를 위한 유일한 방어는 호스트 밖에 있다.</p>
+    </div>
+    <ul class="rules">
+      <li><strong>외부 로그 호스트.</strong> rsyslog 로 auth.log 와 audit 로그를 다른 호스트에 전송한다(Lynis LOGG-2154). root 를 얻은 공격자가 흔적을 지워도 사본이 남는다. 설정 한 줄, 가장 값싸다.</li>
+      <li><strong>대시보드 하트비트.</strong> secdash 가 주기적으로 외부(Slack 또는 감시 서버)에 살아 있음을 알리고, 끊기면 그쪽에서 경보한다. 지금은 서비스를 죽이면 조용해진다.</li>
+      <li><strong>SSH 키 인증 전용.</strong> PasswordAuthentication no. 브루트포스 표면이 사라지고 fail2ban 은 보험이 된다. 모든 관리자 키가 등록된 뒤에 적용한다.</li>
+      <li><strong>전체 디스크 암호화.</strong> 물리 접근이 가능한 서버에서 GRUB 비밀번호는 절반이다. 디스크를 뽑아 가면 나머지 절반이 필요하다.</li>
+      <li><strong>애플리케이션·컨테이너 가시성.</strong> 이 서버가 웹 서비스나 컨테이너를 운영하게 되면 그 로그를 소스로 추가해야 3절의 첫 두 줄이 2절로 올라온다.</li>
+    </ul>
+  </section>
+</div>
+</body>
+</html>
