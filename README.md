@@ -139,3 +139,7 @@ python3 simulate_attack.py                            # 탐지 파이프라인 �
 - 파일 무결성은 자체 해시다. 규제 요건이 있으면 AIDE 를 병행하고 이 대시보드는 표시 계층으로 써라.
 - auditd 가 없으면 프로세스 실행 이력(execve)은 30초 샘플링으로만 본다. `deploy/install.sh` 는 auditd 와 최소 규칙을 설치해 이 공백을 메운다.
 - 서버 한 대 단위다. 여러 서버를 한 화면에서 보려면 Wazuh 같은 중앙 관리 도구가 필요하며, 그때 이 대시보드는 그 위의 한국어 트리아지 뷰로 쓸 수 있다.
+
+## 라이선스
+
+Apache License 2.0. [LICENSE](LICENSE) 를 보라.
