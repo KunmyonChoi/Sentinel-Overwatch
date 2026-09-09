@@ -11,6 +11,8 @@
   <style>
     body { margin: 0; font-family: "IBM Plex Sans KR", "Apple SD Gothic Neo", system-ui, sans-serif; word-break: keep-all; }
     a { color: #0e7c6b; } a:hover { color: #0a5f52; }
+    .nav { display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 12px; margin-left: -12px; border-radius: 8px; text-decoration: none; color: #5d6c65; font-size: 14px; }
+    .nav:hover { background: #e6ede9; }
     .fold { display: flex; align-items: center; justify-content: space-between; padding: 15px 22px; border-top: 1px solid #eef2f0; cursor: pointer; }
     .fold-t { font-size: 15px; }
     .fold-s { font-size: 13px; color: #5d6c65; }
@@ -19,8 +21,8 @@
 
 <div style="width: 960px; height: 900px; box-sizing: border-box; background: #f2f5f3; color: #17221d; display: flex; flex-direction: column;">
 
-  <div style="display: flex; align-items: center; gap: 12px; padding: 20px 40px; border-bottom: 1px solid #d7e0db;">
-    <a href="#" style="display: flex; align-items: center; gap: 6px; text-decoration: none; color: #5d6c65; font-size: 14px;">
+  <div style="display: flex; align-items: center; gap: 12px; padding: 14px 40px; border-bottom: 1px solid #d7e0db;">
+    <a href="#" class="nav">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
       돌아가기
     </a>
@@ -29,7 +31,7 @@
   <div style="flex: 1; padding: 26px 40px 24px; overflow: hidden;">
     <div style="font-size: 25px; font-weight: 600; letter-spacing: -0.02em;">자세히 보기</div>
     <div style="font-size: 14px; color: #5d6c65; margin-top: 5px; max-width: 74ch; line-height: 1.6;">
-      지킴이가 실제로 무엇을 보고 그렇게 판단했는지 전부 여기 있습니다. 평소에는 접어둡니다.
+      지킴이가 무엇을 보고 그렇게 판단했는지 전부 여기 있어요. 평소에는 접어둬요.
     </div>
 
     <div style="margin-top: 18px; background: #ffffff; border: 1px solid #d7e0db; border-radius: 12px; overflow: hidden;">
@@ -37,10 +39,10 @@
       <div class="fold" style="border-top: 0;">
         <div>
           <div class="fold-t">밖에서 들어올 수 있는 문</div>
-          <div class="fold-s">포트별 바인딩 주소와 방화벽 규칙 대조 결과</div>
+          <div class="fold-s">문마다 어디까지 열려 있는지, 잠금장치가 실제로 막고 있는지</div>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
-          <span style="font-size: 13px; color: #5d6c65;">1개 열림 · 8개 내부 전용</span>
+          <span style="font-size: 13px; color: #5d6c65;">밖으로 1개 · 나머지는 안에서만</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5d6c65" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(180deg);"><path d="m6 9 6 6 6-6"/></svg>
         </div>
       </div>
@@ -55,7 +57,7 @@
           </div>
 
           <div style="display: flex; align-items: center; gap: 8px; color: #6b7280; font-size: 11px; padding: 9px 0;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00ff41" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00ff41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             <span style="color: #9ca3af;">ufw</span><span>· 기본 deny · 허용 22/tcp</span>
           </div>
 
@@ -85,14 +87,14 @@
           </div>
         </div>
         <div style="font-size: 12.5px; color: #5d6c65; margin-top: 9px;">
-          지금 쓰시던 전문가 화면이 그대로 들어옵니다. 무엇 하나 없애지 않았어요.
+          전문가용 화면을 그대로 볼 수 있어요. 아무것도 없애지 않았어요. — 위에서 문이 <b style="color:#17221d;">1개</b>인데 여기 <b style="color:#17221d;">2</b>로 보이는 건, 문 하나가 두 갈래 길(IPv4·IPv6)로 세어지기 때문이에요.
         </div>
       </div>
 
       <div class="fold">
         <div>
-          <div class="fold-t">설정 점검</div>
-          <div class="fold-s">파일 권한 · 컨테이너 설정</div>
+          <div class="fold-t">파일과 프로그램 설정</div>
+          <div class="fold-s">파일 자물쇠가 제대로 잠겨 있는지, 프로그램이 너무 큰 권한으로 돌지 않는지</div>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
           <span style="font-size: 13px; color: #5d6c65;">조치 필요 없음</span>
@@ -102,33 +104,33 @@
 
       <div class="fold">
         <div>
-          <div class="fold-t">계정 상태</div>
-          <div class="fold-s">잠김·만료, 권한 그룹, 마지막 로그인</div>
+          <div class="fold-t">이 컴퓨터를 쓰는 사람</div>
+          <div class="fold-s">누가 쓸 수 있는 상태인지, 누가 관리자인지, 마지막으로 언제 들어왔는지</div>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
-          <span style="font-size: 13px; color: #5d6c65;">활성 2 / 전체 6</span>
+          <span style="font-size: 13px; color: #5d6c65;">쓸 수 있는 사람 2명</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5d6c65" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
         </div>
       </div>
 
       <div class="fold">
         <div>
-          <div class="fold-t">지켜보고 있는 것</div>
-          <div class="fold-s">14가지 점검 항목의 동작 상태와 데이터 출처</div>
+          <div class="fold-t">지킴이가 보고 있는 것</div>
+          <div class="fold-s">무엇을 어디서 보고 있는지, 못 보고 있는 것은 없는지</div>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
-          <span style="font-size: 13px; color: #5d6c65;">14가지 정상</span>
+          <span style="font-size: 13px; color: #5d6c65;">14가지 모두 잘 보고 있어요</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5d6c65" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
         </div>
       </div>
 
       <div class="fold">
         <div>
-          <div class="fold-t">강화 작업 목록</div>
-          <div class="fold-s">외부 보안 감사 도구가 제안한 항목</div>
+          <div class="fold-t">더 단단하게 만들 거리</div>
+          <div class="fold-s">지금 당장 문제는 아니지만 해두면 좋은 것들</div>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
-          <span style="font-size: 13px; color: #5d6c65;">경고 0 · 제안 27</span>
+          <span style="font-size: 13px; color: #5d6c65;">급한 것 없음 · 해두면 좋은 것 27</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5d6c65" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
         </div>
       </div>
@@ -136,7 +138,7 @@
       <div class="fold">
         <div>
           <div class="fold-t">보안 뉴스</div>
-          <div class="fold-s">내 컴퓨터에 해당하는 것만 위로 올립니다</div>
+          <div class="fold-s">내 컴퓨터에 해당하는 것만 위로 올려요</div>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
           <span style="font-size: 13px; color: #5d6c65;">해당 없음</span>

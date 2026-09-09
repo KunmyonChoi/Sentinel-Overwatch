@@ -11,13 +11,15 @@
   <style>
     body { margin: 0; font-family: "IBM Plex Sans KR", "Apple SD Gothic Neo", system-ui, sans-serif; word-break: keep-all; }
     a { color: #0e7c6b; } a:hover { color: #0a5f52; }
+    .nav { display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 12px; margin-left: -12px; border-radius: 8px; text-decoration: none; color: #5d6c65; font-size: 14px; }
+    .nav:hover { background: #e6ede9; }
   </style>
 </helmet>
 
 <div style="width: 960px; height: 760px; box-sizing: border-box; background: #f2f5f3; color: #17221d; display: flex; flex-direction: column;">
 
-  <div style="display: flex; align-items: center; gap: 12px; padding: 20px 40px; border-bottom: 1px solid #d7e0db;">
-    <a href="#" style="display: flex; align-items: center; gap: 6px; text-decoration: none; color: #5d6c65; font-size: 14px;">
+  <div style="display: flex; align-items: center; gap: 12px; padding: 14px 40px; border-bottom: 1px solid #d7e0db;">
+    <a href="#" class="nav">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
       돌아가기
     </a>
@@ -31,35 +33,38 @@
       </div>
       <div>
         <div style="font-size: 28px; font-weight: 600; line-height: 1.2; letter-spacing: -0.02em;">잠갔어요</div>
-        <div style="font-size: 15.5px; color: #5d6c65; margin-top: 4px;">파일 3개를 나만 고칠 수 있게 바꿨습니다.</div>
+        <div style="font-size: 15.5px; color: #5d6c65; margin-top: 4px;">파일 3개를 나만 고칠 수 있게 바꿨어요.</div>
       </div>
     </div>
 
     <div style="margin-top: 30px; background: #ffffff; border: 1px solid #d7e0db; border-radius: 12px; overflow: hidden;">
+      <div style="display: grid; grid-template-columns: 1fr 130px 24px 130px; align-items: center; gap: 0 12px; padding: 10px 20px 6px; font-size: 12px; color: #5d6c65; background: #e6ede9;">
+        <div>파일</div><div>잠그기 전</div><div></div><div>지금</div>
+      </div>
       <div style="display: grid; grid-template-columns: 1fr 130px 24px 130px; align-items: center; gap: 0 12px; padding: 12px 20px; border-bottom: 1px solid #eef2f0;">
         <div style="font-size: 14.5px;">로그인할 때 실행되는 설정</div>
-        <div style="font-size: 13.5px; color: #5d6c65; text-decoration: line-through;">누구나 고침</div>
+        <div style="font-size: 13.5px; color: #5d6c65; text-decoration: line-through;">누구나 고칠 수 있음</div>
         <div style="color: #b9c6bf;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div>
-        <div style="font-size: 13.5px; color: #0e7c6b; font-weight: 500;">나만 고침</div>
+        <div style="font-size: 13.5px; color: #0e7c6b; font-weight: 500;">나만 고칠 수 있음</div>
       </div>
       <div style="display: grid; grid-template-columns: 1fr 130px 24px 130px; align-items: center; gap: 0 12px; padding: 12px 20px; border-bottom: 1px solid #eef2f0;">
         <div style="font-size: 14.5px;">터미널을 열 때 실행되는 설정</div>
-        <div style="font-size: 13.5px; color: #5d6c65; text-decoration: line-through;">누구나 고침</div>
+        <div style="font-size: 13.5px; color: #5d6c65; text-decoration: line-through;">누구나 고칠 수 있음</div>
         <div style="color: #b9c6bf;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div>
-        <div style="font-size: 13.5px; color: #0e7c6b; font-weight: 500;">나만 고침</div>
+        <div style="font-size: 13.5px; color: #0e7c6b; font-weight: 500;">나만 고칠 수 있음</div>
       </div>
       <div style="display: grid; grid-template-columns: 1fr 130px 24px 130px; align-items: center; gap: 0 12px; padding: 12px 20px;">
         <div style="font-size: 14.5px;">내가 설치한 프로그램이 들어가는 폴더</div>
-        <div style="font-size: 13.5px; color: #5d6c65; text-decoration: line-through;">누구나 넣음</div>
+        <div style="font-size: 13.5px; color: #5d6c65; text-decoration: line-through;">누구나 넣을 수 있음</div>
         <div style="color: #b9c6bf;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div>
-        <div style="font-size: 13.5px; color: #0e7c6b; font-weight: 500;">나만 열기</div>
+        <div style="font-size: 13.5px; color: #0e7c6b; font-weight: 500;">나만 열 수 있음</div>
       </div>
     </div>
 
     <div style="margin-top: 22px; padding: 18px 20px; background: #ffffff; border: 1px solid #d7e0db; border-radius: 12px;">
       <div style="font-size: 14px; font-weight: 600; margin-bottom: 6px;">혹시 뭔가 안 되나요?</div>
       <div style="font-size: 14px; color: #5d6c65; line-height: 1.65; max-width: 74ch;">
-        이 변경은 <b style="color: #17221d;">기록</b>에 그대로 남아 있어요. 무엇이 어떻게 바뀌었는지 시간과 함께 볼 수 있고, 되돌리는 방법도 거기에 적혀 있습니다.
+        이 변경은 <b style="color: #17221d;">기록</b>에 그대로 남아 있어요. 무엇이 어떻게 바뀌었는지 시간과 함께 볼 수 있고 되돌리는 방법도 거기에 적어뒀어요.
       </div>
     </div>
 

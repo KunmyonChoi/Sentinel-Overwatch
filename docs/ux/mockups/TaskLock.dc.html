@@ -11,13 +11,15 @@
   <style>
     body { margin: 0; font-family: "IBM Plex Sans KR", "Apple SD Gothic Neo", system-ui, sans-serif; word-break: keep-all; }
     a { color: #0e7c6b; } a:hover { color: #0a5f52; }
+    .nav { display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 12px; margin-left: -12px; border-radius: 8px; text-decoration: none; color: #5d6c65; font-size: 14px; }
+    .nav:hover { background: #e6ede9; }
   </style>
 </helmet>
 
 <div style="width: 960px; height: 760px; box-sizing: border-box; background: #f2f5f3; color: #17221d; display: flex; flex-direction: column;">
 
-  <div style="display: flex; align-items: center; gap: 12px; padding: 20px 40px; border-bottom: 1px solid #d7e0db;">
-    <a href="#" style="display: flex; align-items: center; gap: 6px; text-decoration: none; color: #5d6c65; font-size: 14px;">
+  <div style="display: flex; align-items: center; gap: 12px; padding: 14px 40px; border-bottom: 1px solid #d7e0db;">
+    <a href="#" class="nav">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
       돌아가기
     </a>
@@ -32,14 +34,14 @@
         <div style="font-size: 14px; font-weight: 600; color: #0e7c6b; margin-bottom: 7px;">무슨 일인가요?</div>
         <div style="font-size: 14.5px; line-height: 1.7; color: #17221d;">
           파일에는 <b>누가 열고 고칠 수 있는지</b>를 정해두는 자물쇠가 있어요.
-          이 파일 3개는 자물쇠가 풀려 있어서, 이 컴퓨터를 쓰는 다른 사람이 내용을 바꿀 수 있는 상태예요.
+          이 파일 3개는 자물쇠가 풀려 있어서, 이 컴퓨터를 쓰는 다른 사람이 내용을 바꿀 수 있어요.
         </div>
       </div>
       <div>
         <div style="font-size: 14px; font-weight: 600; color: #0e7c6b; margin-bottom: 7px;">왜 문제인가요?</div>
         <div style="font-size: 14.5px; line-height: 1.7; color: #17221d;">
           이 파일들은 <b>로그인할 때마다 자동으로 실행</b>돼요.
-          누가 한 줄만 몰래 넣어두면, 내가 로그인하는 순간 그 프로그램이 내 권한으로 함께 실행됩니다.
+          누가 내용을 몰래 바꿔 놓으면, 내가 로그인하는 순간 그 프로그램이 내 이름으로 함께 실행돼요.
         </div>
       </div>
     </div>
@@ -60,7 +62,7 @@
           <div style="font-size: 14.5px;">로그인할 때 실행되는 설정</div>
           <div style="font-size: 12px; color: #5d6c65; margin-top: 2px;">.profile</div>
         </div>
-        <div style="font-size: 13.5px; color: #b5322a;">누구나 고칠 수 있음</div>
+        <div style="font-size: 13.5px; color: #5d6c65;">누구나 고칠 수 있음</div>
         <div style="color: #b9c6bf;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
         </div>
@@ -72,7 +74,7 @@
           <div style="font-size: 14.5px;">터미널을 열 때 실행되는 설정</div>
           <div style="font-size: 12px; color: #5d6c65; margin-top: 2px;">.bashrc</div>
         </div>
-        <div style="font-size: 13.5px; color: #b5322a;">누구나 고칠 수 있음</div>
+        <div style="font-size: 13.5px; color: #5d6c65;">누구나 고칠 수 있음</div>
         <div style="color: #b9c6bf;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
         </div>
@@ -84,7 +86,7 @@
           <div style="font-size: 14.5px;">내가 설치한 프로그램이 들어가는 폴더</div>
           <div style="font-size: 12px; color: #5d6c65; margin-top: 2px;">.local/bin</div>
         </div>
-        <div style="font-size: 13.5px; color: #b5322a;">누구나 넣을 수 있음</div>
+        <div style="font-size: 13.5px; color: #5d6c65;">누구나 넣을 수 있음</div>
         <div style="color: #b9c6bf;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
         </div>
@@ -93,7 +95,7 @@
 
       <div style="padding: 13px 20px; border-top: 1px solid #d7e0db; background: #f7fbf9; font-size: 13.5px; color: #5d6c65; display: flex; align-items: center; gap: 8px;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0e7c6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-        <span><b style="color: #17221d;">잠그기만 합니다.</b> 내가 쓰던 것이 안 되게 바뀌는 일은 없어요.</span>
+        <span><b style="color: #17221d;">잠그기만 해요.</b> 지금 쓰시던 기능이 안 되는 일은 없어요.</span>
       </div>
     </div>
 

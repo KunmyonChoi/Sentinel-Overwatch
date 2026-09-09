@@ -11,6 +11,8 @@
   <style>
     body { margin: 0; font-family: "IBM Plex Sans KR", "Apple SD Gothic Neo", system-ui, sans-serif; word-break: keep-all; }
     a { color: #0e7c6b; } a:hover { color: #0a5f52; }
+    .nav { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; margin-left: -12px; border-radius: 8px; text-decoration: none; font-size: 14.5px; }
+    .nav:hover { background: #e6ede9; }
   </style>
 </helmet>
 
@@ -36,7 +38,7 @@
       </div>
       <div>
         <div style="font-size: 28px; font-weight: 600; line-height: 1.2; letter-spacing: -0.02em;">살펴보세요</div>
-        <div style="font-size: 15px; color: #5d6c65; margin-top: 3px;">손볼 일이 1가지 있어요. 급하지는 않지만 오늘 중에 해두는 게 좋아요.</div>
+        <div style="font-size: 15px; color: #5d6c65; margin-top: 3px;">손볼 일이 한 가지 있어요. 급하지는 않지만 오늘 중에 해두는 게 좋아요.</div>
       </div>
     </div>
 
@@ -74,15 +76,15 @@
         <div style="font-size: 19px; font-weight: 600; margin-top: 6px;">없음</div>
       </div>
       <div style="background: #ffffff; border: 1px solid #d7e0db; border-radius: 10px; padding: 16px 18px;">
-        <div style="color: #5d6c65; font-size: 12.5px;">지켜보고 있는 것</div>
-        <div style="font-size: 19px; font-weight: 600; margin-top: 6px;">14가지 <span style="font-size: 13px; font-weight: 400; color: #5d6c65;">· 모두 정상</span></div>
+        <div style="color: #5d6c65; font-size: 12.5px;">이번 주에 막은 접속 시도</div>
+        <div style="font-size: 19px; font-weight: 600; margin-top: 6px;">23번 <span style="font-size: 13px; font-weight: 400; color: #5d6c65;">· 모두 실패</span></div>
       </div>
     </div>
   </div>
 
-  <div style="display: flex; align-items: center; gap: 26px; padding: 20px 40px; border-top: 1px solid #d7e0db; font-size: 14px;">
-    <a href="#" style="text-decoration: none;">무슨 일이 있었는지 보기</a>
-    <a href="#" style="text-decoration: none; color: #5d6c65;">자세히 보기</a>
+  <div style="display: flex; align-items: center; gap: 18px; padding: 14px 40px; border-top: 1px solid #d7e0db;">
+    <a href="#" class="nav">무슨 일이 있었는지 보기</a>
+    <a href="#" class="nav" style="color: #5d6c65;">자세히 보기</a>
   </div>
 
 </div>
