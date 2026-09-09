@@ -62,3 +62,6 @@ dist-release/
 # 호스트 점검 중 만든 임시 덤프 (재생성 가능, 방화벽 구성이 그대로 드러남)
 iptables.txt
 ufw-status.txt
+
+# 호스트 점검 기록 (익명화본이라도 공개 저장소에는 올리지 않는다)
+docs/hardening-log.html
