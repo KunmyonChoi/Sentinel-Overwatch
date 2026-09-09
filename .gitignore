@@ -68,3 +68,6 @@ docs/hardening-log.html
 
 # 디자인 캔버스 조립 결과물 (2MB, 작업 파일에서 언제든 다시 만듦)
 docs/ux/mockups/plain-language-screens.html
+
+# 덱 검증용 스크린샷 (build_tutorial_deck.py + verify_deck.py 로 언제든 재생성)
+docs/ux/shots/

@@ -92,6 +92,7 @@ def text(x, y, w, h, content, *, size=32, weight=400, color=INK, lh=1.5,
     if ls: s.append(f"letter-spacing:{ls}")
     if z is not None: s.append(f"z-index:{z}")
     _parts.append(f'<div{_anim(kw)} style="{";".join(s)};">{content}</div>')
+    return h
 
 
 def pill(x, y, w, h, label, *, fg, bg, border=None, size=20, **kw):
@@ -126,6 +127,15 @@ class Screen:
         rw = 150
         text(x + self.w - rw - 26, y + 16, rw, 32, right_label, size=19,
              color=ACCENT if accent_right else MUTED, align="right")
+
+
+def notes_col(x, y, w, blocks, *, size=27, gap=18, block_gap=52):
+    """제목·본문을 계산된 높이로 쌓는다. y 를 손으로 정하면 글이 길어질 때 반드시 겹친다."""
+    for i, (head, body, kw) in enumerate(blocks):
+        y += text(x, y, w, 0, head, size=38, weight=700, **kw) + gap
+        y += text(x, y, w, 0, body, size=size, color=MUTED, lh=1.7,
+                  trig="with", ref=kw.get("name")) + block_gap
+    return y
 
 
 def slide(bg, transition=None, first=False):
@@ -230,15 +240,12 @@ for i, (lab, val, note) in enumerate([
     text(*s.at(bx + 24, 458), 268, 60, note, size=19, color=MUTED, lh=1.5)
 text(*s.at(40, 578), 700, 40, "📊  무슨 일이 있었는지 보기", size=22, color=ACCENT)
 
-text(1310, 340, 460, 60, "여기만 보면 됩니다", size=38, weight=700,
-     anim="slideIn", dir="up", name="n1")
-text(1310, 412, 470, 200,
-     "상태 한 줄이 화면에서 가장 큽니다.\n‘이상 없음’이면 정말로 아무것도\n하지 않아도 됩니다.",
-     size=27, color=MUTED, lh=1.7, trig="with", ref="n1")
-text(1310, 648, 460, 60, "숫자 셋의 뜻", size=38, weight=700, anim="slideIn", dir="up", name="n2")
-text(1310, 720, 470, 200,
-     "문 = 밖에서 들어올 수 있는 통로.\n업데이트 = 밀린 보안 수정.\n막은 시도 = 지킴이가 한 일.",
-     size=27, color=MUTED, lh=1.7, trig="with", ref="n2")
+notes_col(1310, 340, 470, [
+    ("여기만 보면 됩니다",
+     "상태 한 줄이 화면에서 가장 큽니다.\n‘이상 없음’이면 정말로 아무것도\n하지 않아도 됩니다.", dict(anim="slideIn", dir="up", name="n1")),
+    ("숫자 셋의 뜻",
+     "문 = 밖에서 들어올 수 있는 통로.\n업데이트 = 밀린 보안 수정.\n막은 시도 = 지킴이가 한 일.", dict(anim="slideIn", dir="up", name="n2")),
+])
 end(BG, """
 먼저 평소의 화면입니다. 대부분의 날은 이 모습입니다.
 
@@ -276,16 +283,12 @@ pill(*s.at(156, 424), 132, 52, "잠그기", fg="#ffffff", bg=ACCENT, size=23,
 pill(*s.at(304, 424), 300, 52, "무엇이 바뀌는지 먼저 보기", fg=INK, bg=PANEL,
      border=f"1px solid {LINE2}", size=21, trig="with", ref="card")
 
-text(1310, 340, 470, 60, "할 일이 있을 때만", size=38, weight=700,
-     anim="slideIn", dir="up", name="p1")
-text(1310, 412, 480, 240,
+notes_col(1310, 340, 480, [
+    ("할 일이 있을 때만",
      "평소에는 이 카드가 아예 없습니다.\n빈 목록도 띄우지 않습니다.\n\n"
-     "그래야 카드가 보일 때\n‘진짜 볼 것이 생겼구나’ 하고\n눈이 갑니다.",
-     size=27, color=MUTED, lh=1.7, trig="with", ref="p1")
-text(1310, 688, 470, 60, "급한 정도는 색으로", size=38, weight=700,
-     anim="slideIn", dir="up", name="p2")
-text(1310, 760, 480, 140, "노랑 = 오늘 중에\n빨강 = 지금 바로", size=27, color=MUTED,
-     lh=1.7, trig="with", ref="p2")
+     "그래야 카드가 보일 때\n‘진짜 볼 것이 생겼구나’ 하고\n눈이 갑니다.", dict(anim="slideIn", dir="up", name="p1")),
+    ("급한 정도는 색으로", "노랑 = 오늘 중에\n빨강 = 지금 바로", dict(anim="slideIn", dir="up", name="p2")),
+])
 end(BG, """
 손볼 일이 생기면 이렇게 바뀝니다. 상태 줄이 ‘살펴보세요’가 되고, 그 아래 할 일 카드가 하나 뜹니다.
 
@@ -309,7 +312,7 @@ box(*s.at(48, 168), 1084, 300, bg=PANEL, radius=14, border=f"1px solid {LINE}")
 box(*s.at(48, 168), 1084, 60, bg=PANEL2, radius=14)
 box(*s.at(48, 210), 1084, 18, bg=PANEL2)
 text(*s.at(72, 184), 700, 34, "무엇이 바뀌는지 먼저 보여드릴게요", size=23, weight=600)
-cols = [(72, 480, "파일"), (592, 230, "지금"), (872, 230, "잠근 뒤")]
+cols = [(72, 460, "파일"), (552, 250, "지금"), (850, 250, "잠근 뒤")]
 for cx, cw, lab in cols:
     text(*s.at(cx, 240), cw, 26, lab, size=18, color=MUTED)
 rows = [("로그인할 때 실행되는 설정", "누구나 고칠 수 있음", "나만 고칠 수 있음"),
@@ -318,10 +321,10 @@ rows = [("로그인할 때 실행되는 설정", "누구나 고칠 수 있음", 
 for i, (a, b, c) in enumerate(rows):
     ry = 272 + i * 52
     box(*s.at(72, ry - 8), 1036, 1, bg="#eef2f0")
-    text(*s.at(72, ry), 480, 34, a, size=22)
-    text(*s.at(592, ry), 240, 34, b, size=21, color=MUTED)
-    text(*s.at(838, ry), 30, 34, "→", size=22, color=LINE2)
-    text(*s.at(872, ry), 240, 34, c, size=21, weight=600, color=ACCENT)
+    text(*s.at(72, ry), 460, 0, a, size=21)
+    text(*s.at(552, ry), 250, 0, b, size=19, color=MUTED)
+    text(*s.at(812, ry), 28, 0, "→", size=20, color=LINE2)
+    text(*s.at(850, ry), 250, 0, c, size=19, weight=600, color=ACCENT)
 box(*s.at(48, 432), 1084, 36, bg="#f7fbf9")
 text(*s.at(76, 438), 900, 30, "✓  잠그기만 해요. 지금 쓰시던 기능이 안 되는 일은 없어요.",
      size=21, color=MUTED)
@@ -331,16 +334,12 @@ pill(*s.at(48, 500), 150, 56, "잠그기", fg="#ffffff", bg=ACCENT, size=24,
 pill(*s.at(214, 500), 130, 56, "나중에", fg=INK, bg=PANEL, border=f"1px solid {LINE2}",
      size=22, trig="with", ref="btn")
 
-text(1400, 360, 380, 60, "먼저 보여주고", size=38, weight=700,
-     anim="slideIn", dir="up", name="q1")
-text(1400, 432, 390, 220,
+notes_col(1400, 360, 390, [
+    ("먼저 보여주고",
      "전 → 후를 표로 보여준 다음에\n누르게 합니다.\n\n"
-     "뜻을 모르는 채 눌러서\n필요한 걸 꺼버리는 일을\n막기 위해서입니다.",
-     size=26, color=MUTED, lh=1.7, trig="with", ref="q1")
-text(1400, 700, 380, 60, "좁히기만 합니다", size=38, weight=700,
-     anim="slideIn", dir="up", name="q2")
-text(1400, 772, 390, 160, "지킴이는 자물쇠를 잠그기만 하고\n열지는 않습니다.",
-     size=26, color=MUTED, lh=1.7, trig="with", ref="q2")
+     "뜻을 모르는 채 눌러서\n필요한 걸 꺼버리는 일을\n막기 위해서입니다.", dict(anim="slideIn", dir="up", name="q1")),
+    ("좁히기만 합니다", "지킴이는 자물쇠를 잠그기만 하고\n열지는 않습니다.", dict(anim="slideIn", dir="up", name="q2")),
+], size=26)
 end(PANEL, """
 카드를 누르면 상세 화면이 열립니다. 여기서 바로 처리하지 않습니다.
 
@@ -366,30 +365,27 @@ text(*s.at(168, 180), 760, 38, "파일 3개를 나만 고칠 수 있게 바꿨�
 box(*s.at(48, 250), 984, 190, bg=PANEL, radius=14, border=f"1px solid {LINE}")
 box(*s.at(48, 250), 984, 46, bg=PANEL2, radius=14)
 box(*s.at(48, 282), 984, 14, bg=PANEL2)
-for cx, cw, lab in [(76, 440, "파일"), (556, 200, "잠그기 전"), (800, 200, "지금")]:
+for cx, cw, lab in [(76, 370, "파일"), (456, 240, "잠그기 전"), (744, 250, "지금")]:
     text(*s.at(cx, 262), cw, 26, lab, size=18, color=MUTED)
 for i, (a, b, c) in enumerate(rows):
     ry = 312 + i * 42
-    text(*s.at(76, ry), 440, 30, a, size=21)
-    text(*s.at(556, ry), 200, 30, b, size=19, color=MUTED)
-    text(*s.at(766, ry), 30, 30, "→", size=20, color=LINE2)
-    text(*s.at(800, ry), 200, 30, c, size=19, weight=600, color=ACCENT)
+    text(*s.at(76, ry), 370, 0, a, size=19)
+    text(*s.at(456, ry), 240, 0, b, size=18, color=MUTED)
+    text(*s.at(706, ry), 28, 0, "→", size=19, color=LINE2)
+    text(*s.at(744, ry), 250, 0, c, size=18, weight=600, color=ACCENT)
 
 box(*s.at(48, 466), 984, 74, bg=PANEL, radius=14, border=f"1px solid {LINE}")
 text(*s.at(76, 480), 900, 30, "혹시 뭔가 안 되나요?", size=22, weight=700)
 text(*s.at(76, 508), 920, 28, "이 변경은 기록에 남아 있어요. 되돌리는 방법도 거기에 적어뒀어요.",
      size=20, color=MUTED)
 
-text(1310, 360, 470, 60, "약속한 그대로", size=38, weight=700,
-     anim="slideIn", dir="up", name="r1")
-text(1310, 432, 480, 200,
+notes_col(1310, 360, 480, [
+    ("약속한 그대로",
      "미리보기에서 쓴 문구를\n결과 화면에서도 똑같이 씁니다.\n\n"
-     "말이 달라지면 무엇이 일어났는지\n대조할 수 없기 때문입니다.",
-     size=26, color=MUTED, lh=1.7, trig="with", ref="r1")
-text(1310, 672, 470, 60, "되돌리는 법도 함께", size=38, weight=700,
-     anim="slideIn", dir="up", name="r2")
-text(1310, 744, 480, 160, "기록 화면에서 언제 무엇이 바뀌었는지\n보고 되돌릴 수 있습니다.",
-     size=26, color=MUTED, lh=1.7, trig="with", ref="r2")
+     "말이 달라지면 무엇이 일어났는지\n대조할 수 없기 때문입니다.", dict(anim="slideIn", dir="up", name="r1")),
+    ("되돌리는 법도 함께",
+     "기록 화면에서 언제 무엇이 바뀌었는지\n보고 되돌릴 수 있습니다.", dict(anim="slideIn", dir="up", name="r2")),
+], size=26)
 end(BG, """
 누르고 나면 무엇이 바뀌었는지 다시 보여드립니다.
 
@@ -432,17 +428,14 @@ box(*s.at(48, 508), 984, 62, bg=ACC_SOFT, radius=12)
 text(*s.at(76, 522), 920, 34, "👁  지킴이가 본 것  1건   —   열어보기",
      size=22, weight=600, color=ACCENT)
 
-text(1310, 400, 470, 220,
-     "세 갈래로 나눈 이유", size=38, weight=700, anim="slideIn", dir="up", name="j1")
-text(1310, 472, 480, 260,
+notes_col(1310, 326, 480, [
+    ("세 갈래로 나눈 이유",
      "‘아니요’와 ‘모르겠어요’는\n다음에 할 일이 다릅니다.\n\n"
      "아니요 → 긴급으로 올리고\n              순서대로 안내\n"
-     "모르겠어요 → ‘확인 중’으로 두고\n                      재촉하지 않음",
-     size=26, color=MUTED, lh=1.7, trig="with", ref="j1")
-text(1310, 770, 470, 60, "근거를 먼저 보세요", size=38, weight=700,
-     anim="slideIn", dir="up", name="j2")
-text(1310, 842, 480, 100, "기억이 안 나면 ‘지킴이가 본 것’을\n펼쳐서 확인하고 정하세요.",
-     size=26, color=MUTED, lh=1.7, trig="with", ref="j2")
+     "모르겠어요 → ‘확인 중’으로 두고\n                      재촉하지 않음", dict(anim="slideIn", dir="up", name="j1")),
+    ("근거를 먼저 보세요",
+     "기억이 안 나면 ‘지킴이가 본 것’을\n펼쳐서 확인하고 정하세요.", dict(anim="slideIn", dir="up", name="j2")),
+], size=26)
 end(PANEL, """
 어떤 일은 지킴이가 대신 고칠 수 없습니다. 본인이 한 일인지 아닌지는 사용자만 알기 때문입니다.
 
