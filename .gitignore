@@ -65,3 +65,6 @@ ufw-status.txt
 
 # 호스트 점검 기록 (익명화본이라도 공개 저장소에는 올리지 않는다)
 docs/hardening-log.html
+
+# 디자인 캔버스 조립 결과물 (2MB, 작업 파일에서 언제든 다시 만듦)
+docs/ux/mockups/plain-language-screens.html

@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans KR", "Apple SD Gothic Neo", system-ui, sans-serif; word-break: keep-all; }
+    a { color: #0e7c6b; } a:hover { color: #0a5f52; }
+    .row { display: grid; grid-template-columns: 62px 26px 1fr auto; align-items: start; gap: 0 14px; padding: 14px 24px; border-top: 1px solid #eef2f0; }
+    .t { font-size: 13px; color: #5d6c65; padding-top: 2px; }
+    .who { font-size: 12px; color: #5d6c65; white-space: nowrap; padding-top: 3px; }
+    .ttl { font-size: 14.8px; line-height: 1.5; }
+    .sub { font-size: 13px; color: #5d6c65; line-height: 1.55; margin-top: 3px; }
+  </style>
+</helmet>
+
+<div style="width: 960px; height: 760px; box-sizing: border-box; background: #f2f5f3; color: #17221d; display: flex; flex-direction: column;">
+
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 20px 40px; border-bottom: 1px solid #d7e0db;">
+    <a href="#" style="display: flex; align-items: center; gap: 6px; text-decoration: none; color: #5d6c65; font-size: 14px;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+      돌아가기
+    </a>
+    <button style="height: 38px; padding: 0 14px; border: 1px solid #b9c6bf; border-radius: 7px; background: #ffffff; color: #17221d; font-family: inherit; font-size: 13.5px; cursor: pointer;">파일로 저장</button>
+  </div>
+
+  <div style="flex: 1; padding: 26px 40px 20px; overflow: hidden;">
+    <div style="font-size: 25px; font-weight: 600; letter-spacing: -0.02em;">무슨 일이 있었나</div>
+    <div style="font-size: 14px; color: #5d6c65; margin-top: 5px;">지킴이가 한 일과, 컴퓨터에 생긴 일을 시간 순서로 적어둡니다.</div>
+
+    <div style="margin-top: 20px; background: #ffffff; border: 1px solid #d7e0db; border-radius: 12px; overflow: hidden;">
+
+      <div style="padding: 11px 24px; background: #e6ede9; font-size: 12.5px; font-weight: 500; color: #5d6c65;">오늘</div>
+
+      <div class="row" style="border-top: 0;">
+        <div class="t">15:44</div>
+        <div><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#0e7c6b" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/></svg></div>
+        <div>
+          <div class="ttl">파일 3개를 나만 고칠 수 있게 잠갔어요</div>
+          <div class="sub">로그인·터미널 설정과 프로그램 폴더 · 되돌리려면 이 줄을 눌러 확인하세요</div>
+        </div>
+        <div class="who">내가 함</div>
+      </div>
+
+      <div class="row">
+        <div class="t">15:30</div>
+        <div><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#b98a12" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></div>
+        <div>
+          <div class="ttl">다른 사람이 고칠 수 있는 파일 3개를 찾았어요</div>
+          <div class="sub">15분마다 하는 점검에서 발견</div>
+        </div>
+        <div class="who">자동 점검</div>
+      </div>
+
+      <div class="row">
+        <div class="t">09:12</div>
+        <div><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5d6c65" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11"/><path d="m7.5 9.5 4.5 4.5 4.5-4.5"/><path d="M5 20h14"/></svg></div>
+        <div>
+          <div class="ttl">보안 업데이트 12개가 설치됐어요</div>
+          <div class="sub">밀린 업데이트가 없어졌습니다</div>
+        </div>
+        <div class="who">자동</div>
+      </div>
+
+      <div style="padding: 11px 24px; background: #e6ede9; font-size: 12.5px; font-weight: 500; color: #5d6c65; border-top: 1px solid #d7e0db;">어제</div>
+
+      <div class="row" style="border-top: 0;">
+        <div class="t">22:40</div>
+        <div><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#0e7c6b" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12h6"/></svg></div>
+        <div>
+          <div class="ttl">비밀번호를 계속 찍어보던 상대를 막았어요</div>
+          <div class="sub">5번 실패한 뒤 1시간 동안 접속을 차단했습니다 · 들어오지 못했어요</div>
+        </div>
+        <div class="who">자동 차단</div>
+      </div>
+
+      <div class="row">
+        <div class="t">18:05</div>
+        <div><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5d6c65" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h8"/><path d="M14 3l5 2v14l-5 2z"/></svg></div>
+        <div>
+          <div class="ttl">쓰지 않던 문 하나를 닫았어요</div>
+          <div class="sub">밖에서 들어올 수 있는 문이 2개에서 1개로 줄었습니다</div>
+        </div>
+        <div class="who">내가 함</div>
+      </div>
+
+    </div>
+
+    <div style="margin-top: 16px; font-size: 13px; color: #5d6c65;">30일치를 보관합니다. 더 필요하면 <a href="#" style="text-decoration: none;">파일로 저장</a>해 두세요.</div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
