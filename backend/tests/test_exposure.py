@@ -34,14 +34,17 @@ def _snapshot_from(mon, listeners, fw):
     rows = [dict(r) for r in listeners]
     mon.fw = fw
     for r in rows:
-        r.update(classify(r["address"], r["port"], r["proto"], fw, mon.expected))
+        r.update(classify(r["address"], r["port"], r["proto"], fw, mon.expected,
+                          process=r.get("process"), ephemeral=(32768, 60999),
+                          client_names={"firefox", "chrome", "slack"}))
     mon.listeners = rows
     return {
         "listeners": rows, "firewall": fw, "missing_process_info": False,
         "counts": {"total": len(rows), "exposed": sum(1 for r in rows if r["state"] == "exposed"),
                    "unknown": sum(1 for r in rows if r["state"] == "unknown"),
                    "loopback": sum(1 for r in rows if r["state"] == "loopback"),
-                   "external_bind": sum(1 for r in rows if r["state"] != "loopback"),
+                   "client": sum(1 for r in rows if r["state"] == "client"),
+                   "external_bind": sum(1 for r in rows if r["state"] not in ("loopback", "client")),
                    "expected": sum(1 for r in rows if r["state"] == "expected")},
     }
 
@@ -164,3 +167,71 @@ def test_health_degrades_when_firewall_unreadable():
     mon = _mon([L_LOCAL], fw=FW_UNKNOWN)
     mon.tick()
     assert mon.health == "degraded" and "방화벽" in mon.health_reason
+
+
+# --- 나가는 통로 vs 진짜 서비스 ---
+from monitor.exposure import ephemeral_range, is_client_socket  # noqa: E402
+
+EPH = (32768, 60999)
+CLIENTS = {"firefox", "chrome", "slack"}
+
+
+def test_ephemeral_range_reads_the_host_setting(tmp_path):
+    p = tmp_path / "range"
+    p.write_text("40000\t50000\n")
+    assert ephemeral_range(str(p)) == (40000, 50000)
+
+
+def test_ephemeral_range_falls_back_when_unreadable(tmp_path):
+    assert ephemeral_range(str(tmp_path / "없음")) == (32768, 60999)
+
+
+def test_browser_ephemeral_socket_is_a_client_socket():
+    assert is_client_socket(56876, "firefox", EPH, CLIENTS) is True
+
+
+def test_real_service_in_ephemeral_range_is_not_filtered():
+    """Tailscale 기본 포트 41641 은 임시 포트 범위 안이다.
+    범위만 보고 걸렀다면 진짜 노출을 놓친다 — 프로세스 이름까지 봐야 하는 이유."""
+    assert is_client_socket(41641, "tailscaled", EPH, CLIENTS) is False
+
+
+def test_unknown_process_is_never_treated_as_client():
+    """누가 열었는지 모르면 문으로 둔다 (안전한 쪽)."""
+    assert is_client_socket(56876, None, EPH, CLIENTS) is False
+    assert is_client_socket(56876, "", EPH, CLIENTS) is False
+
+
+def test_client_process_outside_ephemeral_range_is_still_a_door():
+    """브라우저가 낮은 포트를 붙잡고 있으면 그것은 서비스다."""
+    assert is_client_socket(8080, "firefox", EPH, CLIENTS) is False
+
+
+def test_classify_marks_client_socket_and_it_is_not_exposed():
+    r = classify("0.0.0.0", 56876, "udp", FW_OK, EXPECTED,
+                 process="firefox", ephemeral=EPH, client_names=CLIENTS)
+    assert r["state"] == "client" and r["reachable"] is False and r["severity"] == "INFO"
+
+
+def test_classify_keeps_service_in_ephemeral_range_visible():
+    fw = {**FW_OK, "allowed": [{"port": 41641, "proto": "udp"}]}
+    r = classify("0.0.0.0", 41641, "udp", fw, EXPECTED,
+                 process="tailscaled", ephemeral=EPH, client_names=CLIENTS)
+    assert r["state"] == "exposed"
+
+
+def test_expected_port_wins_over_client_rule():
+    """의도해서 등록한 포트는 사람의 뜻이므로 먼저 존중한다."""
+    r = classify("0.0.0.0", 22, "tcp", FW_OK, EXPECTED,
+                 process="firefox", ephemeral=(1, 65535), client_names=CLIENTS)
+    assert r["state"] == "expected"
+
+
+def test_client_sockets_do_not_raise_alerts():
+    fw = {**FW_OK, "allowed": [{"port": 56876, "proto": "udp"}]}
+    listeners = [{"address": "0.0.0.0", "port": 56876, "proto": "udp",
+                  "process": "firefox", "user": "me", "exe": "/usr/bin/firefox", "pid": 9}]
+    mon = ExposureMonitor(firewall=FakeFirewall(fw), expected="22/tcp")
+    mon.snapshot = lambda: _snapshot_from(mon, listeners, fw)
+    mon.tick()
+    assert _alerts() == [], "브라우저가 나가면서 연 통로로 사용자를 놀라게 하면 안 된다"
