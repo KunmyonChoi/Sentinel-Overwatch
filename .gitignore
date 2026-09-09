@@ -58,3 +58,7 @@ backend/.api_token
 *.db-wal
 *.db-shm
 dist-release/
+
+# 호스트 점검 중 만든 임시 덤프 (재생성 가능, 방화벽 구성이 그대로 드러남)
+iptables.txt
+ufw-status.txt
