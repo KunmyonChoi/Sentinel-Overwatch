@@ -110,3 +110,17 @@ def test_dashboard_own_sudo_is_suppressed(db, monkeypatch):
     # 대시보드 계정이라도 fail2ban-client 가 아닌 명령은 기록된다
     w.process_line("Sep  8 14:20:01 host sudo:  secdash : PWD=/ ; USER=root ; COMMAND=/bin/bash")
     assert db.query(Event).filter(Event.event_type == "SUDO_COMMAND").count() == 2
+
+
+def test_privileged_group_add_is_critical_but_removal_is_not(db):
+    """docker 그룹은 root 동등이다. 넣는 것은 긴급, 빼는 것은 권한 축소라 경고로 본다."""
+    w = AuthLogWatcher()
+    w.process_line("Sep  8 14:20:01 host gpasswd[123]: user mallory added by root to group docker")
+    w.process_line("Sep  8 14:21:01 host gpasswd[124]: user bob removed by root from group docker")
+
+    alerts = {a.details_dict().get("user"): a for a in db.query(database.Alert).all()}
+    assert alerts["mallory"].severity == "CRITICAL"
+    assert "root 와 동등" in alerts["mallory"].summary_ko
+    assert "gpasswd -d mallory docker" in alerts["mallory"].action_ko
+    assert alerts["bob"].severity == "WARNING"
+    assert "권한 축소" in alerts["bob"].summary_ko

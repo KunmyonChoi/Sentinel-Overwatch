@@ -19,6 +19,10 @@ EVENT_TYPE_KO = {
     "NETWORK_LISTENER": "리스닝 포트",
     "NETWORK_CONN": "외부 연결",
     "PORT_SCAN": "포트 스캔 의심",
+    "PORT_EXPOSURE": "포트 노출 상태",
+    "PORT_CLOSED": "리스닝 포트 닫힘",
+    "FILE_PERMISSION": "파일 권한",
+    "CONTAINER_CONFIG": "컨테이너 설정",
     "PROCESS_TOOL": "보안 도구 실행",
     "PROCESS_INDICATOR": "의심 프로세스",
     "FILE_INTEGRITY": "파일 무결성",
@@ -99,6 +103,10 @@ def event_ko(event_type: str, d: dict | None = None) -> str:
         return f"{proc} 이(가) 외부 {d.get('ip', '?')}:{d.get('port', '?')} 에 연결"
     if t == "PORT_SCAN":
         return f"{d.get('ip', '?')} 이(가) 서비스 포트 {d.get('port_count', '?')}개에 접촉 (포트 스캔 의심, 신뢰도 낮음)"
+    if t in ("PORT_EXPOSURE", "PORT_CLOSED", "CONTAINER_CONFIG"):
+        return d.get("message_ko") or ""
+    if t == "FILE_PERMISSION":
+        return d.get("title_ko") or f"{d.get('path', '?')} 권한 {d.get('mode', '?')}"
     if t == "PROCESS_TOOL":
         return f"보안/해킹 도구 '{d.get('tool', '?')}' 실행 감지 (PID {d.get('pid', '?')}, 사용자 {d.get('user', '?')}, 실행 파일 {d.get('exe', '?')})"
     if t == "PROCESS_INDICATOR":

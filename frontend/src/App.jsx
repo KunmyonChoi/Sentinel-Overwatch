@@ -10,6 +10,8 @@ import TokenGate from './components/TokenGate';
 import HardeningPanel from './components/HardeningPanel';
 import MaintenanceControl from './components/MaintenanceControl';
 import AccountsPanel from './components/AccountsPanel';
+import ExposurePanel from './components/ExposurePanel';
+import ConfigAuditPanel from './components/ConfigAuditPanel';
 import { api, getToken } from './api';
 import { ShieldAlert } from 'lucide-react';
 
@@ -99,6 +101,8 @@ function App() {
           <HighlightKorean />
           <SystemHealth stats={stats} host={host} />
           <MonitorStatus />
+          <ExposurePanel />
+          <ConfigAuditPanel />
           <AccountsPanel />
           <HardeningPanel />
           <ThreatIntel />

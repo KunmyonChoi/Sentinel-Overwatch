@@ -25,6 +25,8 @@ SEVERITY_RANK = {"INFO": 0, "WARNING": 1, "CRITICAL": 2}
 MAINTENANCE_RULE_PREFIXES = (
     "integrity_change", "persistence_", "security_package_removed", "pending_security_updates",
     "new_listener", "kernel_module", "lynis_", "usn_affects_host", "high_cpu", "high_memory", "disk_full", "process_spike",
+    # 설정 점검 계열: 작업 중 서비스를 띄우거나 권한을 잠시 바꾸면 걸리는 것들 (침입 신호가 아니다)
+    "exposed_port", "file_permission", "container_config",
 )
 _mw_cache: dict = {"at": 0.0, "win": None}
 

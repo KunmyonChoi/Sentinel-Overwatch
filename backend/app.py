@@ -37,12 +37,15 @@ from database import Alert, BlockedIP, Event, get_db, utcnow
 from integrations.fail2ban import Fail2banClient
 from integrations import modules as kmod
 from integrations import accounts as acct
+from monitor.container_audit import ContainerAudit
+from monitor.exposure import ExposureMonitor
 from monitor.fail2ban_sync import Fail2banSync
 from monitor.integrity import IntegrityMonitor, PersistenceMonitor
 from monitor.intel import IntelMonitor
 from monitor.intrusion import AuthLogWatcher, NetworkWatcher
 from monitor.lynis import LynisMonitor, brief_markdown, read_skipped
 from monitor.audit import AuditMonitor
+from monitor.permissions import PermissionMonitor
 from monitor.process_audit import ProcessAudit
 from monitor.resource import ResourceMonitor
 from monitor.update import UpdateMonitor
@@ -98,6 +101,7 @@ async def lifespan(app: FastAPI):
         AuthLogWatcher(), Fail2banSync(), NetworkWatcher(), ProcessAudit(), IntegrityMonitor(),
         PersistenceMonitor(), UpdateMonitor(), ResourceMonitor(), IntelMonitor(),
         AuditMonitor(), LynisMonitor(),
+        ExposureMonitor(), PermissionMonitor(trees=config.PERMISSION_TREES), ContainerAudit(),
     ):
         try:
             _start_monitor(inst)
@@ -387,6 +391,7 @@ def get_host():
         "pending_updates": getattr(upd, "pending", {}),
         "usb_storage": kmod.usb_storage_status(),
         "blocked_modules": kmod.blocked_modules(),
+        "firewall": getattr(monitor_registry.get("ExposureMonitor", {}).get("instance"), "fw", {"available": False}),
         "api_token_file": str(config.API_TOKEN_FILE),
     }
 
@@ -404,6 +409,32 @@ def get_hardening():
 def get_accounts():
     """사람 계정과 root 의 잠김/만료, 권한 그룹, 마지막 로그인, SSH 키 보유."""
     return acct.list_accounts()
+
+
+def _payload_of(monitor_name: str) -> dict:
+    """모니터의 상태 페이로드. 기동 전이면 이유를 명시한다 (빈 결과를 '문제 없음'으로 보이게 하지 않는다)."""
+    inst = monitor_registry.get(monitor_name, {}).get("instance")
+    if not inst:
+        return {"available": False, "health": "down", "health_reason": f"{monitor_name} 미기동"}
+    return inst.status_payload()
+
+
+@app.get("/api/exposure")
+def get_exposure():
+    """지금 열려 있는 리스닝 포트와, 방화벽 규칙과 대조한 실제 외부 도달 여부."""
+    return _payload_of("ExposureMonitor")
+
+
+@app.get("/api/permissions")
+def get_permissions():
+    """world-writable 설정 파일과 과다 노출된 시크릿 파일 목록."""
+    return _payload_of("PermissionMonitor")
+
+
+@app.get("/api/containers")
+def get_containers():
+    """실행 중 컨테이너의 설정 점검 결과 (privileged, docker 소켓, 포트 공개 등)."""
+    return _payload_of("ContainerAudit")
 
 
 @app.get("/api/hardening/brief")

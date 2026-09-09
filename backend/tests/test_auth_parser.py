@@ -34,7 +34,28 @@ def test_account_changes():
     p = parse_line("Sep  8 14:20:01 host useradd[123]: new user: name=test, UID=1002, GID=1002, home=/home/test, shell=/bin/bash, from=/dev/pts/0")
     assert p["kind"] == "account_change" and p["user"] == "test"
     g = parse_line("Sep  8 14:20:01 host usermod[123]: add 'test' to group 'sudo'")
-    assert g["kind"] == "account_change" and g["group"] == "sudo"
+    assert g["kind"] == "account_change" and g["group"] == "sudo" and g["direction"] == "add"
+
+
+def test_group_removal_is_parsed():
+    """제거도 봐야 한다. 되돌림인지 정리인지는 사람이 판단하고, 사실은 남긴다."""
+    r = parse_line("Sep  8 14:20:01 host usermod[123]: remove 'test' from group 'docker'")
+    assert r["kind"] == "account_change" and r["group"] == "docker" and r["direction"] == "remove"
+
+
+def test_gpasswd_is_watched():
+    """gpasswd 는 usermod 와 다른 문장을 남긴다. 빠뜨리면 권한 그룹 변경 주체를 놓친다."""
+    a = parse_line("Sep  8 14:20:01 host gpasswd[123]: user mallory added by root to group docker")
+    assert a["kind"] == "account_change" and a["user"] == "mallory" and a["group"] == "docker"
+    assert a["direction"] == "add"
+    d = parse_line("Sep  8 14:20:01 host gpasswd[123]: user bob removed by root from group docker")
+    assert d["kind"] == "account_change" and d["user"] == "bob" and d["group"] == "docker"
+    assert d["direction"] == "remove"
+
+
+def test_groupdel_is_parsed():
+    g = parse_line("Sep  8 14:20:01 host groupdel[123]: group 'legacy' removed from /etc/group")
+    assert g["kind"] == "account_change" and g["group"] == "legacy"
 
 
 def test_root_session_via_su_and_cron_ignored():

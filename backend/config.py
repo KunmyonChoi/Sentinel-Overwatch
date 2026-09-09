@@ -60,6 +60,12 @@ except KeyError:
 # 외부 연결 이벤트에서 무시할 프로세스 이름 (쉼표 구분, 예: firefox,chrome)
 NETWORK_IGNORE_PROCESSES = {p.strip().lower() for p in _env("SECDASH_NETWORK_IGNORE_PROCESSES", "").split(",") if p.strip()}
 
+# --- 노출 면 판정 ---
+# 외부에 열려 있어도 정상인 포트 ("22/tcp,443/tcp" 형식). 여기 없는 포트가 외부에서 도달 가능하면 알림.
+EXPECTED_EXPOSED_PORTS = _env("SECDASH_EXPECTED_EXPOSED", "22/tcp")
+# 파일 권한 감시에서 추가로 훑을 디렉터리 (쉼표 구분). 기본은 /etc.
+PERMISSION_TREES = [p.strip() for p in _env("SECDASH_PERMISSION_TREES", "/etc").split(",") if p.strip()]
+
 # --- 브루트포스 판정 ---
 BRUTE_FORCE_WINDOW_MIN = _env_int("SECDASH_BRUTE_WINDOW_MIN", 30)
 BRUTE_FORCE_THRESHOLD = _env_int("SECDASH_BRUTE_THRESHOLD", 5)

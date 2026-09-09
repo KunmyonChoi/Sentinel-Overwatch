@@ -24,6 +24,7 @@ import psutil
 import config
 from alerts import raise_alert
 from database import Event, KnownListener, KnownLoginIP, SessionLocal, utcnow
+from integrations.accounts import PRIVILEGED_GROUPS
 from monitor.base import BaseMonitor, TailReader
 
 logger = logging.getLogger("intrusion_monitor")
@@ -59,7 +60,13 @@ def _resolve_by(m) -> str:
 _USERADD_RE = re.compile(r"new user: name=(?P<user>[^,]+)")
 _USERDEL_RE = re.compile(r"delete user '(?P<user>[^']+)'")
 _USERMOD_RE = re.compile(r"add '(?P<user>[^']+)' to (?:shadow )?group '(?P<group>[^']+)'")
+_USERMOD_DEL_RE = re.compile(r"remove '(?P<user>[^']+)' from (?:shadow )?group '(?P<group>[^']+)'")
+# gpasswd 는 usermod 와 다른 문장을 남긴다 (shadow-utils gpasswd.c)
+#   user kim added by root to group docker / user kim removed by root from group docker
+_GPASSWD_ADD_RE = re.compile(r"user '?(?P<user>[^' ]+)'? added by \S+ to group '?(?P<group>[^' ]+)'?")
+_GPASSWD_DEL_RE = re.compile(r"user '?(?P<user>[^' ]+)'? removed by \S+ from group '?(?P<group>[^' ]+)'?")
 _GROUPADD_RE = re.compile(r"new group: name=(?P<group>[^,]+)")
+_GROUPDEL_RE = re.compile(r"group '(?P<group>[^']+)' removed from")
 _PASSWD_RE = re.compile(r"password changed for (?P<user>\S+)")
 
 SHELL_NAMES = {"bash", "sh", "zsh", "dash", "fish", "su"}
@@ -127,14 +134,24 @@ def parse_line(line: str) -> dict | None:
             return {**base, "kind": "root_session", "by": mm.group("by"), "via": "su"}
         return None
 
-    if prog in ("useradd", "userdel", "usermod", "groupadd", "groupmod", "groupdel", "passwd", "chsh", "chage"):
-        for rx, fmt in ((_USERADD_RE, "새 사용자 생성: {user}"), (_USERDEL_RE, "사용자 삭제: {user}"),
-                        (_USERMOD_RE, "'{user}' 를 그룹 '{group}' 에 추가"), (_GROUPADD_RE, "새 그룹 생성: {group}"),
-                        (_PASSWD_RE, "비밀번호 변경: {user}")):
+    if prog in ("useradd", "userdel", "usermod", "gpasswd", "groupadd", "groupmod", "groupdel", "passwd", "chsh", "chage"):
+        # direction: 권한 그룹에 '추가'는 침입 신호일 수 있고 '제거'는 대개 정리 작업이라 등급을 다르게 본다
+        for rx, fmt, direction in (
+            (_USERADD_RE, "새 사용자 생성: {user}", ""),
+            (_USERDEL_RE, "사용자 삭제: {user}", ""),
+            (_USERMOD_RE, "'{user}' 를 그룹 '{group}' 에 추가", "add"),
+            (_USERMOD_DEL_RE, "'{user}' 를 그룹 '{group}' 에서 제거", "remove"),
+            (_GPASSWD_ADD_RE, "'{user}' 를 그룹 '{group}' 에 추가", "add"),
+            (_GPASSWD_DEL_RE, "'{user}' 를 그룹 '{group}' 에서 제거", "remove"),
+            (_GROUPADD_RE, "새 그룹 생성: {group}", ""),
+            (_GROUPDEL_RE, "그룹 삭제: {group}", ""),
+            (_PASSWD_RE, "비밀번호 변경: {user}", ""),
+        ):
             mm = rx.search(msg)
             if mm:
                 gd = mm.groupdict()
                 return {**base, "kind": "account_change", "user": gd.get("user"), "group": gd.get("group"),
+                        "direction": direction,
                         "change": fmt.format(**{k: (v or "?") for k, v in gd.items()})}
         return None
 
@@ -357,15 +374,28 @@ class AuthLogWatcher(BaseMonitor):
         self.log_event("ROOT_SESSION", sev, f"root session via {p['via']} by {p['by']}", d, is_simulation=sim)
 
     def _on_account_change(self, p: dict, sim: bool):
-        d = {"change": p["change"], "user": p.get("user"), "group": p.get("group"), "prog": p["prog"]}
+        group = p.get("group") or ""
+        direction = p.get("direction", "")
+        d = {"change": p["change"], "user": p.get("user"), "group": p.get("group"), "prog": p["prog"], "direction": direction}
         self.log_event("ACCOUNT_CHANGE", "WARNING", f"Account change ({p['prog']}): {p['change']}", d, is_simulation=sim)
-        privileged = (p.get("group") or "") in ("sudo", "wheel", "admin", "root", "docker", "adm")
+        privileged = group in PRIVILEGED_GROUPS
+        # 권한 그룹에서 '빼는' 것은 대개 정리 작업이다. 긴급으로 올리는 것은 '넣는' 경우뿐.
+        escalation = privileged and direction != "remove"
+        if escalation:
+            summary_ko = f"'{group}' 는 root 와 동등한 권한을 가진 그룹입니다. 계획된 작업이 아니면 권한 상승입니다."
+            action_ko = f"예정된 작업이면 확인(ack) 처리하세요. 아니라면 `sudo gpasswd -d {p.get('user') or '<계정>'} {group}` 으로 되돌리고, 누가 실행했는지 sudo 이벤트에서 확인하세요."
+        elif privileged:
+            summary_ko = f"권한 그룹 '{group}' 에서 제외되었습니다. 권한 축소 방향의 변경입니다."
+            action_ko = "의도한 정리 작업이면 확인(ack) 처리하세요. 아니라면 해당 계정의 작업이 중단되지 않는지 확인하세요."
+        else:
+            summary_ko = "예정된 관리 작업인지 확인하세요."
+            action_ko = "예정된 작업이면 확인(ack) 처리하세요. 아니라면 `sudo userdel -r <계정>` 또는 `sudo gpasswd -d <계정> <그룹>` 으로 되돌리고 원인을 조사하세요."
         raise_alert(
-            "account_change", "CRITICAL" if privileged else "WARNING", f"Account change: {p['change']}",
-            fingerprint=f"account_change:{p['prog']}:{p.get('user') or p.get('group')}",
+            "account_change", "CRITICAL" if escalation else "WARNING", f"Account change: {p['change']}",
+            fingerprint=f"account_change:{p['prog']}:{p.get('user') or p.get('group')}:{direction or 'na'}",
             title_ko=f"계정 변경: {p['change']}",
-            summary_ko="권한 그룹 추가입니다." if privileged else "예정된 관리 작업인지 확인하세요.",
-            action_ko="예정된 작업이면 확인(ack) 처리하세요. 아니라면 `sudo userdel -r <계정>` 또는 `sudo gpasswd -d <계정> <그룹>` 으로 되돌리고 원인을 조사하세요.",
+            summary_ko=summary_ko,
+            action_ko=action_ko,
             evidence=p["raw"], details=d, is_simulation=sim,
         )
 
