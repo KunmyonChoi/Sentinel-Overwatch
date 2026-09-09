@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { api } from '../api';
+import { api, fmtDateTime } from '../api';
 import { Icon, Card, Btn, BackLink, BeforeAfter, StatusHead } from './ui';
 import { TONE, toneOf } from './tokens';
 import { KIND, JUDGE_STEPS } from './tasks';
+import { buildBrief, copyText } from './brief';
 
 // 권한 조치 미리보기 결과의 파일 경로 → 사람이 아는 이름
 const FILE_KO = [
@@ -139,7 +140,10 @@ function JudgeFlow({ task, onAck }) {
     return (
         <div className="mt-7">
             <div className="text-[17px] font-semibold">{task.ask}</div>
-            <div className="flex items-center gap-2.5 mt-3 flex-wrap">
+            <div className="text-[13.5px] text-calm-muted mt-1.5" style={{ wordBreak: 'keep-all' }}>
+                기억이 잘 안 나시면, 바로 아래 <b className="text-calm-ink">지킴이가 본 것</b>을 펼쳐서 언제 무슨 일이 있었는지 확인하고 정하세요.
+            </div>
+            <div className="flex items-center gap-2.5 mt-3.5 flex-wrap">
                 <Btn kind="outline" onClick={() => { setMine(true); onAck(); }}>네, 제가 했어요</Btn>
                 <Btn kind="danger" onClick={() => setMine(false)}>아니요 · 모르겠어요</Btn>
             </div>
@@ -189,7 +193,136 @@ function GuideFlow({ task, onAck }) {
     );
 }
 
-export default function TaskDetail({ task, onBack, onChanged }) {
+/**
+ * 지킴이가 실제로 본 것.
+ *
+ * 접어두되 '열 수 있다'가 분명히 보여야 한다. 사용자가 판단하려면 결국 여기까지 봐야 하는데,
+ * 흐린 글씨 한 줄로 두면 그냥 지나친다. 그래서 (1) 카드로 만들고 (2) 닫혀 있을 때도 첫 줄을
+ * 미리 보여주고 (3) 무엇이 들어 있는지와 몇 건인지를 적는다.
+ * 펼친 상태로 시작하지는 않는다 — 20건짜리 묶음도 있어서, 펼쳐두면 그 아래 내용이 화면 밖으로 밀린다.
+ */
+function Evidence({ task }) {
+    const [open, setOpen] = useState(false);
+    const first = task.alerts[0];
+    const teaser = first?.summary_ko || first?.title_ko || first?.title || '';
+
+    return (
+        <Card className="mt-8 overflow-hidden">
+            <button onClick={() => setOpen(!open)} aria-expanded={open}
+                className="w-full text-left px-5 py-4 flex items-start gap-3 cursor-pointer hover:bg-[#f7fbf9] font-kr">
+                <span className="text-calm-accent mt-0.5 shrink-0"><Icon name="eye" size={20} /></span>
+                <span className="flex-1 min-w-0">
+                    <span className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[15.5px] font-semibold">지킴이가 본 것</span>
+                        <span className="text-[12px] text-calm-accent bg-calm-accent-soft rounded-full px-2 py-0.5">{task.count}건</span>
+                    </span>
+                    <span className="block text-[13.5px] text-calm-muted mt-1" style={{ wordBreak: 'keep-all' }}>
+                        {open ? '무엇을 보고 이렇게 판단했는지 그대로 보여드려요.'
+                            : '무엇을 보고 이렇게 판단했는지 확인해 보세요. 직접 보시면 판단하기 쉬워요.'}
+                    </span>
+                </span>
+                <span className="flex items-center gap-1.5 text-[13.5px] text-calm-accent shrink-0 pt-0.5">
+                    {open ? '접기' : '열어보기'}
+                    <Icon name="down" size={17} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+                </span>
+            </button>
+
+            {/* 닫혀 있어도 한 줄은 보인다 — 안에 뭔가 있다는 것이 눈에 보여야 열어본다 */}
+            {!open && teaser && (
+                <div onClick={() => setOpen(true)}
+                    className="px-5 pb-4 -mt-1 cursor-pointer" >
+                    <div className="border-l-2 border-calm-line2 pl-3 text-[13px] text-calm-muted line-clamp-2"
+                        style={{ wordBreak: 'keep-all' }}>
+                        {teaser}
+                    </div>
+                    {task.count > 1 && (
+                        <div className="text-[12.5px] text-calm-muted mt-1.5 pl-3">…그리고 {task.count - 1}건 더</div>
+                    )}
+                </div>
+            )}
+
+            {open && (
+                <div className="px-5 pb-5 grid gap-2.5">
+                    {task.alerts.map((a, i) => (
+                        <div key={a.id} className="border border-calm-line rounded-lg p-4 bg-calm-bg">
+                            <div className="flex items-start gap-2">
+                                <span className="text-[12px] text-calm-muted shrink-0 pt-0.5 tabular-nums">{i + 1}</span>
+                                <div className="min-w-0">
+                                    <div className="text-[13.5px] font-medium" style={{ wordBreak: 'keep-all' }}>{a.title_ko || a.title}</div>
+                                    {a.summary_ko && <div className="text-[13px] text-calm-muted mt-1" style={{ wordBreak: 'keep-all' }}>{a.summary_ko}</div>}
+                                    {a.evidence && <div className="text-[12px] text-calm-muted mt-1.5 font-mono break-all">{a.evidence}</div>}
+                                    {a.last_seen_at && <div className="text-[12px] text-calm-muted mt-1.5">{fmtDateTime(a.last_seen_at)}</div>}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </Card>
+    );
+}
+
+/**
+ * 이해가 안 될 때: 세부 내용을 그대로 복사해 다른 곳에 물어볼 수 있게 한다.
+ * 대시보드가 스스로 밖으로 보내는 것은 없다 — 사람이 붙여넣을 때만 나간다.
+ * 그 사실을 버튼 옆에 적어둔다. 비전문가는 무엇이 복사되는지 모를 수 있다.
+ */
+function AskElsewhere({ task, host }) {
+    const [state, setState] = useState('idle');   // idle | ok | fail
+    const [shown, setShown] = useState(false);
+    const brief = buildBrief(task, host);
+
+    const copy = async () => {
+        const ok = await copyText(brief);
+        setState(ok ? 'ok' : 'fail');
+        if (!ok) setShown(true);
+        setTimeout(() => setState('idle'), 2500);
+    };
+
+    return (
+        <Card className="mt-4 p-5">
+            <div className="flex items-start gap-3 flex-wrap">
+                <span className="text-calm-accent mt-0.5 shrink-0"><Icon name="chat" size={20} /></span>
+                <div className="flex-1 min-w-[260px]">
+                    <div className="text-[15.5px] font-semibold">설명이 어렵거나 더 묻고 싶으면</div>
+                    <div className="text-[13.5px] text-calm-muted mt-1 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
+                        위 내용을 그대로 복사해서 Claude 같은 AI나 잘 아는 분에게 붙여넣어 물어보세요.
+                        무엇을 물어보면 좋을지까지 함께 적어드려요.
+                    </div>
+                    <div className="text-[12.5px] text-calm-muted mt-1.5" style={{ wordBreak: 'keep-all' }}>
+                        복사되는 글에는 <b className="text-calm-ink">이 컴퓨터의 파일 이름·주소</b>가 들어 있어요.
+                        지킴이가 알아서 밖으로 보내는 일은 없고, 직접 붙여넣으실 때만 나갑니다.
+                    </div>
+                </div>
+                <div className="flex flex-col gap-2 shrink-0">
+                    <Btn kind="primary" onClick={copy} className="h-11">
+                        <Icon name="copy" size={16} />
+                        {state === 'ok' ? '복사했어요' : state === 'fail' ? '복사 실패' : '복사하기'}
+                    </Btn>
+                    <button onClick={() => setShown(!shown)}
+                        className="h-9 px-3 rounded-lg text-[13px] text-calm-muted hover:bg-calm-panel2 cursor-pointer font-kr">
+                        {shown ? '내용 접기' : '무엇이 복사되는지 보기'}
+                    </button>
+                </div>
+            </div>
+
+            {shown && (
+                <>
+                    {state === 'fail' && (
+                        <div className="text-[13px] text-calm-warn mt-3" style={{ wordBreak: 'keep-all' }}>
+                            자동 복사가 막혀 있어요. 아래 글을 직접 끌어서 복사해 주세요.
+                        </div>
+                    )}
+                    <pre className="mt-3 max-h-72 overflow-auto text-[12.5px] leading-relaxed bg-calm-bg border border-calm-line rounded-lg p-4 whitespace-pre-wrap font-mono select-all">
+                        {brief}
+                    </pre>
+                </>
+            )}
+        </Card>
+    );
+}
+
+export default function TaskDetail({ task, onBack, onChanged, host }) {
     const tone = toneOf(task.severity);
     const ackAll = async () => {
         try {
@@ -228,26 +361,14 @@ export default function TaskDetail({ task, onBack, onChanged }) {
                     )}
                 </div>
 
+                {/* 질문·선택지가 먼저다. 근거는 길어질 수 있어서, 위로 올리면 답하러 스크롤해야 한다.
+                    대신 근거 카드를 바로 아래에 붙이고, 접힌 상태에서도 눈에 띄게 만든다. */}
                 {task.kind === KIND.FIX && <FixFlow task={task} onDone={() => { onChanged?.(); onBack(); }} />}
                 {task.kind === KIND.JUDGE && <JudgeFlow task={task} onAck={ackAll} />}
                 {task.kind === KIND.GUIDE && <GuideFlow task={task} onAck={ackAll} />}
 
-                {/* 근거: 지킴이가 실제로 본 것 */}
-                <details className="mt-8 group">
-                    <summary className="cursor-pointer text-[13.5px] text-calm-muted inline-flex items-center gap-1.5 select-none h-11">
-                        <Icon name="down" size={15} className="group-open:rotate-180 transition-transform" />
-                        지킴이가 본 것 {task.count > 1 ? `${task.count}건` : ''}
-                    </summary>
-                    <div className="mt-2 grid gap-2">
-                        {task.alerts.map((a) => (
-                            <Card key={a.id} className="p-4">
-                                <div className="text-[13.5px] font-medium">{a.title_ko || a.title}</div>
-                                {a.summary_ko && <div className="text-[13px] text-calm-muted mt-1" style={{ wordBreak: 'keep-all' }}>{a.summary_ko}</div>}
-                                {a.evidence && <div className="text-[12px] text-calm-muted mt-1.5 font-mono break-all">{a.evidence}</div>}
-                            </Card>
-                        ))}
-                    </div>
-                </details>
+                <Evidence task={task} />
+                <AskElsewhere task={task} host={host} />
             </div>
         </div>
     );

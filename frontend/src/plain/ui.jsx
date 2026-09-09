@@ -20,6 +20,8 @@ export function Icon({ name, size = 20, className = '' }) {
         arrow: <><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></>,
         chart: <><path d="M3 3v18h18" /><path d="m7 14 3.5-4 3 3L18 8" /></>,
         eye: <><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z" /><circle cx="12" cy="12" r="2.5" /></>,
+        chat: <><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z" /><path d="M9 10h6" /><path d="M9 13.5h4" /></>,
+        copy: <><rect x="9" y="9" width="12" height="12" rx="2" /><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" /></>,
         save: <><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><path d="M17 21v-8H7v8" /><path d="M7 3v5h8" /></>,
     };
     return (

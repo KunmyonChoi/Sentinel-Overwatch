@@ -101,7 +101,7 @@ export default function PlainApp() {
                 )}
                 {view.name === 'task' && (
                     <TaskDetail task={tasks.find((t) => t.id === view.task.id) || view.task}
-                        onBack={() => go('home')} onChanged={load} />
+                        onBack={() => go('home')} onChanged={load} host={d.host} />
                 )}
                 {view.name === 'history' && <HistoryView onBack={() => go('home')} />}
                 {view.name === 'expert' && (
