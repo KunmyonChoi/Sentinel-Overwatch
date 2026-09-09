@@ -23,4 +23,10 @@ Cmnd_Alias SECDASH_DOCKER = /usr/bin/docker ps -q, \
                             /usr/bin/docker inspect *, \
                             /usr/bin/docker version --format *
 
-secdash ALL=(root) NOPASSWD: SECDASH_F2B, SECDASH_FW, SECDASH_DOCKER
+# 권한 일괄 조치. 인자까지 고정해 등록한다 — 스크립트가 대상 경로를 인자로 받지 않고
+# root 권한으로 직접 재스캔해 정하므로, API 토큰이 유출되어도 임의 경로를 건드릴 수 없다.
+# 권한은 좁히기만 한다 (새 모드 = 기존 & 목표).
+Cmnd_Alias SECDASH_FIXPERM = /opt/secdash/deploy/fix-permissions.sh, \
+                             /opt/secdash/deploy/fix-permissions.sh --apply
+
+secdash ALL=(root) NOPASSWD: SECDASH_F2B, SECDASH_FW, SECDASH_DOCKER, SECDASH_FIXPERM

@@ -9,6 +9,7 @@ setup_logging()
 
 import hmac
 import ipaddress
+import json
 import logging
 import os
 import platform
@@ -37,6 +38,7 @@ from database import Alert, BlockedIP, Event, get_db, utcnow
 from integrations.fail2ban import Fail2banClient
 from integrations import modules as kmod
 from integrations import accounts as acct
+from integrations import permission_fix
 from monitor.container_audit import ContainerAudit
 from monitor.exposure import ExposureMonitor
 from monitor.fail2ban_sync import Fail2banSync
@@ -429,6 +431,41 @@ def get_exposure():
 def get_permissions():
     """world-writable 설정 파일과 과다 노출된 시크릿 파일 목록."""
     return _payload_of("PermissionMonitor")
+
+
+@app.post("/api/permissions/fix")
+def fix_permissions(apply: bool = False, request: Request = None):
+    """
+    권한 일괄 조치. 대상 경로를 받지 않는다 — root 로 도는 스크립트가 스스로 재스캔해 정한다.
+    권한은 좁히기만 하며(새 모드 = 기존 & 목표), 모든 변경은 이벤트로 남는다.
+    apply=false(기본)면 무엇이 바뀔지만 계산한다.
+    """
+    result = permission_fix.run(apply=apply)
+    if apply and result.get("ok"):
+        changed = [r for r in result.get("results", []) if r.get("applied")]
+        for r in changed:
+            logger.warning(f"permission fixed: {r['path']} {r.get('before')} -> {r.get('after')}")
+        if changed:
+            db = database.SessionLocal()
+            try:
+                for r in changed:
+                    db.add(Event(
+                        event_type="PERMISSION_FIXED", severity="INFO", source="PermissionFix",
+                        description=f"chmod {r.get('before')} -> {r.get('after')}: {r['path']}",
+                        description_ko=korean.event_ko("PERMISSION_FIXED", r),
+                        details=json.dumps(r, ensure_ascii=False),
+                    ))
+                db.commit()
+            finally:
+                db.close()
+        # 즉시 재스캔해 알림을 정리한다 (고쳐진 항목은 자동 해결된다)
+        inst = monitor_registry.get("PermissionMonitor", {}).get("instance")
+        if inst:
+            try:
+                inst.tick()
+            except Exception as e:
+                logger.error(f"rescan after fix failed: {e}")
+    return result
 
 
 @app.get("/api/containers")

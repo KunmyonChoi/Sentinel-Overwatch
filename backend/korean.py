@@ -22,6 +22,7 @@ EVENT_TYPE_KO = {
     "PORT_EXPOSURE": "포트 노출 상태",
     "PORT_CLOSED": "리스닝 포트 닫힘",
     "FILE_PERMISSION": "파일 권한",
+    "PERMISSION_FIXED": "파일 권한 조치",
     "CONTAINER_CONFIG": "컨테이너 설정",
     "PROCESS_TOOL": "보안 도구 실행",
     "PROCESS_INDICATOR": "의심 프로세스",
@@ -107,6 +108,8 @@ def event_ko(event_type: str, d: dict | None = None) -> str:
         return d.get("message_ko") or ""
     if t == "FILE_PERMISSION":
         return d.get("title_ko") or f"{d.get('path', '?')} 권한 {d.get('mode', '?')}"
+    if t == "PERMISSION_FIXED":
+        return f"권한 좁힘: {d.get('path', '?')} {d.get('before', '?')} → {d.get('after', '?')}"
     if t == "PROCESS_TOOL":
         return f"보안/해킹 도구 '{d.get('tool', '?')}' 실행 감지 (PID {d.get('pid', '?')}, 사용자 {d.get('user', '?')}, 실행 파일 {d.get('exe', '?')})"
     if t == "PROCESS_INDICATOR":

@@ -65,6 +65,9 @@ NETWORK_IGNORE_PROCESSES = {p.strip().lower() for p in _env("SECDASH_NETWORK_IGN
 EXPECTED_EXPOSED_PORTS = _env("SECDASH_EXPECTED_EXPOSED", "22/tcp")
 # 파일 권한 감시에서 추가로 훑을 디렉터리 (쉼표 구분). 기본은 /etc.
 PERMISSION_TREES = [p.strip() for p in _env("SECDASH_PERMISSION_TREES", "/etc").split(",") if p.strip()]
+# 권한 일괄 조치 스크립트. 경로를 인자로 받지 않고 스스로 재스캔하므로 API 가 임의 경로를 건드릴 수 없다.
+PERMISSION_FIX_SCRIPT = _env("SECDASH_PERMISSION_FIX_SCRIPT", str(BASE_DIR.parent / "deploy" / "fix-permissions.sh"))
+PERMISSION_FIX_USE_SUDO = _env_bool("SECDASH_PERMISSION_FIX_USE_SUDO", os.geteuid() != 0)
 
 # --- 브루트포스 판정 ---
 BRUTE_FORCE_WINDOW_MIN = _env_int("SECDASH_BRUTE_WINDOW_MIN", 30)

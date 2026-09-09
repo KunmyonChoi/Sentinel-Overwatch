@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FileWarning, Boxes, Check } from 'lucide-react';
+import { FileWarning, Boxes, Check, Wrench, AlertTriangle } from 'lucide-react';
 import { api } from '../api';
 import CopyBtn from './CopyBtn';
 
@@ -77,9 +77,81 @@ function ContainerRows({ data }) {
     );
 }
 
+/** 권한 일괄 조치: 먼저 무엇이 바뀔지 보여주고, 확인을 받은 뒤에만 적용한다. */
+function FixControl({ count, onDone }) {
+    const [preview, setPreview] = useState(null);   // dry-run 결과
+    const [busy, setBusy] = useState(false);
+    const [result, setResult] = useState(null);     // 적용 결과
+    const [error, setError] = useState(null);
+
+    const call = async (apply) => {
+        setBusy(true); setError(null);
+        try {
+            const r = await api(`/api/permissions/fix?apply=${apply}`, { method: 'POST' });
+            if (!r.ok) { setError(r); setPreview(null); return; }
+            if (apply) { setResult(r); setPreview(null); onDone?.(); }
+            else setPreview(r);
+        } catch (e) {
+            setError({ error: e.message || '요청 실패', fix_hint: '' });
+        } finally { setBusy(false); }
+    };
+
+    if (!count) return null;
+
+    return (
+        <div className="mt-2">
+            {!preview && !result && (
+                <button onClick={() => call(false)} disabled={busy}
+                    className="text-[11px] border border-gray-700 hover:border-neon-green text-gray-300 hover:text-neon-green px-2 py-1 rounded flex items-center gap-1 disabled:opacity-50">
+                    <Wrench className="w-3 h-3" /> {busy ? '확인 중…' : `권한 일괄 조치 (${count}건 검토)`}
+                </button>
+            )}
+
+            {error && (
+                <div className="text-[11px] text-yellow-400 border border-yellow-500/40 rounded px-2 py-1 mt-1" style={{ wordBreak: 'keep-all' }}>
+                    <AlertTriangle className="w-3 h-3 inline mr-1" />조치하지 못했습니다 — {error.error}
+                    {error.fix_hint && <div className="text-gray-500 mt-0.5">해결: {error.fix_hint}</div>}
+                </div>
+            )}
+
+            {preview && (
+                <div className="border border-yellow-500/40 rounded p-2 mt-1 text-[11px]">
+                    <div className="text-yellow-400 mb-1">아래 {preview.results?.length ?? 0}건의 권한을 좁힙니다. 넓히는 변경은 없습니다.</div>
+                    <ul className="space-y-0.5 max-h-40 overflow-y-auto scrollbar-hide font-mono">
+                        {(preview.results || []).map(r => (
+                            <li key={r.path} className="text-gray-300 break-all">
+                                <span className="text-neon-red">{r.before}</span>
+                                <span className="text-gray-600"> → </span>
+                                <span className="text-neon-green">{r.after}</span>
+                                <span className="text-gray-500"> {r.path}</span>
+                            </li>
+                        ))}
+                    </ul>
+                    <div className="flex gap-2 mt-2">
+                        <button onClick={() => call(true)} disabled={busy}
+                            className="text-[11px] border border-neon-green text-neon-green px-2 py-0.5 rounded hover:bg-neon-green/10 disabled:opacity-50">
+                            {busy ? '적용 중…' : '적용'}
+                        </button>
+                        <button onClick={() => setPreview(null)} className="text-[11px] border border-gray-700 text-gray-400 px-2 py-0.5 rounded hover:border-gray-500">
+                            취소
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {result && (
+                <div className="text-[11px] text-neon-green mt-1 flex items-center gap-1">
+                    <Check className="w-3 h-3" /> {result.changed}건 조치 완료 · 라이브 피드에 기록됨
+                </div>
+            )}
+        </div>
+    );
+}
+
 export default function ConfigAuditPanel() {
     const [perm, setPerm] = useState(null);
     const [cont, setCont] = useState(null);
+    const [tick, setTick] = useState(0);
 
     useEffect(() => {
         let alive = true;
@@ -90,7 +162,7 @@ export default function ConfigAuditPanel() {
         load();
         const iv = setInterval(load, 120000);
         return () => { alive = false; clearInterval(iv); };
-    }, []);
+    }, [tick]);
 
     if (!perm && !cont) return null;
     const permCount = perm?.counts?.total ?? 0;
@@ -108,6 +180,7 @@ export default function ConfigAuditPanel() {
 
             <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">파일 권한</div>
             <PermissionRows data={perm} />
+            <FixControl count={permCount} onDone={() => setTick(t => t + 1)} />
 
             <div className="text-[10px] text-gray-500 uppercase tracking-wider mt-3 mb-1 flex items-center gap-1">
                 <Boxes className="w-3 h-3" /> 컨테이너 설정
