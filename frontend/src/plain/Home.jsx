@@ -59,7 +59,7 @@ export default function Home({ status, tasks, facts, onOpenTask, onGo }) {
 
                 <div className={`grid gap-4 ${hasTasks ? 'mt-6' : 'mt-10'} grid-cols-1 sm:grid-cols-3`}>
                     <FactCard icon="door" label="밖에서 들어올 수 있는 문"
-                        value={`${facts.doors}개`} note={facts.doorsNote} />
+                        value={facts.doors === '—' ? '—' : `${facts.doors}개`} note={facts.doorsNote} />
                     <FactCard icon="update" label="밀린 보안 업데이트"
                         value={facts.updates} note={facts.updatesNote} />
                     <FactCard icon="shield" label={facts.blockedLabel}

@@ -60,7 +60,7 @@ export default function ExpertView({ stats, host, events, alerts, onChanged, tic
                 </div>
                 <div className="text-[14px] text-calm-muted mt-1.5 max-w-[74ch] leading-relaxed" style={{ wordBreak: 'keep-all' }}>
                     지킴이가 무엇을 보고 그렇게 판단했는지 전부 여기 있어요. 평소에는 접어둬요.
-                    이 안쪽은 전문가용 화면 그대로예요 — 아무것도 없애지 않았어요.
+                    같은 내용을 예전처럼 한 화면에 펼쳐 보시려면 위의 <b className="text-calm-ink">대시보드</b>를 누르세요.
                 </div>
 
                 <Card className="mt-5 overflow-hidden">

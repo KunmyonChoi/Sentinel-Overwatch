@@ -21,8 +21,10 @@ function agoKo(iso) {
     return `${Math.round(sec / 86400)}일 전에 확인했어요`;
 }
 
-export default function PlainApp() {
-    const [view, setView] = useState({ name: 'home' });
+export default function PlainApp({ mode = 'plain', onGo }) {
+    // 홈과 '자세히 보기'는 App 이 기억하는 화면이라 바깥에서 시작 지점을 받는다.
+    // 할 일 상세·기록은 잠깐 들르는 곳이라 여기서만 들고 있는다.
+    const [view, setView] = useState(() => ({ name: mode === 'expert' ? 'expert' : 'home' }));
     const [needToken, setNeedToken] = useState(() => !getToken());
     const [d, setD] = useState({ stats: null, alerts: [], events: [], host: null, exposure: null, blocked: null, monitors: [], accounts: [] });
     const [tick, setTick] = useState(0);
@@ -83,18 +85,26 @@ export default function PlainApp() {
             : doors === 0 ? '밖에서 들어올 수 있는 문이 없어요.'
             : d.exposure?.firewall?.available === false ? '잠겼는지 확인하지 못했어요. 자세히 보기에서 이유를 볼 수 있어요.'
                 : '직접 열어두신 것이에요.',
+        // 못 읽은 것을 '없음'이라고 말하지 않는다. 0 과 '모름'은 다른 말이다.
         updates: !d.host ? '—' : pending.available === false ? '확인 못 함' : (pending.security ? `${pending.security}개` : '없음'),
-        updatesNote: pending.available === false ? '업데이트 목록을 읽지 못했어요.'
-            : pending.security ? '보안에 관한 것이라 먼저 설치하는 게 좋아요.'
-                : pending.total ? `보안과 무관한 업데이트 ${pending.total}개가 남아 있어요.` : '밀린 것이 없어요.',
+        updatesNote: !d.host ? '아직 확인하지 못했어요.'
+            : pending.available === false ? '업데이트 목록을 읽지 못했어요.'
+                : pending.security ? '보안에 관한 것이라 먼저 설치하는 게 좋아요.'
+                    : pending.total ? `보안과 무관한 업데이트 ${pending.total}개가 남아 있어요.` : '밀린 것이 없어요.',
         blockedLabel: tried !== null ? '막은 접속 시도' : '지금 막고 있는 상대',
-        blocked: tried !== null ? `${tried}번` : `${nowBlocking}곳`,
-        blockedNote: tried !== null
-            ? (tried ? '모두 들어오지 못했어요. 따로 하실 일은 없어요.' : '아직 막을 일이 없었어요.')
-            : (nowBlocking ? '들어오려다 막힌 곳이에요. 따로 하실 일은 없어요.' : '지금 막고 있는 곳이 없어요.'),
+        blocked: !d.blocked ? '—' : tried !== null ? `${tried}번` : `${nowBlocking}곳`,
+        blockedNote: !d.blocked ? '아직 확인하지 못했어요.'
+            : tried !== null
+                ? (tried ? '모두 들어오지 못했어요. 따로 하실 일은 없어요.' : '아직 막을 일이 없었어요.')
+                : (nowBlocking ? '들어오려다 막힌 곳이에요. 따로 하실 일은 없어요.' : '지금 막고 있는 곳이 없어요.'),
     };
 
-    const go = (name) => setView({ name });
+    const go = (name) => {
+        setView({ name });
+        // 홈과 자세히 보기만 기억한다. 상세·기록에서 새로고침하면 홈으로 돌아오는 게 맞다.
+        if (name === 'home') onGo?.('plain');
+        if (name === 'expert') onGo?.('expert');
+    };
     const atHome = view.name === 'home';
     const atExpert = view.name === 'expert';
     const openTask = (task) => setView({ name: 'task', task });
@@ -126,6 +136,11 @@ export default function PlainApp() {
                             className={`h-11 px-3 rounded-lg inline-flex items-center gap-1.5 text-[14px] cursor-pointer font-kr
                                 ${atExpert ? 'text-calm-accent bg-calm-accent-soft' : 'text-calm-muted hover:bg-calm-panel2'}`}>
                             <Icon name="eye" size={16} />{atExpert ? '쉬운 화면으로' : '자세히 보기'}
+                        </button>
+                        {/* 예전 전문가 화면. 익숙한 사람은 여기서 바로 건너뛴다. */}
+                        <button onClick={() => onGo?.('dashboard')} title="예전 전문가 화면 — 한 화면에 전부 펼쳐 보기"
+                            className="h-11 px-3 rounded-lg inline-flex items-center gap-1.5 text-[14px] cursor-pointer font-kr text-calm-muted hover:bg-calm-panel2">
+                            <Icon name="grid" size={16} /><span className="hidden sm:inline">대시보드</span>
                         </button>
                     </div>
                 </div>
