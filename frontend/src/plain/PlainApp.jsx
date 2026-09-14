@@ -75,6 +75,7 @@ export default function PlainApp({ page = 'home', onPage, onMode }) {
 
     // 홈의 안심 정보 세 칸
     const pending = d.host?.pending_updates || {};
+    const reboot = d.host?.reboot || {};
     const doors = doorCount(d.exposure);
     // fail2ban 통계를 읽을 수 있을 때만 '시도 횟수'라고 말한다.
     // 못 읽으면 지금 막고 있는 상대 수를 보여주고, 그 사실을 그대로 적는다.
@@ -90,11 +91,16 @@ export default function PlainApp({ page = 'home', onPage, onMode }) {
             : d.exposure?.firewall?.available === false ? '잠겼는지 확인하지 못했어요. 자세히 보기에서 이유를 볼 수 있어요.'
                 : '직접 열어두신 것이에요.',
         // 못 읽은 것을 '없음'이라고 말하지 않는다. 0 과 '모름'은 다른 말이다.
-        updates: !d.host ? '—' : pending.available === false ? '확인 못 함' : (pending.security ? `${pending.security}개` : '없음'),
+        // 설치는 했는데 재부팅을 안 한 상태를 '없음'이라고 말하면 안 된다.
+        // 남은 할 일이 있는데 화면이 끝났다고 답하는 셈이다.
+        updates: !d.host ? '—' : pending.available === false ? '확인 못 함'
+            : pending.security ? `${pending.security}개`
+                : reboot.required ? '재부팅 필요' : '없음',
         updatesNote: !d.host ? '아직 확인하지 못했어요.'
             : pending.available === false ? '업데이트 목록을 읽지 못했어요.'
                 : pending.security ? '보안에 관한 것이라 먼저 설치하는 게 좋아요.'
-                    : pending.total ? `보안과 무관한 업데이트 ${pending.total}개가 남아 있어요.` : '밀린 것이 없어요.',
+                    : reboot.required ? '새 버전은 설치됐어요. 재부팅해야 적용돼요.'
+                        : pending.total ? `보안과 무관한 업데이트 ${pending.total}개가 남아 있어요.` : '밀린 것이 없어요.',
         blockedLabel: tried !== null ? '막은 접속 시도' : '지금 막고 있는 상대',
         blocked: !d.blocked ? '—' : tried !== null ? `${tried}번` : `${nowBlocking}곳`,
         blockedNote: !d.blocked ? '아직 확인하지 못했어요.'

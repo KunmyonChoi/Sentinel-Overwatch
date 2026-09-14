@@ -2,7 +2,15 @@
 소프트웨어 업데이트 감시.
   - dpkg.log 를 tail 해 설치/업그레이드/제거를 원시 이벤트로 남긴다.
   - 주기적으로 apt 의 미적용 업데이트를 확인해 보안 업데이트가 있으면 알림을 올린다.
+  - 재부팅이 필요한 상태(/run/reboot-required)를 알린다.
+
+'업데이트 안 함'만 보면 절반만 보는 것이다. 실제로 더 흔하고 더 오래 가는 위험은
+**업데이트는 했는데 재부팅을 안 한 상태**다. libc 나 커널을 갈아도 이미 떠 있는
+프로세스는 옛 것을 그대로 쓰므로, 취약점은 재부팅 전까지 살아 있다. 그런데 apt 는
+"밀린 것 없음"이라고 답하기 때문에, 이 파일을 보지 않으면 남은 할 일을 아무도
+알려주지 않는다.
 """
+import os
 import re
 import time
 
@@ -13,6 +21,10 @@ from monitor.base import BaseMonitor, TailReader
 
 LINE_PATTERN = re.compile(r"^(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})\s+(install|upgrade|remove|purge)\s+(\S+)\s+(.*)")
 PENDING_CHECK_INTERVAL = 6 * 3600
+# /var/run 은 보통 /run 의 심볼릭 링크지만, 아닌 시스템도 있어 둘 다 본다.
+REBOOT_FLAGS = ("/run/reboot-required", "/var/run/reboot-required")
+# 재부팅 전까지 옛 코드가 계속 도는 것들. 남은 할 일을 말할 때 이 이름이 있으면 더 분명해진다.
+REBOOT_HEAVY = ("linux-image", "linux-base", "libc6", "systemd", "dbus", "openssl", "libssl")
 
 
 class UpdateMonitor(BaseMonitor):
@@ -29,10 +41,13 @@ class UpdateMonitor(BaseMonitor):
         self._last_pending_check = 0.0
         self.pending: dict = {}
         self._last_pending_key: tuple | None = None
+        self.reboot: dict = {}
+        self._last_reboot_key: tuple | None = None
 
     def setup(self):
         self._try_open()
         self._check_pending()
+        self._check_reboot()
 
     def _try_open(self) -> bool:
         try:
@@ -56,8 +71,51 @@ class UpdateMonitor(BaseMonitor):
                 if not line:
                     break
                 self._process_line(line.strip())
+        # 파일 하나를 보는 일이라 매 주기 확인해도 부담이 없다. 다만 알림은 상태가
+        # 바뀔 때만 올린다 — 같은 지문으로 계속 부르면 발생 횟수만 부풀어 오른다.
+        self._check_reboot()
         if time.time() - self._last_pending_check >= self._pending_interval:
             self._check_pending()
+
+    def _check_reboot(self):
+        """재부팅 대기 상태. 파일이 사라지면(=재부팅함) 스스로 해결 처리한다."""
+        flag = next((p for p in REBOOT_FLAGS if os.path.exists(p)), None)
+        pkgs: list[str] = []
+        if flag:
+            try:
+                with open(flag + ".pkgs", encoding="utf-8", errors="replace") as f:
+                    pkgs = sorted({ln.strip() for ln in f if ln.strip()})
+            except OSError:
+                pkgs = []   # 목록을 못 읽어도 '재부팅 필요'라는 사실은 그대로다
+        key = (bool(flag), tuple(pkgs))
+        changed = key != self._last_reboot_key
+        self._last_reboot_key = key
+        self.reboot = {"required": bool(flag), "packages": pkgs}
+        if not flag:
+            if changed:
+                auto_resolve("reboot_required", "재부팅되어 자동 해결")
+            return
+        if not changed:
+            return
+        heavy = [p for p in pkgs if p.startswith(REBOOT_HEAVY)]
+        d = {"packages": pkgs, "heavy": heavy, "flag": flag}
+        self.log_event("PENDING_UPDATES", "WARNING",
+                       f"reboot required ({len(pkgs)} pkg(s))",
+                       d | {"message_ko": "재부팅이 필요한 상태입니다"})
+        why = ("이미 떠 있는 프로그램은 옛 " + ", ".join(heavy[:3]) + " 를 그대로 쓰고 있어서, "
+               "재부팅 전까지 취약점이 살아 있습니다.") if heavy else \
+              "새 버전이 설치됐지만 재부팅해야 적용됩니다."
+        raise_alert(
+            "reboot_required", "WARNING", f"System restart required ({len(pkgs)} pkg(s))",
+            fingerprint="reboot_required",
+            title_ko="업데이트를 마치려면 재부팅이 필요합니다",
+            summary_ko=(("대상: " + ", ".join(pkgs[:15]) + (" 외" if len(pkgs) > 15 else "") + ". ")
+                        if pkgs else "") + why,
+            action_ko="점검 창을 선언한 뒤 `sudo reboot` 하세요. "
+                      "지금 못 하면 `sudo needrestart -r a` 로 재시작이 필요한 서비스만 먼저 올릴 수 있습니다.",
+            evidence=f"{flag} 존재\n" + ("\n".join(f"  {p}" for p in pkgs) if pkgs else "  (패키지 목록 없음)"),
+            details=d,
+        )
 
     def _process_line(self, line: str):
         m = LINE_PATTERN.match(line)

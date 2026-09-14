@@ -12,7 +12,7 @@ import xml.etree.ElementTree as ET
 import requests
 
 import config
-from alerts import raise_alert
+from alerts import auto_resolve, open_alerts_details, raise_alert
 from database import Event, SessionLocal
 from integrations import apt
 from monitor.base import BaseMonitor
@@ -60,6 +60,7 @@ class IntelMonitor(BaseMonitor):
 
     def setup(self):
         self._load_seen()
+        self._recheck_open()   # 재시작 직후, 그 사이 적용된 업데이트부터 정리한다
 
     def _load_seen(self):
         db = SessionLocal()
@@ -76,6 +77,8 @@ class IntelMonitor(BaseMonitor):
             db.close()
 
     def tick(self):
+        # 새 공지를 받아오기 전에, 이미 올려둔 알림이 아직도 유효한지 먼저 본다.
+        self._recheck_open()
         errors = []
         for url in self.feeds:
             try:
@@ -91,6 +94,38 @@ class IntelMonitor(BaseMonitor):
             self.set_health("degraded", "피드 수집 실패: " + "; ".join(errors)[:300], "네트워크/프록시 설정을 확인하세요.")
         else:
             self.set_health("ok")
+
+    def _recheck_open(self):
+        """살아 있는 USN 알림을 지금 설치된 버전과 다시 대조한다.
+
+        공지를 받은 시점의 판정은 그 시점의 사실일 뿐이다. 그 뒤에 업데이트를
+        적용하면 알림은 이미 해결된 일인데도 사람이 손으로 닫을 때까지 남는다.
+        그렇게 쌓인 목록은 결국 아무도 안 본다.
+
+        대조는 알림에 저장해 둔 근거(details.affected)와 dpkg 로만 한다 — 네트워크를
+        다시 타지 않는다. 설치 목록을 읽지 못하면 **아무 판단도 하지 않는다**:
+        못 읽은 것을 '해결됨'으로 바꾸면 조용히 알림을 지우는 셈이다.
+        """
+        rows = open_alerts_details("usn_affects_host")
+        if not rows:
+            return
+        installed = apt.installed_packages()
+        if not installed:
+            self.log.warning("설치 패키지 목록을 읽지 못해 USN 재대조를 건너뜁니다")
+            return
+        for fp, d in rows:
+            affected = d.get("affected") or []
+            if not affected:
+                continue
+            # 패키지가 지워졌거나(목록에 없음) 수정 버전 이상이면 더는 해당하지 않는다
+            still = [a for a in affected
+                     if a.get("package") in installed
+                     and a.get("fixed")
+                     and apt.version_lt(installed[a["package"]], a["fixed"])]
+            if not still:
+                n = auto_resolve(fp, "설치된 버전이 수정 버전 이상이라 자동 해결")
+                if n:
+                    self.log.info(f"{fp}: 수정 버전 적용 확인, 자동 해결")
 
     def _fetch_news(self, url: str):
         resp = requests.get(url, timeout=15)

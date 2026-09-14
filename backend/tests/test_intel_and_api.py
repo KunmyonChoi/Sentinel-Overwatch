@@ -95,3 +95,51 @@ def test_timeline_hours_and_utc_timestamps(client, db):
     assert sum(r["warning"] for r in rows) == 1 and sum(r["info"] for r in rows) == 1
     assert len(client.get("/api/stats/timeline?hours=24", headers=H).json()) == 24
     assert sum(r["warning"] for r in client.get("/api/stats/timeline?hours=24", headers=H).json()) == 0   # 30시간 전 이벤트는 24h 창 밖
+
+
+def test_usn_alert_resolves_itself_once_the_fix_is_installed(db, monkeypatch):
+    """알림을 띄우기 전에 지금 설치된 버전과 다시 대조한다.
+
+    공지를 받은 시점의 판정은 그 시점의 사실일 뿐이다. 그 뒤 업데이트를 적용하면
+    이미 끝난 일인데도 알림이 사람이 손으로 닫을 때까지 남는다. 그렇게 쌓인 목록은
+    결국 아무도 안 본다.
+    """
+    from monitor.intel import IntelMonitor
+    from integrations import apt
+    import alerts as A
+
+    affected = [{"package": "libc6", "installed": "2.39-0ubuntu8.3", "fixed": "2.39-0ubuntu8.5"}]
+    A.raise_alert("usn_affects_host", "WARNING", "USN-9999-1 affects installed packages",
+                  fingerprint="usn:USN-9999-1", title_ko="테스트 공지",
+                  details={"affected": affected, "feed": "usn"})
+    db.expire_all()
+    assert db.query(database.Alert).filter(database.Alert.status == "OPEN").count() == 1
+
+    m = IntelMonitor(feeds=[], usn_url="")
+
+    # 아직 옛 버전이면 그대로 둔다
+    monkeypatch.setattr(apt, "installed_packages", lambda: {"libc6": "2.39-0ubuntu8.3"})
+    m._recheck_open()
+    db.expire_all()
+    assert db.query(database.Alert).one().status == "OPEN"
+
+    # 수정 버전이 깔렸으면 스스로 정리한다
+    monkeypatch.setattr(apt, "installed_packages", lambda: {"libc6": "2.39-0ubuntu8.5"})
+    m._recheck_open()
+    db.expire_all()
+    a = db.query(database.Alert).one()
+    assert a.status == "RESOLVED" and "수정 버전" in (a.resolution_note or "")
+
+
+def test_usn_recheck_does_nothing_when_package_list_is_unreadable(db, monkeypatch):
+    """설치 목록을 못 읽으면 아무 판단도 하지 않는다 — 못 읽은 것을 '해결됨'으로 바꾸면 조용히 지우는 셈이다."""
+    from monitor.intel import IntelMonitor
+    from integrations import apt
+    import alerts as A
+
+    A.raise_alert("usn_affects_host", "WARNING", "x", fingerprint="usn:USN-9998-1",
+                  details={"affected": [{"package": "libc6", "installed": "1", "fixed": "2"}]})
+    monkeypatch.setattr(apt, "installed_packages", lambda: {})
+    IntelMonitor(feeds=[], usn_url="")._recheck_open()
+    db.expire_all()
+    assert db.query(database.Alert).one().status == "OPEN"

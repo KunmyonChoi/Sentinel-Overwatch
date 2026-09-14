@@ -479,6 +479,9 @@ def get_host():
             "fail2ban_hint": hint,
         },
         "pending_updates": getattr(upd, "pending", {}),
+        # '밀린 업데이트 없음'만으로는 절반만 말하는 것이다. 적용해 두고 재부팅을
+        # 안 했으면 남은 할 일이 있는데도 화면은 '없음'이라고 답한다.
+        "reboot": getattr(upd, "reboot", {}),
         "usb_storage": kmod.usb_storage_status(),
         "blocked_modules": kmod.blocked_modules(),
         "firewall": getattr(monitor_registry.get("ExposureMonitor", {}).get("instance"), "fw", {"available": False}),
