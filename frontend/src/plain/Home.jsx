@@ -46,7 +46,8 @@ export default function Home({ status, tasks, facts, onOpenTask, onGo }) {
     const hasTasks = tasks.length > 0;
     return (
         <div className="flex flex-col min-h-full">
-            <div className={`flex-1 px-6 sm:px-10 ${hasTasks ? 'pt-8' : 'flex flex-col justify-center'}`}>
+            {/* 위아래 여백이 없으면 상태 머리가 헤더 선에, 카드가 아래 선에 붙는다. */}
+            <div className={`flex-1 px-6 sm:px-10 pb-10 ${hasTasks ? 'pt-8' : 'pt-10 flex flex-col justify-center'}`}>
                 <StatusHead tone={status.key === 'unknown' ? 'flat' : status.key}
                     icon={status.key === 'ok' ? 'check' : status.key === 'unknown' ? 'clock' : 'alert'}
                     label={status.label} lead={status.lead} big={!hasTasks} />
