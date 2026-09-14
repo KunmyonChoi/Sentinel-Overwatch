@@ -435,6 +435,15 @@ def get_monitors():
     return out
 
 
+def _euid_name() -> str:
+    """실행 계정 이름. USER 환경변수는 systemd 아래에서 비어 있을 수 있어 uid 로 푼다."""
+    try:
+        import pwd
+        return pwd.getpwuid(os.geteuid()).pw_name
+    except Exception:
+        return os.environ.get("USER", "")
+
+
 @app.get("/api/host")
 def get_host():
     def readable(p):
@@ -453,7 +462,15 @@ def get_host():
         "kernel": platform.release(),
         "uptime_hours": round((time.time() - psutil.boot_time()) / 3600, 1),
         "dashboard_started_at": _started_at.isoformat(),
-        "running_as": {"uid": os.geteuid(), "user": os.environ.get("USER", ""), "root": os.geteuid() == 0},
+        "running_as": {"uid": os.geteuid(), "user": _euid_name(), "root": os.geteuid() == 0},
+        # 개발 인스턴스와 운영 서비스를 화면에서 구별하기 위한 것.
+        # systemd 가 띄운 프로세스에만 INVOCATION_ID 가 있다 — 계정 이름이나 포트를
+        # 하드코딩해 맞히는 것보다 정확하다.
+        "instance": {
+            "mode": "service" if os.environ.get("INVOCATION_ID") else "dev",
+            "port": config.PORT,
+            "user": _euid_name(),
+        },
         "privileges": {
             "auth_log_readable": readable(config.AUTH_LOG_PATH),
             "shadow_readable": readable("/etc/shadow"),

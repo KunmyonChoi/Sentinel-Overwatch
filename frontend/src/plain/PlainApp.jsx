@@ -7,6 +7,7 @@ import { api, getToken } from '../api';
 import TokenGate from '../components/TokenGate';
 import MaintenanceControl from '../components/MaintenanceControl';
 import ModeSwitch from '../ModeSwitch';
+import InstanceBadge from '../InstanceBadge';
 import Home from './Home';
 import { Icon } from './ui';
 import { doorCount } from './tokens';
@@ -135,6 +136,7 @@ export default function PlainApp({ page = 'home', onPage, onMode }) {
                                 <Icon name="clock" size={15} />{lastCheck}
                             </span>
                         )}
+                        <InstanceBadge host={d.host} />
                         <ModeSwitch mode="plain" onChange={onMode} />
                     </div>
                 </div>

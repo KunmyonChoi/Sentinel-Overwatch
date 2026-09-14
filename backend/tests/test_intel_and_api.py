@@ -69,6 +69,19 @@ def test_summary_and_monitors_endpoints(client):
     assert client.get("/api/monitors", headers=H).json() == []   # lifespan 미실행
     host = client.get("/api/host", headers=H).json()
     assert "privileges" in host and "auth_log_readable" in host["privileges"]
+    # 실행 계정은 USER 환경변수가 아니라 실제 uid 에서 풀어야 한다 (systemd 아래에선 비어 있다)
+    assert host["running_as"]["user"]
+
+
+def test_host_reports_which_instance_this_is(client, monkeypatch):
+    """개발 인스턴스와 운영 서비스는 겉보기가 같다. 화면이 구별하려면 백엔드가 말해줘야 한다."""
+    monkeypatch.delenv("INVOCATION_ID", raising=False)
+    inst = client.get("/api/host", headers=H).json()["instance"]
+    assert inst["mode"] == "dev" and inst["user"] and inst["port"]
+
+    # systemd 가 띄운 프로세스에만 INVOCATION_ID 가 있다
+    monkeypatch.setenv("INVOCATION_ID", "deadbeef")
+    assert client.get("/api/host", headers=H).json()["instance"]["mode"] == "service"
 
 
 def test_timeline_hours_and_utc_timestamps(client, db):

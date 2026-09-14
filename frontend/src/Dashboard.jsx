@@ -20,6 +20,7 @@ import ConfigAuditPanel from './components/ConfigAuditPanel';
 import { api, getToken } from './api';
 import { ShieldAlert } from 'lucide-react';
 import ModeSwitch from './ModeSwitch';
+import InstanceBadge from './InstanceBadge';
 
 async function loadCore() {
   const [stats, events, alerts] = await Promise.all([
@@ -99,6 +100,7 @@ export default function Dashboard({ onMode }) {
             </span>
           )}
           <span className="text-neon-green/70 font-mono">{new Date().toLocaleTimeString('ko-KR', { hour12: false })}</span>
+          <InstanceBadge host={host} tone="neon" />
           {/* 초보자 화면과 같은 조각, 같은 자리(오른쪽 끝). 여기서 바뀌는 것은 모드뿐이다. */}
           <ModeSwitch mode="dashboard" onChange={onMode} tone="neon" />
         </div>
