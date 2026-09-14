@@ -1,0 +1,154 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans KR", "Apple SD Gothic Neo", system-ui, sans-serif; word-break: keep-all; }
+    a { color: #0e7c6b; } a:hover { color: #0a5f52; }
+    .nav { display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 12px; margin-left: -12px; border-radius: 8px; text-decoration: none; color: #5d6c65; font-size: 14px; }
+    .nav:hover { background: #e6ede9; }
+    .fold { display: flex; align-items: center; justify-content: space-between; padding: 15px 22px; border-top: 1px solid #eef2f0; cursor: pointer; }
+    .fold-t { font-size: 15px; }
+    .fold-s { font-size: 13px; color: #5d6c65; }
+  </style>
+</helmet>
+
+<div style="width: 960px; height: 900px; box-sizing: border-box; background: #f2f5f3; color: #17221d; display: flex; flex-direction: column;">
+
+  <div style="display: flex; align-items: center; gap: 12px; padding: 14px 40px; border-bottom: 1px solid #d7e0db;">
+    <a href="#" class="nav">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+      돌아가기
+    </a>
+  </div>
+
+  <div style="flex: 1; padding: 26px 40px 24px; overflow: hidden;">
+    <div style="font-size: 25px; font-weight: 600; letter-spacing: -0.02em;">자세히 보기</div>
+    <div style="font-size: 14px; color: #5d6c65; margin-top: 5px; max-width: 74ch; line-height: 1.6;">
+      지킴이가 무엇을 보고 그렇게 판단했는지 전부 여기 있어요. 평소에는 접어둬요.
+    </div>
+
+    <div style="margin-top: 18px; background: #ffffff; border: 1px solid #d7e0db; border-radius: 12px; overflow: hidden;">
+
+      <div class="fold" style="border-top: 0;">
+        <div>
+          <div class="fold-t">밖에서 들어올 수 있는 문</div>
+          <div class="fold-s">문마다 어디까지 열려 있는지, 잠금장치가 실제로 막고 있는지</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 13px; color: #5d6c65;">밖으로 1개 · 나머지는 안에서만</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5d6c65" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(180deg);"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </div>
+
+      <!-- 펼쳐진 영역: 기존 전문가 화면이 그대로 들어온다 -->
+      <div style="padding: 0 22px 20px;">
+        <div style="background: #0a0a0a; border: 1px solid #00ff41; box-shadow: 0 0 5px #00ff41, inset 0 0 5px #00ff41; border-radius: 2px; padding: 16px 18px; font-family: 'Fira Code', monospace;">
+          <div style="display: flex; align-items: center; gap: 8px; color: #00ff41; font-size: 13px; font-weight: 500; padding-bottom: 9px; border-bottom: 1px solid rgba(0,255,65,0.3); text-shadow: 0 0 5px #00ff41;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v18"/><path d="M3 12h18"/></svg>
+            <span>노출 면</span>
+            <span style="margin-left: auto; color: #6b7280; font-weight: 400;">외부 바인딩 2 / 전체 11</span>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 8px; color: #6b7280; font-size: 11px; padding: 9px 0;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00ff41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span style="color: #9ca3af;">ufw</span><span>· 기본 deny · 허용 22/tcp</span>
+          </div>
+
+          <div style="display: grid; gap: 5px;">
+            <div style="border-left: 2px solid #00ff41; padding-left: 8px; font-size: 11.5px; display: flex; align-items: center; gap: 8px;">
+              <span style="color: #ffffff;">tcp/22</span>
+              <span style="color: #6b7280;">0.0.0.0</span>
+              <span style="border: 1px solid rgba(0,255,65,0.6); color: #00ff41; padding: 0 4px; border-radius: 2px; font-size: 10px;">의도된 공개</span>
+              <span style="color: #9ca3af;">sshd</span>
+            </div>
+            <div style="border-left: 2px solid #374151; padding-left: 8px; font-size: 11.5px; display: flex; align-items: center; gap: 8px;">
+              <span style="color: #ffffff;">tcp/8000</span>
+              <span style="color: #6b7280;">127.0.0.1</span>
+              <span style="border: 1px solid #374151; color: #6b7280; padding: 0 4px; border-radius: 2px; font-size: 10px;">루프백 전용</span>
+              <span style="color: #9ca3af;">python3</span>
+            </div>
+            <div style="border-left: 2px solid #374151; padding-left: 8px; font-size: 11.5px; display: flex; align-items: center; gap: 8px;">
+              <span style="color: #ffffff;">tcp/5173</span>
+              <span style="color: #6b7280;">127.0.0.1</span>
+              <span style="border: 1px solid #374151; color: #6b7280; padding: 0 4px; border-radius: 2px; font-size: 10px;">루프백 전용</span>
+              <span style="color: #9ca3af;">node</span>
+            </div>
+          </div>
+
+          <div style="color: #4b5563; font-size: 10px; margin-top: 10px; line-height: 1.5;">
+            바인딩 주소만으로는 노출을 알 수 없어 방화벽 규칙과 대조한 결과입니다.
+          </div>
+        </div>
+        <div style="font-size: 12.5px; color: #5d6c65; margin-top: 9px;">
+          전문가용 화면을 그대로 볼 수 있어요. 아무것도 없애지 않았어요. — 위에서 문이 <b style="color:#17221d;">1개</b>인데 여기 <b style="color:#17221d;">2</b>로 보이는 건, 문 하나가 두 갈래 길(IPv4·IPv6)로 세어지기 때문이에요.
+        </div>
+      </div>
+
+      <div class="fold">
+        <div>
+          <div class="fold-t">파일과 프로그램 설정</div>
+          <div class="fold-s">파일 자물쇠가 제대로 잠겨 있는지, 프로그램이 너무 큰 권한으로 돌지 않는지</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 13px; color: #5d6c65;">조치 필요 없음</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5d6c65" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </div>
+
+      <div class="fold">
+        <div>
+          <div class="fold-t">이 컴퓨터를 쓰는 사람</div>
+          <div class="fold-s">누가 쓸 수 있는 상태인지, 누가 관리자인지, 마지막으로 언제 들어왔는지</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 13px; color: #5d6c65;">쓸 수 있는 사람 2명</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5d6c65" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </div>
+
+      <div class="fold">
+        <div>
+          <div class="fold-t">지킴이가 보고 있는 것</div>
+          <div class="fold-s">무엇을 어디서 보고 있는지, 못 보고 있는 것은 없는지</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 13px; color: #5d6c65;">14가지 모두 잘 보고 있어요</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5d6c65" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </div>
+
+      <div class="fold">
+        <div>
+          <div class="fold-t">더 단단하게 만들 거리</div>
+          <div class="fold-s">지금 당장 문제는 아니지만 해두면 좋은 것들</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 13px; color: #5d6c65;">급한 것 없음 · 해두면 좋은 것 27</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5d6c65" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </div>
+
+      <div class="fold">
+        <div>
+          <div class="fold-t">보안 뉴스</div>
+          <div class="fold-s">내 컴퓨터에 해당하는 것만 위로 올려요</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 13px; color: #5d6c65;">해당 없음</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5d6c65" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

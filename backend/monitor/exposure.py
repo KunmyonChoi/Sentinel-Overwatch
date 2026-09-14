@@ -11,16 +11,59 @@ NetworkWatcher 는 '새로 열린 포트'(변화)를 본다. 이 모니터는 '�
   외부 바인딩 + 방화벽 차단 → 지금은 못 오지만 방화벽 규칙 하나에만 의존하는 상태. 정보로만 남긴다
   방화벽을 못 읽음        → '판단 불가'. 안전하다고도, 뚫렸다고도 단정하지 않는다
 
+브라우저 같은 프로그램은 인터넷에 '나가면서' 임시 포트를 잠깐 연다(QUIC, WebRTC).
+이것은 남이 들어오는 문이 아니라 내가 나가는 통로다. 문으로 세면 홈 화면이
+"밖에서 들어올 수 있는 문 5개"라고 말해 사용자를 놀라게 하는데, 실제로는 위험하지 않다.
+그래서 별도 상태로 분류한다 — 숨기지는 않는다. 목록에는 그대로 남고 자세히 보기에서 볼 수 있다.
+
 컨테이너가 게시한 포트는 호스트 방화벽으로 막히지 않는다(Docker 가 iptables 에 직접 규칙을 넣는다).
 그쪽은 ContainerAudit 이 따로 본다.
 """
 import psutil
 
 import config
-from alerts import auto_resolve, raise_alert
+from alerts import auto_resolve, open_fingerprints, raise_alert
 from integrations.firewall import FirewallClient, port_reachable
 from monitor.base import BaseMonitor
 from monitor.intrusion import _proc_info
+
+
+EPHEMERAL_PATH = "/proc/sys/net/ipv4/ip_local_port_range"
+
+
+def ephemeral_range(path: str = EPHEMERAL_PATH) -> tuple[int, int]:
+    """커널이 임시 포트로 나눠주는 범위. 하드코딩하지 않고 이 컴퓨터 설정을 읽는다."""
+    try:
+        lo, hi = open(path, encoding="utf-8").read().split()
+        return int(lo), int(hi)
+    except (OSError, ValueError):
+        return 32768, 60999
+
+
+def is_client_socket(port: int, process: str | None, ephemeral: tuple[int, int],
+                     names: set[str], proto: str = "udp") -> bool:
+    """
+    '나가는 통로'인가.
+
+    세 조건을 모두 만족해야 한다.
+      1. UDP 다. 이 규칙이 겨냥한 것은 브라우저의 QUIC·WebRTC 처럼 나가면서 여는 소켓이다.
+         TCP 로 듣고 있으면 그것은 서비스다 — 브라우저 계열 프로그램이라도 마찬가지다.
+         (예: code serve-web 이 0.0.0.0 에 TCP 로 듣는 경우. 문으로 세지 않으면 노출을 놓친다.)
+      2. 커널이 나눠주는 임시 포트 범위 안이다.
+      3. 여는 쪽이 클라이언트 프로그램이다 (브라우저, 메신저 등).
+
+    프로세스 이름까지 보는 이유: 임시 포트 범위에 자리잡은 진짜 서비스도 있다.
+    예를 들어 Tailscale 의 기본 포트 41641 은 이 범위 안이다. 범위만 보고 걸렀다면
+    그런 서비스가 목록에서 사라져 노출을 놓치게 된다.
+    """
+    if proto != "udp":
+        return False
+    if not process:
+        return False                      # 누가 열었는지 모르면 문으로 둔다 (안전한 쪽)
+    lo, hi = ephemeral
+    if not (lo <= port <= hi):
+        return False
+    return process.strip().lower() in names
 
 
 def is_loopback(addr: str) -> bool:
@@ -45,13 +88,20 @@ def parse_expected(spec: str) -> set[tuple[int, str]]:
     return out
 
 
-def classify(addr: str, port: int, proto: str, fw: dict, expected: set[tuple[int, str]]) -> dict:
+def classify(addr: str, port: int, proto: str, fw: dict, expected: set[tuple[int, str]],
+             process: str | None = None, ephemeral: tuple[int, int] | None = None,
+             client_names: set[str] | None = None) -> dict:
     """리스너 하나의 노출 상태를 판정한다."""
     if is_loopback(addr):
         return {"state": "loopback", "state_ko": "루프백 전용", "reachable": False, "severity": "INFO"}
     reachable = port_reachable(fw, port, proto)
     if (port, proto) in expected:
         return {"state": "expected", "state_ko": "의도된 공개", "reachable": reachable, "severity": "INFO"}
+    if is_client_socket(port, process, ephemeral or ephemeral_range(),
+                        client_names or config.CLIENT_PROCESSES, proto):
+        # 문으로 세지 않을 뿐, 도달성을 단정하지는 않는다 (방화벽을 못 읽으면 None 이다)
+        return {"state": "client", "state_ko": "프로그램이 나가면서 잠시 쓰는 통로",
+                "reachable": reachable, "severity": "INFO"}
     if reachable is None:
         return {"state": "unknown", "state_ko": "판단 불가 (방화벽 상태 못 읽음)", "reachable": None, "severity": "WARNING"}
     if reachable:
@@ -110,8 +160,10 @@ class ExposureMonitor(BaseMonitor):
     def snapshot(self) -> dict:
         rows, missing_pid = collect_listeners()
         self.fw = self.firewall.snapshot()
+        eph = ephemeral_range()
         for r in rows:
-            r.update(classify(r["address"], r["port"], r["proto"], self.fw, self.expected))
+            r.update(classify(r["address"], r["port"], r["proto"], self.fw, self.expected,
+                              process=r.get("process"), ephemeral=eph, client_names=config.CLIENT_PROCESSES))
         self.listeners = rows
         exposed = [r for r in rows if r["state"] == "exposed"]
         unknown = [r for r in rows if r["state"] == "unknown"]
@@ -119,10 +171,13 @@ class ExposureMonitor(BaseMonitor):
             "listeners": rows,
             "firewall": {k: self.fw.get(k) for k in ("available", "backend", "active", "default_incoming", "allowed", "reason", "fix_hint")},
             "missing_process_info": missing_pid,
+            "ephemeral_range": list(eph),
             "counts": {
                 "total": len(rows),
                 "loopback": sum(1 for r in rows if r["state"] == "loopback"),
-                "external_bind": sum(1 for r in rows if r["state"] != "loopback"),
+                "client": sum(1 for r in rows if r["state"] == "client"),
+                # '문'으로 세는 것: 루프백도 아니고, 나가는 통로도 아닌 것
+                "external_bind": sum(1 for r in rows if r["state"] not in ("loopback", "client")),
                 "exposed": len(exposed),
                 "unknown": len(unknown),
                 "expected": sum(1 for r in rows if r["state"] == "expected"),
@@ -131,6 +186,8 @@ class ExposureMonitor(BaseMonitor):
 
     # --- 수명 주기 ---
     def setup(self):
+        # 재시작해도 '내가 올린 알림'을 기억한다. 그래야 사라진 조건을 정리할 수 있다.
+        self._open = open_fingerprints("exposed_port")
         self.tick()
 
     def tick(self):
@@ -181,7 +238,7 @@ class ExposureMonitor(BaseMonitor):
             )
 
         for fp in sorted(self._open - current):
-            auto_resolve(fp, "포트가 닫혔거나 루프백으로 축소됨")
+            auto_resolve(fp, "이제 문으로 세지 않음 (닫혔거나, 루프백이거나, 나가는 통로)")
             self._open.discard(fp)
 
         # 닫힌 포트는 알림이 아니라 사실 기록으로 남긴다 (조치의 결과를 확인할 수 있게)

@@ -25,6 +25,8 @@ changes=0
 say()  { printf '\n\033[1m== %s\033[0m\n' "$*"; }
 plan() { printf '   [%s] %s\n' "$MODE" "$*"; changes=$((changes+1)); }
 run()  { plan "$*"; if [ $APPLY -eq 1 ]; then eval "$@"; fi; return 0; }
+# 강화가 감시를 망가뜨릴 수 있는 자리를 알린다. 건너뛴 것은 changes 에 세지 않는다.
+warn() { printf '   \033[33m[주의]\033[0m %s\n' "$*"; }
 # 파일에 key value 를 보장 (없으면 추가, 다르면 교체)
 ensure_line() { # file regex line
     local f=$1 re=$2 line=$3
@@ -166,10 +168,20 @@ for f in /etc/crontab /etc/ssh/sshd_config /boot/grub/grub.cfg; do
     [ -f "$f" ] || continue
     m=$(stat -c %a "$f"); [ "$m" = "600" ] || [ "$m" = "400" ] || run "chmod 600 '$f'"
 done
-for d in /etc/cron.d /etc/cron.hourly /etc/cron.daily /etc/cron.weekly /etc/cron.monthly; do
-    [ -d "$d" ] || continue
-    [ "$(stat -c %a "$d")" = "700" ] || run "chmod 700 '$d'"
-done
+# 크론 디렉터리를 0700 으로 잠그면 secdash 계정은 CAP_DAC_READ_SEARCH 로만 읽을 수 있다.
+# 그 능력이 없으면 크론 감시가 통째로 멈춘다. 예전에는 조용히 멈췄고, 감시 대상이
+# 사라진 것으로 보여 '삭제됨' 오탐까지 났다. 지금은 대시보드가 사각지대를 알리지만,
+# 잠그기 전에 먼저 확인하는 편이 낫다.
+if ! systemctl show secdash -p AmbientCapabilities --value 2>/dev/null | grep -q cap_dac_read_search; then
+    warn "secdash 서비스에 CAP_DAC_READ_SEARCH 가 없습니다. 크론 디렉터리를 0700 으로 잠그면"
+    warn "크론 감시가 멈춥니다. deploy/secdash.service 의 AmbientCapabilities 를 먼저 확인하세요."
+    warn "→ 이 단계(9b 의 크론 디렉터리 부분)를 건너뜁니다."
+else
+    for d in /etc/cron.d /etc/cron.hourly /etc/cron.daily /etc/cron.weekly /etc/cron.monthly; do
+        [ -d "$d" ] || continue
+        [ "$(stat -c %a "$d")" = "700" ] || run "chmod 700 '$d'"
+    done
+fi
 
 say "10. BANN-7126/7130 로그인 경고 배너"
 banner='이 시스템은 허가된 사용자만 접근할 수 있습니다. 모든 접속과 명령은 기록되며 감사 대상입니다.

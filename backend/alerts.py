@@ -217,6 +217,56 @@ def resolve_alert(alert_id: int, by: str, note: str, db: Session) -> Alert | Non
     return alert
 
 
+def open_fingerprints(rule: str, db: Session | None = None) -> set[str]:
+    """
+    이 규칙으로 아직 살아 있는(OPEN/ACKED) 알림의 지문.
+
+    상태를 대조해 정리하는 모니터(노출 면, 파일 권한, 컨테이너 설정)는 '내가 무엇을 올렸는지'를
+    기억해야 조건이 사라졌을 때 해결 처리할 수 있다. 그 기억이 메모리에만 있으면 재시작하는 순간
+    사라지고, 이미 없어진 문제의 알림이 영원히 남는다. 그래서 시작할 때 DB 에서 되찾는다.
+    """
+    own = db is None
+    db = db or SessionLocal()
+    try:
+        rows = db.query(Alert.fingerprint).filter(Alert.rule == rule, Alert.status.in_(["OPEN", "ACKED"])).all()
+        return {r[0] for r in rows if r[0]}
+    except Exception as e:
+        logger.error(f"open_fingerprints({rule}) failed: {e}")
+        return set()
+    finally:
+        if own:
+            db.close()
+
+
+def open_alerts_details(rule: str, db: Session | None = None) -> list[tuple[str, dict]]:
+    """살아 있는 알림의 (지문, details).
+
+    알림을 올릴 때 근거가 된 사실을 details 에 넣어두면, 나중에 그 사실이 아직도
+    유효한지 다시 대조할 수 있다. 재대조가 없으면 이미 해결된 일의 알림이 사람이
+    손으로 닫을 때까지 남는다 — 그게 쌓이면 목록 전체를 안 보게 된다.
+    """
+    own = db is None
+    db = db or SessionLocal()
+    try:
+        rows = db.query(Alert.fingerprint, Alert.details).filter(
+            Alert.rule == rule, Alert.status.in_(["OPEN", "ACKED"])).all()
+        out = []
+        for fp, raw in rows:
+            if not fp:
+                continue
+            try:
+                out.append((fp, json.loads(raw) if raw else {}))
+            except (ValueError, TypeError):
+                out.append((fp, {}))
+        return out
+    except Exception as e:
+        logger.error(f"open_alerts_details({rule}) failed: {e}")
+        return []
+    finally:
+        if own:
+            db.close()
+
+
 def auto_resolve(fingerprint: str, note: str = "조건 해소로 자동 해결", db: Session | None = None) -> int:
     """조건이 사라진 알림(예: 미적용 업데이트 0건)을 자동으로 해결 처리한다."""
     own = db is None

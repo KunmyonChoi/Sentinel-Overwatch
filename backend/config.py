@@ -63,6 +63,16 @@ NETWORK_IGNORE_PROCESSES = {p.strip().lower() for p in _env("SECDASH_NETWORK_IGN
 # --- 노출 면 판정 ---
 # 외부에 열려 있어도 정상인 포트 ("22/tcp,443/tcp" 형식). 여기 없는 포트가 외부에서 도달 가능하면 알림.
 EXPECTED_EXPOSED_PORTS = _env("SECDASH_EXPECTED_EXPOSED", "22/tcp")
+# 인터넷에 '나가면서' 임시 포트를 여는 프로그램. 이 포트는 남이 들어오는 문이 아니다.
+# 임시 포트 범위 안이고 이 목록에 있는 프로그램이 열었을 때만 '나가는 통로'로 본다
+# (범위만 보고 거르면 Tailscale 41641 같은 진짜 서비스를 놓친다).
+CLIENT_PROCESSES = {p.strip().lower() for p in _env(
+    "SECDASH_CLIENT_PROCESSES",
+    "firefox,chrome,chromium,chromium-browser,brave,brave-browser,opera,vivaldi,msedge,microsoft-edge,"
+    "thunderbird,slack,discord,telegram-desktop,signal-desktop,element-desktop,zoom,teams,skype,"
+    "electron,code,cursor,obsidian,spotify,steam,whatsapp,webexmta,jitsi",
+).split(",") if p.strip()}
+
 # 파일 권한 감시에서 추가로 훑을 디렉터리 (쉼표 구분). 기본은 /etc.
 PERMISSION_TREES = [p.strip() for p in _env("SECDASH_PERMISSION_TREES", "/etc").split(",") if p.strip()]
 # 권한 일괄 조치 스크립트. 경로를 인자로 받지 않고 스스로 재스캔하므로 API 가 임의 경로를 건드릴 수 없다.

@@ -10,6 +10,7 @@ const STATE = {
     expected: { cls: 'text-neon-green border-neon-green/60', border: '#00ff41', rank: 2 },
     firewalled: { cls: 'text-gray-400 border-gray-600', border: '#4b5563', rank: 3 },
     loopback: { cls: 'text-gray-500 border-gray-700', border: '#374151', rank: 4 },
+    client: { cls: 'text-gray-500 border-gray-700', border: '#374151', rank: 5 },
 };
 
 function FirewallLine({ fw }) {
@@ -71,7 +72,7 @@ export default function ExposurePanel() {
     const c = data.counts || {};
     const attention = (c.exposed || 0) + (c.unknown || 0);
     // 루프백은 대부분이고 조치 대상이 아니다. 기본은 접어둔다.
-    const shown = showAll ? listeners : listeners.filter(l => l.state !== 'loopback');
+    const shown = showAll ? listeners : listeners.filter(l => l.state !== 'loopback' && l.state !== 'client');
     const hidden = listeners.length - shown.length;
 
     return (
@@ -99,12 +100,12 @@ export default function ExposurePanel() {
 
             {hidden > 0 && (
                 <button onClick={() => setShowAll(true)} className="mt-2 text-xs text-gray-400 hover:text-neon-green flex items-center gap-1">
-                    루프백 전용 {hidden}개 보기 <ChevronDown className="w-3 h-3" />
+                    루프백·나가는 통로 {hidden}개 보기 <ChevronDown className="w-3 h-3" />
                 </button>
             )}
             {showAll && (
                 <button onClick={() => setShowAll(false)} className="mt-2 text-xs text-gray-400 hover:text-neon-green flex items-center gap-1">
-                    루프백 접기 <ChevronDown className="w-3 h-3 rotate-180" />
+                    접기 <ChevronDown className="w-3 h-3 rotate-180" />
                 </button>
             )}
 

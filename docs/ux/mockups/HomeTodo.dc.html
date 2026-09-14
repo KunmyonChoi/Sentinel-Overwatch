@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans KR", "Apple SD Gothic Neo", system-ui, sans-serif; word-break: keep-all; }
+    a { color: #0e7c6b; } a:hover { color: #0a5f52; }
+    .nav { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; margin-left: -12px; border-radius: 8px; text-decoration: none; font-size: 14.5px; }
+    .nav:hover { background: #e6ede9; }
+  </style>
+</helmet>
+
+<div style="width: 960px; height: 720px; box-sizing: border-box; background: #f2f5f3; color: #17221d; display: flex; flex-direction: column;">
+
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 22px 40px; border-bottom: 1px solid #d7e0db;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0e7c6b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span style="font-size: 16px; font-weight: 600; letter-spacing: -0.01em;">내 컴퓨터 지킴이</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 7px; color: #5d6c65; font-size: 13px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      <span>방금 확인했어요</span>
+    </div>
+  </div>
+
+  <div style="flex: 1; padding: 32px 40px 0;">
+
+    <!-- 상태: 살펴보세요 -->
+    <div style="display: flex; align-items: center; gap: 18px; margin-bottom: 24px;">
+      <div style="width: 52px; height: 52px; border-radius: 50%; background: #f7ecd0; display: flex; align-items: center; justify-content: center; flex: none;">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#b98a12" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+      </div>
+      <div>
+        <div style="font-size: 28px; font-weight: 600; line-height: 1.2; letter-spacing: -0.02em;">살펴보세요</div>
+        <div style="font-size: 15px; color: #5d6c65; margin-top: 3px;">손볼 일이 한 가지 있어요. 급하지는 않지만 오늘 중에 해두는 게 좋아요.</div>
+      </div>
+    </div>
+
+    <!-- 할 일 카드 -->
+    <div style="background: #ffffff; border: 1px solid #b98a12; border-radius: 12px; padding: 24px 26px;">
+      <div style="display: flex; align-items: flex-start; gap: 14px;">
+        <div style="width: 38px; height: 38px; border-radius: 9px; background: #f7ecd0; display: flex; align-items: center; justify-content: center; flex: none; margin-top: 2px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b98a12" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/></svg>
+        </div>
+        <div style="flex: 1;">
+          <div style="font-size: 19px; font-weight: 600; line-height: 1.35;">다른 사람이 고칠 수 있는 파일이 3개 있어요</div>
+          <div style="font-size: 15px; color: #5d6c65; line-height: 1.65; margin-top: 8px; max-width: 62ch;">
+            이 파일들은 컴퓨터에 로그인할 때마다 자동으로 실행돼요.
+            이 컴퓨터를 쓰는 다른 사람이 내용을 바꿔 놓으면, 내가 로그인할 때 그 사람이 넣어둔 프로그램이 내 이름으로 실행될 수 있어요.
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 10px; margin-top: 20px;">
+            <button style="height: 46px; padding: 0 22px; border: 0; border-radius: 8px; background: #0e7c6b; color: #ffffff; font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer;">잠그기</button>
+            <button style="height: 46px; padding: 0 18px; border: 1px solid #b9c6bf; border-radius: 8px; background: #ffffff; color: #17221d; font-family: inherit; font-size: 15px; cursor: pointer;">무엇이 바뀌는지 먼저 보기</button>
+            <button style="height: 46px; padding: 0 14px; border: 0; border-radius: 8px; background: transparent; color: #5d6c65; font-family: inherit; font-size: 15px; cursor: pointer;">나중에</button>
+          </div>
+        </div>
+        <div style="color: #5d6c65; font-size: 12.5px; white-space: nowrap; margin-top: 4px;">10분 전 발견</div>
+      </div>
+    </div>
+
+    <!-- 안심 정보 -->
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 26px;">
+      <div style="background: #ffffff; border: 1px solid #d7e0db; border-radius: 10px; padding: 16px 18px;">
+        <div style="color: #5d6c65; font-size: 12.5px;">밖에서 들어올 수 있는 문</div>
+        <div style="font-size: 19px; font-weight: 600; margin-top: 6px;">1개 <span style="font-size: 13px; font-weight: 400; color: #5d6c65;">· 직접 열어두신 것</span></div>
+      </div>
+      <div style="background: #ffffff; border: 1px solid #d7e0db; border-radius: 10px; padding: 16px 18px;">
+        <div style="color: #5d6c65; font-size: 12.5px;">밀린 보안 업데이트</div>
+        <div style="font-size: 19px; font-weight: 600; margin-top: 6px;">없음</div>
+      </div>
+      <div style="background: #ffffff; border: 1px solid #d7e0db; border-radius: 10px; padding: 16px 18px;">
+        <div style="color: #5d6c65; font-size: 12.5px;">이번 주에 막은 접속 시도</div>
+        <div style="font-size: 19px; font-weight: 600; margin-top: 6px;">23번 <span style="font-size: 13px; font-weight: 400; color: #5d6c65;">· 모두 실패</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; align-items: center; gap: 18px; padding: 14px 40px; border-top: 1px solid #d7e0db;">
+    <a href="#" class="nav">무슨 일이 있었는지 보기</a>
+    <a href="#" class="nav" style="color: #5d6c65;">자세히 보기</a>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

@@ -55,17 +55,41 @@ def version_lt(a: str, b: str) -> bool:
         return False
 
 
-@lru_cache(maxsize=4096)
-def package_owner(path: str) -> str | None:
-    """dpkg -S 로 파일의 소유 패키지를 찾는다. 없으면 None. (/sbin → /usr/sbin 등 merged-usr 경로 모두 시도)"""
-    if not shutil.which("dpkg-query"):
-        return None
+def merged_usr_candidates(path: str) -> list[str]:
+    """
+    dpkg 에 물어볼 경로 후보.
+
+    usr-merge 된 시스템(Ubuntu 24.04 등)에서는 /sbin 이 /usr/sbin 을 가리키는 심볼릭 링크지만,
+    dpkg 데이터베이스는 패키지를 만들 때의 경로(/sbin/...)를 그대로 들고 있다.
+    그래서 실제 파일 경로(/usr/sbin/...)로 물으면 "소유 패키지 없음"이 돌아온다.
+
+    이 판정을 틀리면 배포판이 배포한 정상 파일이 '패키지 소유가 아닌 SUID 바이너리'로 보여
+    긴급 알림이 뜬다 (실제로 libpam-tmpdir 의 pam-tmpdir-helper 가 그렇게 잘못 잡혔다).
+    그래서 링크를 따라가는 방향과 되돌리는 방향을 모두 시도한다.
+    """
     import os
-    candidates = [path]
+    out = [path]
     real = os.path.realpath(path)
     if real != path:
-        candidates.append(real)
-    for p in candidates:
+        out.append(real)                       # /sbin/x → /usr/sbin/x
+    for merged in ("/usr/bin/", "/usr/sbin/", "/usr/lib/", "/usr/lib64/"):
+        if path.startswith(merged):
+            out.append("/" + path[len("/usr/"):])   # /usr/sbin/x → /sbin/x
+            break
+    seen, uniq = set(), []
+    for p in out:
+        if p not in seen:
+            seen.add(p)
+            uniq.append(p)
+    return uniq
+
+
+@lru_cache(maxsize=4096)
+def package_owner(path: str) -> str | None:
+    """dpkg -S 로 파일의 소유 패키지를 찾는다. 없으면 None. (usr-merge 경로를 양방향으로 시도)"""
+    if not shutil.which("dpkg-query"):
+        return None
+    for p in merged_usr_candidates(path):
         try:
             proc = subprocess.run(["dpkg-query", "-S", p], capture_output=True, text=True, timeout=10)
         except Exception:

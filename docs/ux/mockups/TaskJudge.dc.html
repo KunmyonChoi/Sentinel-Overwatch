@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans KR", "Apple SD Gothic Neo", system-ui, sans-serif; word-break: keep-all; }
+    a { color: #0e7c6b; } a:hover { color: #0a5f52; }
+    .nav { display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 12px; margin-left: -12px; border-radius: 8px; text-decoration: none; color: #5d6c65; font-size: 14px; }
+    .nav:hover { background: #e6ede9; }
+  </style>
+</helmet>
+
+<div style="width: 960px; height: 760px; box-sizing: border-box; background: #f2f5f3; color: #17221d; display: flex; flex-direction: column;">
+
+  <div style="display: flex; align-items: center; gap: 12px; padding: 14px 40px; border-bottom: 1px solid #d7e0db;">
+    <a href="#" class="nav">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+      돌아가기
+    </a>
+  </div>
+
+  <div style="flex: 1; padding: 24px 40px; overflow: hidden;">
+
+    <div style="display: flex; align-items: flex-start; gap: 16px;">
+      <div style="width: 46px; height: 46px; border-radius: 50%; background: #f4ddda; display: flex; align-items: center; justify-content: center; flex: none; margin-top: 2px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#b5322a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+      </div>
+      <div>
+        <div style="font-size: 13px; font-weight: 500; color: #b5322a; letter-spacing: 0.02em;">지금 확인하세요</div>
+        <div style="font-size: 25px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.3; margin-top: 2px;">처음 보는 곳에서 로그인에 성공했어요</div>
+        <div style="font-size: 15px; color: #5d6c65; margin-top: 5px; line-height: 1.6;">
+          이건 대신 고쳐드릴 수 없어요. <b style="color: #17221d;">본인이 한 일인지</b>는 사용자만 알 수 있으니까요.
+        </div>
+      </div>
+    </div>
+
+    <!-- 사실 -->
+    <div style="margin-top: 24px; background: #ffffff; border: 1px solid #d7e0db; border-radius: 12px; padding: 20px 24px;">
+      <div style="display: grid; grid-template-columns: 96px 1fr; gap: 12px 18px; font-size: 14.5px; line-height: 1.5;">
+        <div style="color: #5d6c65;">언제</div>
+        <div>오늘 새벽 <b>3시 12분</b></div>
+        <div style="color: #5d6c65;">어디서</div>
+        <div>해외 <span style="color: #5d6c65;">· 지금까지 접속한 적 없는 곳이에요</span></div>
+        <div style="color: #5d6c65;">어떻게</div>
+        <div>이 컴퓨터에 <b>미리 등록해 둔 열쇠 파일</b>로 들어왔어요 <span style="color: #5d6c65;">· 비밀번호를 맞힌 게 아니에요</span></div>
+        <div style="color: #5d6c65;">어느 계정</div>
+        <div>내 계정</div>
+      </div>
+    </div>
+
+    <!-- 판단 -->
+    <div style="margin-top: 18px;">
+      <div style="font-size: 17px; font-weight: 600;">이때 직접 접속하셨나요?</div>
+      <div style="display: flex; align-items: center; gap: 10px; margin-top: 12px;">
+        <button style="height: 48px; padding: 0 24px; border: 1px solid #b9c6bf; border-radius: 8px; background: #ffffff; color: #17221d; font-family: inherit; font-size: 15px; cursor: pointer;">네, 제가 했어요</button>
+        <button style="height: 48px; padding: 0 24px; border: 1px solid #b5322a; border-radius: 8px; background: #ffffff; color: #b5322a; font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer;">아니요 · 모르겠어요</button>
+      </div>
+    </div>
+
+    <!-- 아니라면 -->
+    <div style="margin-top: 18px; background: #ffffff; border: 1px solid #d7e0db; border-left: 3px solid #b5322a; border-radius: 0 12px 12px 0; padding: 20px 24px;">
+      <div style="font-size: 15px; font-weight: 600; margin-bottom: 4px;">내가 한 게 아니라면, 순서대로 해주세요</div>
+      <div style="font-size: 13px; color: #5d6c65; margin-bottom: 12px;">확실하지 않으면 &lsquo;아니요&rsquo;로 보고 아래대로 하세요.</div>
+      <div style="display: grid; gap: 12px;">
+        <div style="display: flex; gap: 12px; align-items: flex-start;">
+          <div style="width: 22px; height: 22px; border-radius: 50%; background: #f2f5f3; border: 1px solid #b9c6bf; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #5d6c65; flex: none;">1</div>
+          <div style="font-size: 14.5px; line-height: 1.6;"><b>인터넷 선을 잠시 뽑으세요.</b> 무선이면 와이파이를 끄면 돼요.</div>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: flex-start;">
+          <div style="width: 22px; height: 22px; border-radius: 50%; background: #f2f5f3; border: 1px solid #b9c6bf; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #5d6c65; flex: none;">2</div>
+          <div style="font-size: 14.5px; line-height: 1.6;">다른 기기(휴대폰 등)에서 <b>이 계정의 비밀번호를 바꾸세요.</b></div>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: flex-start;">
+          <div style="width: 22px; height: 22px; border-radius: 50%; background: #f2f5f3; border: 1px solid #b9c6bf; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #5d6c65; flex: none;">3</div>
+          <div style="font-size: 14.5px; line-height: 1.6;">아래 버튼으로 기록을 저장해 두세요. 도움을 받을 때 그대로 보여주시면 돼요.</div>
+        </div>
+      </div>
+      <button style="height: 44px; padding: 0 18px; margin-top: 16px; border: 1px solid #b9c6bf; border-radius: 8px; background: #f2f5f3; color: #17221d; font-family: inherit; font-size: 14.5px; cursor: pointer;">이 일에 대한 기록 내려받기</button>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,120 +1,60 @@
-import React, { useEffect, useRef, useState } from 'react';
-import SystemHealth from './components/SystemHealth';
-import AlertFeed from './components/AlertFeed';
-import AlertsPanel from './components/AlertsPanel';
-import ThreatIntel from './components/ThreatIntel';
-import MonitorStatus from './components/MonitorStatus';
-import BlockListPanel from './components/BlockListPanel';
-import HighlightKorean from './components/HighlightKorean';
-import TokenGate from './components/TokenGate';
-import HardeningPanel from './components/HardeningPanel';
-import MaintenanceControl from './components/MaintenanceControl';
-import AccountsPanel from './components/AccountsPanel';
-import ExposurePanel from './components/ExposurePanel';
-import ConfigAuditPanel from './components/ConfigAuditPanel';
-import { api, getToken } from './api';
-import { ShieldAlert } from 'lucide-react';
+// 전환이 두 종류다. 섞으면 화면 셋이 동등해 보이므로 축을 나눠 둔다.
+//
+//   모드 (누구를 위한 화면인가)      plain 초보자 · dashboard 전문가
+//     └ ModeSwitch 로만 바뀐다. 어느 화면에서든 오른쪽 끝 같은 자리.
+//
+//   페이지 (같은 모드 안에서 어디)   초보자 모드: home · expert · task · history
+//     └ 화면 안의 이동이다. 상단 바 왼쪽(위치)과 본문 링크로 오간다.
+//
+// 'expert'(자세히 보기)는 전문가 모드가 아니라 초보자 모드의 한 페이지다.
+// 예전 패널을 담았을 뿐, 쉬운 말 설명이 붙어 있고 말투도 초보자 화면 그대로다.
+import React, { useCallback, useEffect, useState } from 'react';
+import PlainApp from './plain/PlainApp';
+import Dashboard from './Dashboard';
 
-async function loadCore() {
-  const [stats, events, alerts] = await Promise.all([
-    api('/api/stats'),
-    api('/api/events?limit=150'),
-    api('/api/alerts?status=active'),
-  ]);
-  return { stats, events, alerts };
+const MODE_KEY = 'secdash:mode';
+const PAGE_KEY = 'secdash:plain-page';
+const MODES = ['plain', 'dashboard'];
+// 기억하는 페이지는 머무는 곳뿐이다. 할 일 상세·기록은 잠깐 들르는 곳이라
+// 새로고침하면 홈으로 돌아오는 게 맞다.
+const PAGES = ['home', 'expert'];
+
+function read(key, allowed, fallback) {
+    try {
+        const v = localStorage.getItem(key);
+        return allowed.includes(v) ? v : fallback;
+    } catch {
+        return fallback;   // 저장소를 못 읽는 브라우저에서도 화면은 떠야 한다
+    }
 }
 
-function App() {
-  const [core, setCore] = useState({ stats: null, events: [], alerts: [] });
-  const [host, setHost] = useState(null);
-  const [needToken, setNeedToken] = useState(() => !getToken());
-  const [tick, setTick] = useState(0);
-  const aliveRef = useRef(true);
-
-  // 주기 갱신: 토큰이 있을 때만. 401 이면 TokenGate 표시.
-  useEffect(() => {
-    aliveRef.current = true;
-    const run = () => {
-      if (!getToken()) return;
-      loadCore()
-        .then((d) => { if (aliveRef.current) { setCore(d); setNeedToken(false); } })
-        .catch((err) => { if (err.status !== 401) console.error('refresh failed', err); });
-      setTick((t) => t + 1);
-    };
-    const onUnauthorized = () => setNeedToken(true);
-    const onToken = () => { setNeedToken(false); run(); };
-    window.addEventListener('secdash:unauthorized', onUnauthorized);
-    window.addEventListener('secdash:token-changed', onToken);
-    const t0 = setTimeout(run, 0);
-    const iv = setInterval(run, 5000);
-    return () => {
-      aliveRef.current = false;
-      clearTimeout(t0); clearInterval(iv);
-      window.removeEventListener('secdash:unauthorized', onUnauthorized);
-      window.removeEventListener('secdash:token-changed', onToken);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (needToken) return;
-    let alive = true;
-    const load = () => api('/api/host').then((h) => { if (alive) setHost(h); }).catch(() => {});
-    const t0 = setTimeout(load, 0);
-    const iv = setInterval(load, 60000);
-    return () => { alive = false; clearTimeout(t0); clearInterval(iv); };
-  }, [needToken]);
-
-  const { stats, events, alerts } = core;
-  const isDefcon1 = stats?.status === 'DEFCON 1';
-  const isDefcon3 = stats?.status === 'DEFCON 3';
-  const badge = isDefcon1 ? 'text-neon-red border-neon-red' : isDefcon3 ? 'text-yellow-400 border-yellow-400' : 'text-neon-green border-neon-green';
-  const refreshNow = () => loadCore().then(setCore).catch(() => {});
-
-  return (
-    <div className="min-h-screen cyber-grid p-6 flex flex-col gap-6">
-      {needToken && <TokenGate />}
-      <header className="flex items-center justify-between border-b border-neon-green/30 pb-4 mb-2 flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <ShieldAlert className={`w-8 h-8 ${isDefcon1 ? 'text-neon-red animate-pulse' : 'text-neon-green'}`} />
-          <div>
-            <h1 className="text-3xl font-bold tracking-widest text-neon-green neon-text">SENTINEL // OVERWATCH</h1>
-            {host && (
-              <div className="text-xs text-gray-500 font-mono mt-1">
-                {host.hostname} · v{host.version} · {host.os} · 실행 계정 {host.running_as?.user || host.running_as?.uid}{host.running_as?.root ? ' (root)' : ''}
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-4 text-sm">
-          <MaintenanceControl maintenance={stats?.maintenance} onChanged={refreshNow} />
-          {stats && (
-            <span className={`px-3 py-1 border rounded font-bold tracking-wider ${badge} ${isDefcon1 ? 'animate-pulse' : ''}`}>
-              {stats.status} · {stats.status_ko}
-            </span>
-          )}
-          <span className="text-neon-green/70 font-mono">{new Date().toLocaleTimeString('ko-KR', { hour12: false })}</span>
-        </div>
-      </header>
-
-      <main className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
-        <section className="lg:col-span-1 flex flex-col gap-6 overflow-y-auto pr-2 scrollbar-hide">
-          <HighlightKorean />
-          <SystemHealth stats={stats} host={host} />
-          <MonitorStatus />
-          <ExposurePanel />
-          <ConfigAuditPanel />
-          <AccountsPanel />
-          <HardeningPanel />
-          <ThreatIntel />
-        </section>
-        <section className="lg:col-span-2 flex flex-col min-h-[500px] gap-4">
-          <AlertsPanel alerts={alerts} onChanged={refreshNow} />
-          <BlockListPanel tick={tick} />
-          <AlertFeed events={events} />
-        </section>
-      </main>
-    </div>
-  );
+function write(key, value) {
+    try { localStorage.setItem(key, value); } catch { /* 기억만 못 할 뿐 전환은 된다 */ }
 }
 
-export default App;
+export default function App() {
+    const [mode, setMode] = useState(() => read(MODE_KEY, MODES, 'plain'));
+    const [page, setPage] = useState(() => read(PAGE_KEY, PAGES, 'home'));
+
+    const goMode = useCallback((next) => {
+        if (!MODES.includes(next)) return;
+        setMode(next);
+        write(MODE_KEY, next);
+    }, []);
+
+    // 초보자 모드 안에서 머무는 페이지가 바뀌면 기억한다. 전문가 화면에 다녀와도
+    // 보던 자리로 돌아온다.
+    const goPage = useCallback((next) => {
+        if (!PAGES.includes(next)) return;
+        setPage(next);
+        write(PAGE_KEY, next);
+    }, []);
+
+    // 탭 제목도 모드를 따라간다 — 여러 탭을 띄워두는 사람이 구분할 수 있어야 한다.
+    useEffect(() => {
+        document.title = mode === 'dashboard' ? 'Sentinel Overwatch' : '내 컴퓨터 지킴이';
+    }, [mode]);
+
+    if (mode === 'dashboard') return <Dashboard onMode={goMode} />;
+    return <PlainApp page={page} onPage={goPage} onMode={goMode} />;
+}

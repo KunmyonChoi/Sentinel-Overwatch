@@ -7,7 +7,25 @@
   --color-neon-red: #ff0033;
   --color-neon-blue: #00f3ff;
 
+  /* 비전문가용 화면. 저장소의 문서(docs/coverage.html)가 쓰는 팔레트를 그대로 가져온다.
+     네온은 전문가 화면 안에만 남는다 — 두 시각 언어가 두 사용자층에 대응한다. */
+  --color-calm-bg: #f2f5f3;
+  --color-calm-panel: #ffffff;
+  --color-calm-panel2: #e6ede9;
+  --color-calm-ink: #17221d;
+  --color-calm-muted: #5d6c65;
+  --color-calm-line: #d7e0db;
+  --color-calm-line2: #b9c6bf;
+  --color-calm-accent: #0e7c6b;
+  --color-calm-accent2: #0a5f52;
+  --color-calm-accent-soft: #d5ece6;
+  --color-calm-warn: #b98a12;
+  --color-calm-warn-soft: #f7ecd0;
+  --color-calm-crit: #b5322a;
+  --color-calm-crit-soft: #f4ddda;
+
   --font-mono: "Fira Code", monospace;
+  --font-kr: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
 }
 
 @layer base {

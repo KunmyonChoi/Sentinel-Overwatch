@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans KR", "Apple SD Gothic Neo", system-ui, sans-serif; word-break: keep-all; }
+    a { color: #0e7c6b; } a:hover { color: #0a5f52; }
+    .nav { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; margin-left: -12px; border-radius: 8px; text-decoration: none; font-size: 14.5px; }
+    .nav:hover { background: #e6ede9; }
+  </style>
+</helmet>
+
+<div style="width: 960px; height: 720px; box-sizing: border-box; background: #f2f5f3; color: #17221d; display: flex; flex-direction: column; overflow: hidden;">
+
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 22px 40px; border-bottom: 1px solid #d7e0db;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0e7c6b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span style="font-size: 16px; font-weight: 600; letter-spacing: -0.01em;">내 컴퓨터 지킴이</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 7px; color: #5d6c65; font-size: 13px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      <span>2분 전에 확인했어요</span>
+    </div>
+  </div>
+
+  <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 0 40px;">
+
+    <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 14px;">
+      <div style="width: 64px; height: 64px; border-radius: 50%; background: #d5ece6; display: flex; align-items: center; justify-content: center; flex: none;">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#0e7c6b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+      <div>
+        <div style="font-size: 34px; font-weight: 600; line-height: 1.2; letter-spacing: -0.02em;">이상 없음</div>
+        <div style="font-size: 16px; color: #5d6c65; margin-top: 4px;">지금 손볼 일이 없어요. 이 창을 닫으셔도 돼요.</div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 38px;">
+
+      <div style="background: #ffffff; border: 1px solid #d7e0db; border-radius: 10px; padding: 20px;">
+        <div style="display: flex; align-items: center; gap: 8px; color: #5d6c65; font-size: 13px; margin-bottom: 12px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h8"/><path d="M14 3l5 2v14l-5 2z"/><circle cx="16" cy="12" r="0.9" fill="currentColor" stroke="none"/></svg>
+          <span>밖에서 들어올 수 있는 문</span>
+        </div>
+        <div style="font-size: 26px; font-weight: 600; line-height: 1;">1개</div>
+        <div style="font-size: 13px; color: #5d6c65; margin-top: 8px; line-height: 1.5;">멀리서 접속할 때 쓰는 문이에요.<br>직접 열어두신 것이에요.</div>
+      </div>
+
+      <div style="background: #ffffff; border: 1px solid #d7e0db; border-radius: 10px; padding: 20px;">
+        <div style="display: flex; align-items: center; gap: 8px; color: #5d6c65; font-size: 13px; margin-bottom: 12px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11"/><path d="m7.5 9.5 4.5 4.5 4.5-4.5"/><path d="M5 20h14"/></svg>
+          <span>밀린 보안 업데이트</span>
+        </div>
+        <div style="font-size: 26px; font-weight: 600; line-height: 1;">없음</div>
+        <div style="font-size: 13px; color: #5d6c65; margin-top: 8px; line-height: 1.5;">오늘 아침에 12개가<br>자동으로 설치됐어요.</div>
+      </div>
+
+      <div style="background: #ffffff; border: 1px solid #d7e0db; border-radius: 10px; padding: 20px;">
+        <div style="display: flex; align-items: center; gap: 8px; color: #5d6c65; font-size: 13px; margin-bottom: 12px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12h6"/></svg>
+          <span>이번 주에 막은 접속 시도</span>
+        </div>
+        <div style="font-size: 26px; font-weight: 600; line-height: 1;">23번</div>
+        <div style="font-size: 13px; color: #5d6c65; margin-top: 8px; line-height: 1.5;">모두 들어오지 못했어요.<br>따로 하실 일은 없어요.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="display: flex; align-items: center; gap: 18px; padding: 14px 40px; border-top: 1px solid #d7e0db;">
+    <a href="#" class="nav">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 3.5-4 3 3L18 8"/></svg>
+      무슨 일이 있었는지 보기
+    </a>
+    <a href="#" class="nav" style="color: #5d6c65;">자세히 보기</a>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

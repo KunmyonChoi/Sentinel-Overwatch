@@ -256,6 +256,77 @@ class MaintenanceBody(BaseModel):
     by: str = "dashboard"
 
 
+class RespondBody(BaseModel):
+    ids: list[int]
+    answer: str                # mine | not_me | unsure
+    by: str = "사용자"
+    note: str = ""
+
+
+_ANSWER_KO = {
+    "mine": "내가 한 일이 맞다",
+    "not_me": "내가 한 일이 아니다",
+    "unsure": "잘 모르겠다",
+    "fixed": "조치를 마쳤다",
+}
+
+
+@app.post("/api/alerts/respond")
+def respond_alerts(body: RespondBody, db: Session = Depends(get_db)):
+    """
+    쉬운 화면에서 사용자가 '내가 한 일인지' 답한 것을 기록한다.
+
+      mine    내가 했다     → 확인(ACK). 목록과 DEFCON 에서 빠진다.
+      not_me  내가 안 했다  → 열어둔 채 긴급으로 올린다. 본인의 증언이 가장 강한 신호다.
+      unsure  잘 모르겠다   → 열어둔 채 '확인 중'으로 표시만 한다. 억지로 판단하게 하지 않는다.
+      fixed   조치를 마쳤다 → 해결(RESOLVE). 확인이 아니라 실제로 끝냈다는 뜻이다.
+                             (전문가 화면의 '해결'과 같은 상태가 된다)
+
+    어느 쪽이든 답한 사실 자체를 이벤트로 남긴다. 나중에 도움을 받을 때 근거가 되고,
+    '보고도 판단을 미룬 것'과 '아예 열어보지 않은 것'을 구분할 수 있게 된다.
+    """
+    if body.answer not in _ANSWER_KO:
+        raise HTTPException(400, f"answer 는 {', '.join(_ANSWER_KO)} 중 하나여야 합니다")
+    rows = db.query(Alert).filter(Alert.id.in_(body.ids or [])).all()
+    if not rows:
+        raise HTTPException(404, "해당 알림을 찾을 수 없습니다")
+
+    now = utcnow()
+    for a in rows:
+        d = a.details_dict()
+        d.update({"user_response": body.answer, "user_response_at": now.isoformat(), "user_response_by": body.by})
+        if body.note:
+            d["user_note"] = body.note
+        a.details = json.dumps(d, ensure_ascii=False)
+        if body.answer == "fixed":
+            a.status, a.resolved_at, a.resolved_by = "RESOLVED", now, body.by
+            a.resolution_note = body.note or "사용자가 조치를 마침"
+        elif body.answer == "mine":
+            a.status, a.acked_at, a.acked_by = "ACKED", now, body.by
+            a.resolution_note = body.note or "사용자가 본인이 한 일이라고 확인"
+        elif body.answer == "not_me":
+            a.status = "OPEN"
+            a.severity = "CRITICAL"          # 본인이 아니라고 했다면 가장 강한 신호다
+        else:
+            a.status = "OPEN"                # 판단을 미룬 것도 열어둔 상태다 (숨기지 않는다)
+    db.commit()
+
+    first = rows[0]
+    d = {"answer": body.answer, "answer_ko": _ANSWER_KO[body.answer], "rule": first.rule,
+         "count": len(rows), "by": body.by,
+         "message_ko": f"사용자가 '{first.title_ko or first.title}'에 대해 "
+                       f"'{_ANSWER_KO[body.answer]}'라고 답했어요"
+                       + (f" ({len(rows)}건)" if len(rows) > 1 else "")}
+    db.add(Event(
+        event_type="USER_RESPONSE",
+        severity="WARNING" if body.answer == "not_me" else "INFO",
+        source="사용자", description=f"user answered '{body.answer}' for {first.rule} ({len(rows)} alert(s))",
+        description_ko=d["message_ko"], details=json.dumps(d, ensure_ascii=False),
+    ))
+    db.commit()
+    return {"updated": len(rows), "answer": body.answer, "escalated": body.answer == "not_me"}
+
+
 @app.get("/api/maintenance")
 def get_maintenance(db: Session = Depends(get_db)):
     return alert_engine.maintenance_payload(alert_engine.active_maintenance(db, force=True))
@@ -364,6 +435,15 @@ def get_monitors():
     return out
 
 
+def _euid_name() -> str:
+    """실행 계정 이름. USER 환경변수는 systemd 아래에서 비어 있을 수 있어 uid 로 푼다."""
+    try:
+        import pwd
+        return pwd.getpwuid(os.geteuid()).pw_name
+    except Exception:
+        return os.environ.get("USER", "")
+
+
 @app.get("/api/host")
 def get_host():
     def readable(p):
@@ -382,7 +462,15 @@ def get_host():
         "kernel": platform.release(),
         "uptime_hours": round((time.time() - psutil.boot_time()) / 3600, 1),
         "dashboard_started_at": _started_at.isoformat(),
-        "running_as": {"uid": os.geteuid(), "user": os.environ.get("USER", ""), "root": os.geteuid() == 0},
+        "running_as": {"uid": os.geteuid(), "user": _euid_name(), "root": os.geteuid() == 0},
+        # 개발 인스턴스와 운영 서비스를 화면에서 구별하기 위한 것.
+        # systemd 가 띄운 프로세스에만 INVOCATION_ID 가 있다 — 계정 이름이나 포트를
+        # 하드코딩해 맞히는 것보다 정확하다.
+        "instance": {
+            "mode": "service" if os.environ.get("INVOCATION_ID") else "dev",
+            "port": config.PORT,
+            "user": _euid_name(),
+        },
         "privileges": {
             "auth_log_readable": readable(config.AUTH_LOG_PATH),
             "shadow_readable": readable("/etc/shadow"),
@@ -391,6 +479,9 @@ def get_host():
             "fail2ban_hint": hint,
         },
         "pending_updates": getattr(upd, "pending", {}),
+        # '밀린 업데이트 없음'만으로는 절반만 말하는 것이다. 적용해 두고 재부팅을
+        # 안 했으면 남은 할 일이 있는데도 화면은 '없음'이라고 답한다.
+        "reboot": getattr(upd, "reboot", {}),
         "usb_storage": kmod.usb_storage_status(),
         "blocked_modules": kmod.blocked_modules(),
         "firewall": getattr(monitor_registry.get("ExposureMonitor", {}).get("instance"), "fw", {"available": False}),
