@@ -744,24 +744,23 @@ def feat_maint():
     beat(3)
     el(830, 236, 940, 40, "그래서 작업 전에 창을 선언한다", size=26, weight=700, color=ACCENT)
     el(830, 288, 420, 210, "", bg=CARD, radius=16, border=f"2px solid {ACCENT}")
-    el(178, 328, 464, 40, "점검 모드 선언", size=30, weight=700, color=ACCENT)
-    el(178, 386, 464, 40, "45분", size=44, weight=700)
-    el(178, 448, 464, 76, "메모: 커널 업데이트와 재부팅<br>선언: kunmyon", size=22,
-       color=MUTED, lh=1.6)
-    el(700, 400, 70, 46, "→", size=32, color=LINE2, align="center")
+    el(854, 310, 372, 40, "점검 모드 선언", size=28, weight=700, color=ACCENT)
+    el(854, 360, 372, 50, "45분", size=42, weight=700)
+    # 선언자는 '관리자'로 둔다. 공개 저장소에 올라가는 목업이라 실제 계정 이름을 쓰지 않는다.
+    el(854, 422, 372, 64, "메모: 커널 업데이트와 재부팅<br>선언: 관리자", size=21,
+       color=MUTED, lh=1.55)
     beat(4)
-    el(800, 300, 970, 110, "", bg=ACC_SOFT, radius=14, border=f"1.5px solid {ACCENT}")
-    el(826, 318, 918, 38, "계획된 변경 → 처음부터 '확인함'", size=27, weight=700, color=ACCENT)
-    el(826, 358, 918, 34, "파일 변경 · 자동 실행 지점 · 새 포트 · 패키지 · Lynis · 리소스",
-       size=20, color=MUTED)
-    el(800, 430, 970, 40, "Slack 안 감 · 위험 단계 안 올라감 · 근거는 그대로 남음",
-       size=23, color=MUTED)
+    el(1290, 288, 480, 150, "", bg=ACC_SOFT, radius=14, border=f"1.5px solid {ACCENT}")
+    el(1312, 306, 436, 38, "계획된 변경 → '확인함'", size=25, weight=700, color=ACCENT)
+    el(1312, 346, 436, 56, "파일 변경 · 자동 실행 지점 · 새 포트<br>패키지 · Lynis · 리소스",
+       size=19, color=MUTED, lh=1.5)
+    el(1312, 404, 436, 28, "Slack 안 감 · 위험 단계 안 올라감", size=18, color=ACCENT)
     beat(5)
-    el(800, 500, 970, 110, "", bg=CARD, radius=14, border=f"2px solid {CRIT}")
-    el(826, 518, 918, 38, "침입 신호 → 언제나 '열림'", size=27, weight=700, color=CRIT)
-    el(826, 558, 918, 34, "브루트포스 · 실패 후 로그인 성공 · 리버스 셸 · 계정 변경",
-       size=20, color=MUTED)
-    el(800, 630, 970, 40, "점검 모드와 무관하다", size=23, color=CRIT)
+    el(1290, 458, 480, 150, "", bg=CARD, radius=14, border=f"2px solid {CRIT}")
+    el(1312, 476, 436, 38, "침입 신호 → 언제나 '열림'", size=25, weight=700, color=CRIT)
+    el(1312, 516, 436, 56, "브루트포스 · 실패 후 로그인 성공<br>리버스 셸 · 계정 변경",
+       size=19, color=MUTED, lh=1.5)
+    el(1312, 574, 436, 28, "점검 모드와 무관하다", size=18, color=CRIT)
     beat(5)
     el(150, 700, 1620, 44, "근거는 남는다. 조용해지는 것은 알림뿐이다.",
        size=28, weight=700, align="center")
