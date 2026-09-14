@@ -202,3 +202,40 @@ def test_blind_spot_is_not_silenced_by_maintenance_mode(db, tmp_path):
     db.expire_all()
     spot = db.query(Alert).filter(Alert.rule == "monitor_blind_spot").one()
     assert spot.status == "OPEN"      # 점검 모드여도 자동 확인되지 않는다
+
+
+def test_locked_glob_dir_is_reported_not_silently_empty(db, tmp_path, monkeypatch):
+    """읽지 못하는 폴더는 '비어 있음'이 아니다.
+
+    glob 은 권한이 막힌 디렉터리를 빈 결과로 돌려준다. 그러면 그 안에 새로 생기는
+    파일은 영영 발견되지 않는다 — /etc/sudoers.d 가 그런 자리다. 이미 아는 파일은
+    계속 감시되니 화면상 아무 문제가 없어 보이는 것이 이 결함의 고약한 점이다.
+    """
+    if os.geteuid() == 0:
+        pytest.skip("root 는 권한 검사를 우회한다")
+    from monitor import integrity as I
+
+    dropins = tmp_path / "sudoers.d"
+    dropins.mkdir()
+    (dropins / "10-known").write_text("alice ALL=(ALL) NOPASSWD: /bin/true\n")
+    # 호스트의 실제 감시 대상(/root/.ssh 등)이 섞이지 않게 목록을 통째로 바꾼다
+    monkeypatch.setattr(I, "WATCH_FILES", {})
+    monkeypatch.setattr(I, "WATCH_GLOBS", {
+        str(dropins / "*"): ("CRITICAL", False, I.summarize_sudoers, "테스트 드롭인")})
+
+    files, denied = I._expand_watch()
+    assert str(dropins / "10-known") in files
+    assert not denied
+
+    os.chmod(dropins, 0o000)
+    try:
+        files, denied = I._expand_watch()
+        assert str(dropins) in denied          # 조용히 비우지 않는다
+        m = IntegrityMonitor(watch=None)
+        m.setup()
+        db.expire_all()
+        spot = db.query(Alert).filter(Alert.rule == "monitor_blind_spot").one()
+        assert spot.status == "OPEN" and str(dropins) in spot.evidence
+        assert m.health == "degraded"
+    finally:
+        os.chmod(dropins, 0o755)

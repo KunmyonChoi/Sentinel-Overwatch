@@ -144,16 +144,35 @@ WATCH_GLOBS = {
 }
 
 
-def _expand_watch() -> dict[str, tuple]:
+def _expand_watch() -> tuple[dict[str, tuple], set[str]]:
+    """(감시할 파일, 읽지 못한 상위 디렉터리).
+
+    glob 은 읽지 못하는 디렉터리를 '비어 있음'으로 돌려준다. list_files 가 가졌던
+    것과 같은 결함이고, 여기서는 더 위험하다 — /etc/sudoers.d 가 잠기면 이미 아는
+    파일은 계속 감시되지만 **새로 생긴 드롭인은 영영 발견되지 않는다.** 침입자가
+    권한을 잠그고 규칙을 심으면 그대로 통과한다. 그래서 읽지 못한 디렉터리를
+    따로 돌려준다.
+    """
     files = dict(WATCH_FILES)
+    denied: set[str] = set()
     for pattern, spec in WATCH_GLOBS.items():
+        parent = os.path.dirname(pattern)
+        if "*" not in parent:
+            # os.access 로 묻지 않는다. 그건 실제 uid 만 보고 capability 를 반영하지
+            # 않아서, CAP_DAC_READ_SEARCH 로 잘 읽고 있는 디렉터리를 못 읽는다고
+            # 보고한다. 읽을 수 있는지는 읽어봐야 안다.
+            _, d = list_files([parent])
+            denied |= d
         for p in glob.glob(pattern):
             if os.path.basename(p) == "README":
                 continue
             files.setdefault(p, spec)
-    home_keys = str(Path.home() / ".ssh" / "authorized_keys")
-    files.setdefault(home_keys, WATCH_GLOBS["/home/*/.ssh/authorized_keys"])
-    return files
+    # 서비스 계정의 홈이 /home 밖(예: /var/lib/secdash)이면 위 glob 에 안 걸린다.
+    # 목록에 그 패턴이 없을 수도 있으므로 키를 하드코딩해 꺼내지 않는다 — 없으면 건너뛴다.
+    home_spec = WATCH_GLOBS.get("/home/*/.ssh/authorized_keys")
+    if home_spec:
+        files.setdefault(str(Path.home() / ".ssh" / "authorized_keys"), home_spec)
+    return files, denied
 
 
 class _BaselineStore:
@@ -191,11 +210,14 @@ class IntegrityMonitor(BaseMonitor):
 
     def __init__(self, interval: int | None = None, watch: dict | None = None):
         super().__init__(interval)
-        self.watch = watch if watch is not None else _expand_watch()
+        if watch is not None:
+            self.watch, self.blind_dirs = watch, set()
+        else:
+            self.watch, self.blind_dirs = _expand_watch()
         self.source = f"sha256 of {len(self.watch)} files"
         self.store = _BaselineStore("file")
         self.baselines: dict[str, tuple[str | None, str | None]] = {}
-        self.unreadable: set[str] = set()
+        self.unreadable: set[str] = set()   # 있는데 내용을 못 읽는 파일
 
     def setup(self):
         self.baselines = self.store.load()
@@ -219,17 +241,43 @@ class IntegrityMonitor(BaseMonitor):
         self._update_health()
 
     def _update_health(self):
-        if self.unreadable:
-            names = ", ".join(sorted(self.unreadable))
-            self.set_health("degraded", f"읽을 수 없어 감시하지 못하는 파일: {names}",
-                            "deploy/secdash.service 처럼 CAP_DAC_READ_SEARCH 를 부여하거나 서비스 계정을 shadow 그룹에 추가하세요.")
-        else:
+        """읽지 못하는 자리를 health 와 알림 양쪽에 올린다.
+
+        파일을 못 읽는 것과 디렉터리를 못 읽는 것은 무게가 다르다. 파일은 그 파일
+        하나를 감시하지 못하는 것이지만, 디렉터리는 **그 안에 새로 생기는 것을
+        영영 발견하지 못한다**. /etc/sudoers.d 가 그런 자리다.
+        """
+        spots = sorted(self.blind_dirs) + sorted(self.unreadable)
+        fp = "monitor_blind_spot:integrity"
+        if not spots:
             self.set_health("ok")
+            auto_resolve(fp, "다시 읽을 수 있게 되어 자동 해결")
+            return
+        self.set_health("degraded", f"읽지 못해 감시하지 못하는 곳 {len(spots)}곳 (예: {spots[0]})",
+                        "CAP_DAC_READ_SEARCH 를 부여하거나(deploy/secdash.service) 권한을 되돌리세요.")
+        if not self.blind_dirs:
+            return      # 파일 하나를 못 읽는 것은 health 로 충분하다
+        d = {"denied_dirs": sorted(self.blind_dirs), "unreadable_files": sorted(self.unreadable),
+             "count": len(spots)}
+        raise_alert(
+            "monitor_blind_spot", "WARNING",
+            f"integrity watch blind spot: {len(self.blind_dirs)} dir(s)",
+            fingerprint=fp,
+            title_ko=f"설정 파일을 감시하지 못하는 폴더가 {len(self.blind_dirs)}곳 있습니다",
+            summary_ko="권한이 없어 폴더를 읽지 못했습니다. 그 안에 규칙이나 키가 새로 생겨도 "
+                       "지킴이가 발견하지 못합니다 — '이상 없음'이 아니라 '모름'입니다.",
+            action_ko="권한을 누가 언제 바꿨는지 `ls -ld` 와 auth.log 로 확인하세요. "
+                      "직접 바꾼 것이 아니라면 침입 신호일 수 있습니다.",
+            evidence="읽지 못한 폴더:\n" + "\n".join(f"  {p}" for p in sorted(self.blind_dirs))
+                     + "\n\n" + recent_admin_context(),
+            details=d,
+        )
 
     def tick(self):
         # 새로 생긴 홈 디렉터리의 authorized_keys 등 glob 대상 갱신
         if self.watch is not None and any(k.startswith("/home/") for k in self.watch):
-            for p, spec in _expand_watch().items():
+            found, self.blind_dirs = _expand_watch()
+            for p, spec in found.items():
                 if p not in self.watch:
                     self.watch[p] = spec
         for path, spec in list(self.watch.items()):
