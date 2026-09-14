@@ -80,3 +80,4 @@ docs/video/*/node_modules/
 docs/video/*/.snap/
 docs/video/*/snapshots/
 docs/video/*/renders/
+docs/video/*/.thumbnails/
