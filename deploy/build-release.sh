@@ -20,7 +20,8 @@ OUT="$ROOT/dist-release"
 STAGE="$OUT/$NAME"
 
 echo ">> 1/4 frontend build"
-(cd "$ROOT/frontend" && rm -f .env.local && npm ci --silent && npm run build --silent)
+# 개발 토큰이 화면에 박히지 않게: start.sh 가 쓴 .env.local 도, 셸에 남은 VITE_API_TOKEN 도 쓰지 않는다
+(cd "$ROOT/frontend" && rm -f .env.local && npm ci --silent && VITE_API_TOKEN= npm run build --silent)
 
 echo ">> 2/4 staging $NAME ($COMMIT)"
 rm -rf "$STAGE" && mkdir -p "$STAGE/frontend"
