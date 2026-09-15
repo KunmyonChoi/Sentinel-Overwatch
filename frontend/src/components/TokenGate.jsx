@@ -15,7 +15,8 @@ export default function TokenGate() {
                 </h2>
                 <p className="text-gray-400 text-sm mb-3" style={{ wordBreak: 'keep-all' }}>
                     대시보드 API 는 토큰으로 보호됩니다. 서버의 <code className="text-gray-200">backend/.api_token</code> 파일 내용
-                    (또는 <code className="text-gray-200">SECDASH_API_TOKEN</code>)을 입력하세요. 이 브라우저에만 저장됩니다.
+                    (또는 <code className="text-gray-200">SECDASH_API_TOKEN</code>)을 입력하세요.
+                    {window.__TAURI__ ? ' 이 컴퓨터의 OS 키링에 저장됩니다.' : ' 이 브라우저에만 저장됩니다.'}
                 </p>
                 <input
                     autoFocus
