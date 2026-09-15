@@ -2,6 +2,7 @@
 # 시뮬레이션 흔적 정리: 테스트 로그 비우기, 시뮬레이션 이벤트/알림 삭제, 더미 프로세스 종료
 cd "$(dirname "$0")"
 [ -f backend/test_auth.log ] && : > backend/test_auth.log && echo "✓ cleared backend/test_auth.log"
+[ -f backend/test_ufw.log ] && : > backend/test_ufw.log && echo "✓ cleared backend/test_ufw.log"
 pkill -f "_sim [0-9]+" 2>/dev/null; rm -f ./*_sim; echo "✓ killed simulation processes"
 if [ -f backend/security_monitor.db ]; then
     (cd backend && venv/bin/python - <<'PY'

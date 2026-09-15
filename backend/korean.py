@@ -20,6 +20,8 @@ EVENT_TYPE_KO = {
     "NETWORK_LISTENER": "리스닝 포트",
     "NETWORK_CONN": "외부 연결",
     "PORT_SCAN": "포트 스캔 의심",
+    "FIREWALL_SCAN": "포트 스캔 (방화벽이 막음)",
+    "FIREWALL_DAILY": "방화벽 차단 하루 요약",
     "PORT_EXPOSURE": "포트 노출 상태",
     "PORT_CLOSED": "리스닝 포트 닫힘",
     "FILE_PERMISSION": "파일 권한",
@@ -108,6 +110,21 @@ def event_ko(event_type: str, d: dict | None = None) -> str:
         return f"{proc} 이(가) 외부 {d.get('ip', '?')}:{d.get('port', '?')} 에 연결"
     if t == "PORT_SCAN":
         return f"{d.get('ip', '?')} 이(가) 서비스 포트 {d.get('port_count', '?')}개에 접촉 (포트 스캔 의심, 신뢰도 낮음)"
+    if t == "FIREWALL_SCAN":
+        where = "내부망 주소 " if d.get("internal") else ""
+        return (f"{where}{d.get('ip', '?')} 이(가) {d.get('window_sec', '?')}초 안에 방화벽이 막은 포트 "
+                f"{d.get('port_count', '?')}개 이상에 접속 시도 (포트 스캔, 모두 차단됨, 숫자는 최소치)")
+    if t == "FIREWALL_DAILY":
+        text = (f"{d.get('date', '?')} 방화벽 차단 요약: 막은 기록 {d.get('total_blocked', 0)}건, "
+                f"스캔한 IP {d.get('scanning_ips', 0)}개")
+        top = d.get("top_sources") or []
+        if top:
+            text += f", 가장 많이 두드린 곳 {top[0].get('ip', '?')} ({top[0].get('packets', 0)}건)"
+        if d.get("partial"):
+            text += " — 대시보드가 켜진 뒤부터만 셌음"
+        if d.get("log_unavailable"):
+            text += " — 로그를 읽지 못한 시간이 있음"
+        return text + " (숫자는 최소치)"
     if t in ("PORT_EXPOSURE", "PORT_CLOSED", "CONTAINER_CONFIG", "USER_RESPONSE"):
         return d.get("message_ko") or ""
     if t == "FILE_PERMISSION":

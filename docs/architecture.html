@@ -148,7 +148,7 @@
     </div>
     <figure>
       <div class="frame">
-        <svg viewBox="0 0 1130 816" role="img" aria-label="호스트 진실 원천이 열네 개 모니터를 거쳐 이벤트 버스로 모이고, 사실은 SQLite 에, 판단은 알림 엔진에 저장되며, 알림 엔진과 DEFCON 감시가 속도 제한된 알림 큐를 통해 Slack 으로 나가고, 토큰으로 보호된 API 가 브라우저 대시보드와 데스크톱 앱에 데이터를 준다. 인터넷 밖으로 나가는 것은 Ubuntu USN 과 뉴스 피드 읽기, 뉴스 제목 번역, Slack 웹훅뿐이다.">
+        <svg viewBox="0 0 1130 816" role="img" aria-label="호스트 진실 원천(인증·방화벽 차단·audit 로그 등)이 열다섯 개 모니터를 거쳐 이벤트 버스로 모이고, 사실은 SQLite 에, 판단은 알림 엔진에 저장되며, 알림 엔진과 DEFCON 감시가 속도 제한된 알림 큐를 통해 Slack 으로 나가고, 토큰으로 보호된 API 가 브라우저 대시보드와 데스크톱 앱에 데이터를 준다. 인터넷 밖으로 나가는 것은 Ubuntu USN 과 뉴스 피드 읽기, 뉴스 제목 번역, Slack 웹훅뿐이다.">
           <defs>
             <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
               <polygon points="0,0 10,5 0,10" fill="currentColor"></polygon>
@@ -163,8 +163,9 @@
 
           <!-- Layer 1: sources -->
           <rect x="24" y="56" width="170" height="62" rx="4" class="box"></rect>
-          <text x="109" y="80" text-anchor="middle" class="t mono">auth.log · audit.log</text>
-          <text x="109" y="98" text-anchor="middle" class="d">rsyslog · auditd (execve, 파일 쓰기)</text>
+          <text x="109" y="77" text-anchor="middle" class="t mono">auth.log · audit.log</text>
+          <text x="109" y="93" text-anchor="middle" class="d mono">ufw.log (방화벽이 막은 패킷)</text>
+          <text x="109" y="108" text-anchor="middle" class="d">rsyslog · auditd (execve, 파일 쓰기)</text>
 
           <rect x="208" y="56" width="170" height="62" rx="4" class="box"></rect>
           <text x="293" y="80" text-anchor="middle" class="t mono">dpkg.log · apt</text>
@@ -210,9 +211,10 @@
 
           <!-- Layer 2: monitors -->
           <rect x="24" y="206" width="170" height="66" rx="4" class="box-mon"></rect>
-          <text x="109" y="228" text-anchor="middle" class="t">AuthLog · Audit</text>
-          <text x="109" y="244" text-anchor="middle" class="d">실패 창 집계 · 실패 후 성공 · 새 IP</text>
-          <text x="109" y="258" text-anchor="middle" class="d">execve 즉시 탐지 · 누가 썼나</text>
+          <text x="109" y="225" text-anchor="middle" class="t">Auth · Firewall · Audit</text>
+          <text x="109" y="239" text-anchor="middle" class="d">실패 창 집계 · 실패 후 성공 · 새 IP</text>
+          <text x="109" y="252" text-anchor="middle" class="d">막힌 포트 스캔 → 뒤이은 행동만 경고</text>
+          <text x="109" y="265" text-anchor="middle" class="d">execve 즉시 탐지 · 누가 썼나</text>
 
           <rect x="208" y="206" width="170" height="66" rx="4" class="box-mon"></rect>
           <text x="293" y="228" text-anchor="middle" class="t">UpdateMonitor</text>
@@ -248,7 +250,7 @@
           <line x1="845" y1="272" x2="845" y2="308" class="edge"></line>
           <line x1="1029" y1="272" x2="1029" y2="308" class="edge"></line>
           <line x1="60" y1="308" x2="1080" y2="308" class="bus"></line>
-          <text x="60" y="326" class="lbl">14개 모니터 (방화벽 노출·파일 권한·컨테이너 설정 점검 포함): health(ok/degraded/down) 노출 · 사실은 log_event, 판단은 raise_alert · 패키지 부산물·mask·snap 은 사실로만</text>
+          <text x="60" y="326" class="lbl">15개 모니터 (방화벽 노출·파일 권한·컨테이너 설정 점검 포함): health(ok/degraded/down) 노출 · 사실은 log_event, 판단은 raise_alert · 패키지 부산물·mask·snap 은 사실로만</text>
 
           <!-- bus → layer 3 -->
           <line x1="272" y1="308" x2="272" y2="356" class="edge" marker-end="url(#ah)"></line>
@@ -348,7 +350,7 @@
           <text x="560" y="772" class="d">auth.log 줄, sudo 명령, 패키지 목록은 나가지 않는다.</text>
         </svg>
       </div>
-      <figcaption>데이터는 위에서 아래로만 흐른다. 호스트 데몬과 로그(1층)를 열네 모니터가 읽고(2층), 사실은 SQLite 에, 판단은 알림 엔진에 쌓인다(3층). API 는 저장소만 읽고 쓰며(4층), 브라우저와 데스크톱 앱은 API 만 본다(5층). 점선 상자만이 인터넷 경계를 넘는다.</figcaption>
+      <figcaption>데이터는 위에서 아래로만 흐른다. 호스트 데몬과 로그(1층)를 열다섯 모니터가 읽고(2층), 사실은 SQLite 에, 판단은 알림 엔진에 쌓인다(3층). API 는 저장소만 읽고 쓰며(4층), 브라우저와 데스크톱 앱은 API 만 본다(5층). 점선 상자만이 인터넷 경계를 넘는다.</figcaption>
     </figure>
   </section>
 
@@ -487,7 +489,7 @@
     <section>
       <h2>4. 왜 이 구조인가</h2>
       <ul class="rules">
-        <li><strong>진실 원천은 하나씩.</strong> 차단은 fail2ban, 인증은 auth.log, 패키지는 dpkg, 취약점은 USN. 대시보드는 그 관찰을 해석할 뿐 두 번째 사실을 만들지 않는다.</li>
+        <li><strong>진실 원천은 하나씩.</strong> 차단은 fail2ban, 인증은 auth.log, 막힌 스캔은 ufw 로그, 패키지는 dpkg, 취약점은 USN. 대시보드는 그 관찰을 해석할 뿐 두 번째 사실을 만들지 않는다.</li>
         <li><strong>조용히 실패하지 않는다.</strong> 모든 모니터는 health 와 해결 명령을 노출한다. 읽지 못하는 파일은 "정상"이 아니라 "제한"이다.</li>
         <li><strong>사실과 판단의 분리.</strong> 원시 이벤트는 근거로 남고, 알림만이 사람의 시간을 요구한다. 심각도는 알림에만 붙는다.</li>
         <li><strong>호스트 로그는 안에 머문다.</strong> 한국어는 템플릿으로 만든다. 외부 API 에 나가는 것은 공개 뉴스 제목뿐이다.</li>
@@ -505,7 +507,7 @@
           <tr><th>경계</th><th>넘는 것</th><th>허용 방법</th><th>막는 것</th></tr>
         </thead>
         <tbody>
-          <tr><td>root 데몬 → secdash 프로세스</td><td>auth.log 읽기</td><td><code>adm</code> 그룹</td><td>쓰기 · 다른 로그</td></tr>
+          <tr><td>root 데몬 → secdash 프로세스</td><td>auth.log·ufw.log 읽기</td><td><code>adm</code> 그룹</td><td>쓰기 · 다른 로그</td></tr>
           <tr><td>보호 파일 → secdash</td><td>/etc/shadow, sudoers, 타 사용자 authorized_keys, cron spool, audit.log, lynis-report.dat</td><td><code>CAP_DAC_READ_SEARCH</code></td><td>쓰기 (ProtectSystem=strict)</td></tr>
           <tr><td>타 사용자 프로세스 → secdash</td><td>exe · cwd · fd · 소켓 귀속</td><td><code>CAP_SYS_PTRACE</code> · <code>CAP_NET_ADMIN</code></td><td>ptrace attach 는 사용하지 않음</td></tr>
           <tr><td>secdash → fail2ban</td><td>status · banned · banip/ignoreip 조회 · banip · unbanip</td><td><code>sudo -n fail2ban-client</code> (sudoers 여덟 명령)</td><td>jail 설정 변경·중지 등 그 밖의 fail2ban 명령</td></tr>
