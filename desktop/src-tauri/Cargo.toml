@@ -16,5 +16,8 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = ["tray-icon", "image-png"] }
 tauri-plugin-autostart = "2"
 tauri-plugin-single-instance = "2"
+tauri-plugin-notification = "2"
+# API 토큰을 OS 키링에 둔다. Linux 는 Secret Service(GNOME 키링), macOS Keychain, Windows 자격 증명 관리자.
+keyring = { version = "3", features = ["sync-secret-service", "crypto-rust", "apple-native", "windows-native"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

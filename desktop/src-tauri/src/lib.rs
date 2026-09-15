@@ -6,6 +6,9 @@
 //!
 //! Linux(AppIndicator)에서는 트레이 클릭 이벤트와 툴팁이 오지 않는다. 그래서 창을 여는 길은
 //! 메뉴의 "창 열기"이고, 상태는 메뉴 첫 줄 글자로도 적는다.
+//!
+//! API 토큰은 OS 키링에 둔다(`token_get`·`token_set`·`token_clear`). 창 안 저장소(localStorage)는
+//! 앱 데이터 폴더의 평문 파일이라, 같은 계정의 다른 프로그램이 그대로 읽을 수 있다.
 
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
@@ -15,6 +18,7 @@ use tauri::menu::{CheckMenuItem, Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{TrayIcon, TrayIconBuilder};
 use tauri::{AppHandle, Manager, WindowEvent, Wry};
 use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
+use tauri_plugin_notification::NotificationExt;
 
 const ICON_OK: &[u8] = include_bytes!("../icons/tray-ok.png");
 const ICON_WARN: &[u8] = include_bytes!("../icons/tray-warn.png");
@@ -61,6 +65,47 @@ fn set_tray_status(app: AppHandle, level: String, label: String) -> Result<(), S
     Ok(())
 }
 
+const TOKEN_SERVICE: &str = "io.github.kunmyonchoi.sentinel";
+const TOKEN_USER: &str = "api-token";
+
+fn token_entry() -> Result<keyring::Entry, String> {
+    keyring::Entry::new(TOKEN_SERVICE, TOKEN_USER).map_err(|e| e.to_string())
+}
+
+// 키링 호출은 D-Bus 를 오가며 잠금 해제 창을 띄울 수도 있다. async 명령은 주 스레드 밖에서 돌아
+// 그동안 창이 멈추지 않는다.
+#[tauri::command]
+async fn token_get() -> Result<Option<String>, String> {
+    match token_entry()?.get_password() {
+        Ok(token) => Ok(Some(token)),
+        Err(keyring::Error::NoEntry) => Ok(None),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+#[tauri::command]
+async fn token_set(token: String) -> Result<(), String> {
+    let token = token.trim();
+    if token.is_empty() {
+        return Err("빈 토큰은 저장하지 않는다".into());
+    }
+    token_entry()?.set_password(token).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn token_clear() -> Result<(), String> {
+    match token_entry()?.delete_credential() {
+        Ok(()) | Err(keyring::Error::NoEntry) => Ok(()),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+/// 긴급 알림을 OS 알림으로 띄운다. 무엇을 언제 알릴지는 화면(desktop.js)이 정한다.
+#[tauri::command]
+async fn notify_urgent(app: AppHandle, title: String, body: String) -> Result<(), String> {
+    app.notification().builder().title(title).body(body).show().map_err(|e| e.to_string())
+}
+
 fn open_main_window(app: &AppHandle) {
     if let Some(w) = app.get_webview_window("main") {
         let _ = w.unminimize();
@@ -76,7 +121,8 @@ pub fn run() {
             open_main_window(app);
         }))
         .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, None))
-        .invoke_handler(tauri::generate_handler![set_tray_status])
+        .plugin(tauri_plugin_notification::init())
+        .invoke_handler(tauri::generate_handler![set_tray_status, token_get, token_set, token_clear, notify_urgent])
         .setup(|app| {
             let open_i = MenuItem::with_id(app, "open", "창 열기", true, None::<&str>)?;
             let status_i = MenuItem::with_id(app, "status", "상태: 확인하고 있어요", false, None::<&str>)?;
@@ -143,4 +189,21 @@ pub fn run() {
         })
         .run(tauri::generate_context!())
         .expect("내 컴퓨터 지킴이를 시작하지 못했습니다");
+}
+
+#[cfg(test)]
+mod tests {
+    /// 실제 OS 키링에 쓰고 읽고 지운다. 키링 서비스가 있는 데스크톱 세션에서만 돈다:
+    ///   cargo test -- --ignored
+    #[test]
+    #[ignore]
+    fn keyring_roundtrip() {
+        let entry = keyring::Entry::new("io.github.kunmyonchoi.sentinel.test", "roundtrip").unwrap();
+        let _ = entry.delete_credential();
+        assert!(matches!(entry.get_password(), Err(keyring::Error::NoEntry)));
+        entry.set_password("secret-token-123").unwrap();
+        assert_eq!(entry.get_password().unwrap(), "secret-token-123");
+        entry.delete_credential().unwrap();
+        assert!(matches!(entry.get_password(), Err(keyring::Error::NoEntry)));
+    }
 }
