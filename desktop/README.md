@@ -56,6 +56,36 @@ npm run build        # 화면 빌드(frontend → desktop/dist) + 앱 빌드(deb
 (`SECDASH_PORT=8001 SECDASH_UI_PORT=5174 ./start.sh`),
 `npx tauri dev --config '{"build":{"devUrl":"http://127.0.0.1:5174"}}'` 로 붙는다.
 
+## 배포판 설치와 시험 (Ubuntu 24.04)
+
+배포판은 같은 컴퓨터의 **운영 인스턴스**(`/opt/secdash`, `127.0.0.1:8000`)에 붙는다. 운영 인스턴스가
+앱 출처(`tauri://localhost`)를 허용하는 버전이어야 한다 — 이 앱보다 오래된 운영 코드는 앱의 요청을 CORS 로 거절한다.
+
+1. **운영 백엔드를 최신으로** (저장소 루트에서)
+   ```bash
+   (cd frontend && VITE_API_TOKEN= npx vite build)   # 웹 화면: 개발 토큰 없이
+   sudo deploy/update.sh
+   ```
+   `update.sh` 는 `frontend/dist` 에 개발 토큰이 들어 있으면 웹 화면을 올리지 않고 알린다.
+2. **패키지 만들기**
+   ```bash
+   cd desktop && npm ci && npm run build
+   # → src-tauri/target/release/bundle/deb/Sentinel Overwatch_<버전>_amd64.deb
+   #   src-tauri/target/release/bundle/appimage/Sentinel Overwatch_<버전>_amd64.AppImage
+   ```
+3. **설치** — 둘 중 하나
+   ```bash
+   sudo apt install "./src-tauri/target/release/bundle/deb/Sentinel Overwatch_0.1.0_amd64.deb"
+   # 또는 설치 없이:  chmod +x "…AppImage" && "./…AppImage"
+   ```
+   앱 메뉴에 **내 컴퓨터 지킴이**(영문 환경에서는 Sentinel Overwatch)로 보이고, 실행 파일은 `sentinel-desktop`.
+4. **토큰** — 처음 창이 뜨면 운영 토큰을 넣는다. 토큰 파일은 `secdash` 계정만 읽을 수 있다:
+   `sudo cat /opt/secdash/backend/.api_token`. 입력한 토큰은 OS 키링에 저장된다.
+5. **확인할 것** — 트레이 아이콘과 메뉴 첫 줄, 창 닫기(트레이에 남음)·창 열기, 로그인 시 자동 시작,
+   운영 서비스를 멈췄을 때 "상태를 알 수 없어요" (`sudo systemctl stop secdash` → 확인 → `start`).
+6. **지우기** — `sudo apt remove sentinel-overwatch`. 키링의 토큰은 남으니 필요하면 GNOME '암호와 키'에서
+   `io.github.kunmyonchoi.sentinel` 항목을 지운다.
+
 ## 보안에 관해
 
 - 백엔드는 여전히 `127.0.0.1` 에만 붙고, 모든 API 호출에 `X-API-Token` 이 필요하다.

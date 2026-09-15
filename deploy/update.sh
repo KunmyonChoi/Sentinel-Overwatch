@@ -8,7 +8,18 @@ SRC="$(cd "$(dirname "$0")/.." && pwd)"
 DEST=/opt/secdash
 
 rsync -a --exclude venv --exclude '*.db*' --exclude .api_token --exclude logs --exclude __pycache__ --exclude .env --exclude tests "$SRC/backend/" "$DEST/backend/"
-[ -d "$SRC/frontend/dist" ] && rsync -a --delete "$SRC/frontend/dist/" "$DEST/frontend/dist/"
+# 개발용 start.sh 는 frontend/.env.local 에 개발 토큰(VITE_API_TOKEN)을 적는다. 그 상태로 빌드한 dist 에는
+# 토큰이 박힌다. 그런 dist 는 운영에 올리지 않는다 — 기존 운영 화면을 그대로 두고 알린다.
+copy_dist=1
+if [ -d "$SRC/frontend/dist" ] && [ -f "$SRC/frontend/.env.local" ]; then
+    dev_token=$(sed -n 's/^VITE_API_TOKEN=//p' "$SRC/frontend/.env.local" | tail -1)
+    if [ -n "$dev_token" ] && grep -rqF -- "$dev_token" "$SRC/frontend/dist"; then
+        copy_dist=0
+        echo "!! frontend/dist 에 개발 토큰이 들어 있어 웹 화면은 올리지 않습니다 (운영 화면은 그대로)."
+        echo "   다시 빌드하세요: (cd frontend && VITE_API_TOKEN= npx vite build) 후 이 스크립트를 다시 실행"
+    fi
+fi
+[ $copy_dist -eq 1 ] && [ -d "$SRC/frontend/dist" ] && rsync -a --delete "$SRC/frontend/dist/" "$DEST/frontend/dist/"
 rsync -a "$SRC/deploy/" "$DEST/deploy/"
 [ -d "$SRC/docs" ] && rsync -a --delete "$SRC/docs/" "$DEST/docs/"
 for f in VERSION README.md; do [ -f "$SRC/$f" ] && cp "$SRC/$f" "$DEST/"; done
