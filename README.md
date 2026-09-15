@@ -136,6 +136,11 @@ sudo secdash-1.0.0/deploy/apply-host-config.sh && sudo systemctl restart secdash
 브라우저 대신 자기 창을 가진 앱으로 연다. 화면 위쪽 막대(트레이)에 아이콘이 늘 떠서 지금 상태(이상 없음·살펴보세요·지금 확인하세요·알 수 없음)를 보여주고, 긴급 알림은 바탕화면 알림으로 띄운다.
 앱은 **이 컴퓨터의 `127.0.0.1:8000`** 에 붙는다 — 같은 컴퓨터에 지킴이를 설치했거나, 4단계의 SSH 터널이 열려 있어야 한다.
 
+<p align="center">
+  <img src="docs/images/desktop-app.png" width="760" alt="내 컴퓨터 지킴이 데스크톱 앱 첫 화면: 살펴보세요 상태와 할 일 두 가지, 열린 문·밀린 보안 업데이트·막은 접속 시도 요약">
+</p>
+<p align="center"><sub>데스크톱 앱 첫 화면 (예시 데이터 — 실제 서버 정보가 아니다)</sub></p>
+
 ```bash
 cd ~
 wget https://github.com/KunmyonChoi/Sentinel-Overwatch/releases/download/desktop-v0.1.0/sentinel-overwatch_0.1.0_amd64.deb
