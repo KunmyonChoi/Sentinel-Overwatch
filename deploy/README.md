@@ -6,6 +6,7 @@
 |---|---|---|
 | IP 차단 | fail2ban (`sshd` jail) | 차단 목록 동기화, 수동 차단/해제 요청, 미연동 시 "차단 권고" 표시 |
 | SSH/sudo/계정 이벤트 | rsyslog `/var/log/auth.log` | 구조화, 상관 분석(브루트포스, 실패 후 성공, 새 IP), 한국어 안내 |
+| 포트 스캔 | ufw 차단 로그 `/var/log/ufw.log` | 막힌 포트 스캔은 이벤트·하루 요약으로만, 스캔 뒤 SSH 시도·실제 연결이나 내부망 스캔만 경고 (숫자는 최소치, 자동 차단 없음) |
 | 패키지 변경/보안 업데이트 | dpkg.log, `apt list --upgradable` | 이벤트화, 미적용 보안 업데이트 알림 |
 | 파일/영속화 무결성 | 자체 SHA-256 + DB 기준선 | diff 첨부 알림 (AIDE 가 있으면 병행 권장) |
 | 프로세스/네트워크 | /proc (psutil) | 리버스 셸·임시 디렉터리 실행·새 리스너 탐지 |
@@ -35,7 +36,7 @@ sudo deploy/install.sh
 
 스크립트가 하는 일:
 1. fail2ban / rsyslog / auditd / lynis 설치·활성화, 호스트 도구 설정 반영(`apply-host-config.sh`)
-2. 전용 계정 `secdash` 생성 (+ `adm` 그룹: auth.log 읽기)
+2. 전용 계정 `secdash` 생성 (+ `adm` 그룹: auth.log·ufw.log 읽기)
 3. `/opt/secdash` 에 복사, venv 생성(휠이 있으면 오프라인 설치), 빌드된 dist 가 없을 때만 npm 빌드
 4. `/etc/secdash/secdash.env` 설정 파일
 5. `/etc/sudoers.d/secdash` (fail2ban-client·방화벽/docker 읽기·권한 조치 진입점만, 인자까지 고정) 와 systemd 유닛 설치
@@ -125,7 +126,7 @@ sudo deploy/update.sh --deps   # requirements 가 바뀐 경우
 
 | 필요 권한 | 제공 방법 | 용도 |
 |---|---|---|
-| auth.log 읽기 | `adm` 그룹 | SSH/sudo 이벤트 |
+| auth.log·ufw.log 읽기 | `adm` 그룹 | SSH/sudo 이벤트, 방화벽이 막은 포트 스캔 |
 | /etc/shadow, 다른 홈의 authorized_keys, cron spool | `CAP_DAC_READ_SEARCH` | 무결성 감시 |
 | 다른 사용자 프로세스의 exe/fd | `CAP_SYS_PTRACE` | 리버스 셸/임시 실행 탐지 |
 | 소켓 → 프로세스 귀속 | `CAP_NET_ADMIN` | 리스너 프로세스 확인 |
@@ -146,10 +147,10 @@ ssh -L 8000:127.0.0.1:8000 user@server
 
 ## 시뮬레이션 (탐지 파이프라인 점검)
 
-운영 서버에서는 실제 로그를 건드리지 않도록 `SECDASH_AUTH_LOG` 를 테스트 파일로 바꿔 별도 인스턴스로 실행하세요.
+운영 서버에서는 실제 로그를 건드리지 않도록 `SECDASH_AUTH_LOG`·`SECDASH_UFW_LOG` 를 테스트 파일로 바꿔 별도 인스턴스로 실행하세요.
 
 ```bash
-cd backend && SECDASH_AUTH_LOG=./test_auth.log SECDASH_PORT=8001 venv/bin/python app.py &
+cd backend && SECDASH_AUTH_LOG=./test_auth.log SECDASH_UFW_LOG=./test_ufw.log SECDASH_PORT=8001 venv/bin/python app.py &
 python3 ../simulate_attack.py
 ```
 

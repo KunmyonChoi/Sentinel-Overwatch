@@ -42,6 +42,7 @@ from integrations import permission_fix
 from monitor.container_audit import ContainerAudit
 from monitor.exposure import ExposureMonitor
 from monitor.fail2ban_sync import Fail2banSync
+from monitor.firewall_log import FirewallLogWatcher
 from monitor.integrity import IntegrityMonitor, PersistenceMonitor
 from monitor.intel import IntelMonitor
 from monitor.intrusion import AuthLogWatcher, NetworkWatcher
@@ -100,7 +101,7 @@ async def lifespan(app: FastAPI):
     database.init_db()
     translate.load_cache()
     for inst in (
-        AuthLogWatcher(), Fail2banSync(), NetworkWatcher(), ProcessAudit(), IntegrityMonitor(),
+        AuthLogWatcher(), FirewallLogWatcher(), Fail2banSync(), NetworkWatcher(), ProcessAudit(), IntegrityMonitor(),
         PersistenceMonitor(), UpdateMonitor(), ResourceMonitor(), IntelMonitor(),
         AuditMonitor(), LynisMonitor(),
         ExposureMonitor(), PermissionMonitor(trees=config.PERMISSION_TREES), ContainerAudit(),
@@ -480,6 +481,7 @@ def get_host():
         },
         "privileges": {
             "auth_log_readable": readable(config.AUTH_LOG_PATH),
+            "ufw_log_readable": readable(config.UFW_LOG_PATH),
             "shadow_readable": readable("/etc/shadow"),
             "fail2ban_control": ok,
             "fail2ban_reason": why,
@@ -523,6 +525,12 @@ def _payload_of(monitor_name: str) -> dict:
 def get_exposure():
     """지금 열려 있는 리스닝 포트와, 방화벽 규칙과 대조한 실제 외부 도달 여부."""
     return _payload_of("ExposureMonitor")
+
+
+@app.get("/api/firewall-log")
+def get_firewall_log():
+    """ufw 차단 기록 기반 포트 스캔: 오늘 집계(최소치), 최근 스캔한 IP, 파서 통계."""
+    return _payload_of("FirewallLogWatcher")
 
 
 @app.get("/api/permissions")

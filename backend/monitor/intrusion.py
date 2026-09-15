@@ -25,6 +25,7 @@ import config
 from alerts import raise_alert
 from database import Event, KnownListener, KnownLoginIP, SessionLocal, utcnow
 from integrations.accounts import PRIVILEGED_GROUPS
+from monitor import firewall_log
 from monitor.base import BaseMonitor, TailReader
 
 logger = logging.getLogger("intrusion_monitor")
@@ -244,12 +245,15 @@ class AuthLogWatcher(BaseMonitor):
     def _on_auth_failure(self, p: dict, sim: bool):
         d = {"user": p["user"], "ip": p["ip"], "method": p.get("method", "")}
         self.log_event("AUTH_FAILURE", "INFO", f"Failed {d['method']} for {d['user']} from {d['ip']}", d, is_simulation=sim)
+        # 방화벽 로그에서 포트 스캔한 IP 면 '스캔 뒤 로그인 시도' 경고 (FirewallLogWatcher 규칙 a)
+        firewall_log.note_auth_activity(p["ip"], "auth_failure", user=p["user"], raw=p["raw"], is_simulation=sim)
         if _counts_as_failure(p):
             self._record_failure(p["ip"], p["user"], sim)
 
     def _on_invalid_user(self, p: dict, sim: bool):
         d = {"user": p["user"], "ip": p["ip"]}
         self.log_event("INVALID_USER", "INFO", f"Invalid user {d['user']} from {d['ip']}", d, is_simulation=sim)
+        firewall_log.note_auth_activity(p["ip"], "invalid_user", user=p["user"], raw=p["raw"], is_simulation=sim)
         if _counts_as_failure(p):
             self._record_failure(p["ip"], p["user"], sim)
 
@@ -264,6 +268,7 @@ class AuthLogWatcher(BaseMonitor):
         if count < self.threshold:
             return
         users = sorted({u for _, u in q})
+        scan = firewall_log.scan_context(ip)
         raise_alert(
             "brute_force", "WARNING",
             f"Brute force from {ip}: {count} failures in {config.BRUTE_FORCE_WINDOW_MIN} min",
@@ -272,7 +277,8 @@ class AuthLogWatcher(BaseMonitor):
             summary_ko=f"시도한 계정: {', '.join(users[:10])}{' 외' if len(users) > 10 else ''}",
             action_ko="fail2ban 차단 여부를 차단 목록에서 확인하세요. 차단되지 않았다면 '차단 권고' 이벤트의 명령을 실행하세요. 시도된 계정이 실제 존재하면 해당 계정의 비밀번호 인증을 끄고 키 인증만 허용하는 것을 검토하세요.",
             evidence="\n".join(f"{t.strftime('%H:%M:%S')} {u}" for t, u in list(q)[-10:]),
-            details={"ip": ip, "count": count, "users": users, "window_min": config.BRUTE_FORCE_WINDOW_MIN},
+            details={"ip": ip, "count": count, "users": users, "window_min": config.BRUTE_FORCE_WINDOW_MIN}
+                    | ({"prior_scan": scan} if scan else {}),
             is_simulation=sim,
         )
         if count == self.threshold or count % 25 == 0:
@@ -298,17 +304,22 @@ class AuthLogWatcher(BaseMonitor):
         # 규칙 1: 실패 이력이 있는 IP 에서 성공
         prior = [x for x in self._failures.get(ip, ()) if x[0] >= utcnow() - self.window]
         if prior:
+            # 이미 긴급이다. 스캔 이력이 있으면 새 알림을 만들지 않고 이 알림에 정황으로 붙인다.
+            scan = firewall_log.scan_context(ip)
+            scan_ko = (f" 이 IP 는 앞서 방화벽에 막힌 포트 {scan['port_count']}개 이상을 스캔했습니다(최소치)." if scan else "")
             raise_alert(
                 "login_after_failures", "CRITICAL",
                 f"Successful login for {user} from {ip} after {len(prior)} failures",
                 fingerprint=f"login_after_failures:{ip}:{user}",
                 title_ko=f"실패 후 로그인 성공: {ip} 에서 {len(prior)}회 실패 뒤 '{user}' 로그인 성공",
-                summary_ko=f"브루트포스가 성공했을 가능성이 있습니다. 인증 방식: {d['method']}",
+                summary_ko=f"브루트포스가 성공했을 가능성이 있습니다. 인증 방식: {d['method']}{scan_ko}",
                 action_ko=f"즉시 해당 세션을 확인하세요: `who`, `last -a | head`. 본인이 아니면 `sudo pkill -KILL -u {user}` 후 비밀번호를 바꾸고 authorized_keys 를 점검하세요.",
                 evidence=p["raw"],
-                details=d | {"failures": len(prior)},
+                details=d | {"failures": len(prior)} | ({"prior_scan": scan} if scan else {}),
                 is_simulation=sim,
             )
+        else:
+            firewall_log.note_auth_activity(ip, "auth_success", user=user, raw=p["raw"], is_simulation=sim)
 
         # 규칙 2: root 직접 로그인
         if user == "root":
@@ -552,6 +563,7 @@ class NetworkWatcher(BaseMonitor):
             self.set_health("degraded", "소켓 목록 접근 거부", "root 또는 CAP_NET_ADMIN 권한이 필요합니다.")
             return
         scan_now: dict[str, set[int]] = defaultdict(set)
+        listen_ports = {c.laddr.port for c in conns if c.status == "LISTEN" and c.laddr}
         for c in conns:
             if c.status == "LISTEN" and c.laddr:
                 self._remember_listener(c, silent=False)
@@ -559,9 +571,13 @@ class NetworkWatcher(BaseMonitor):
             if not c.raddr:
                 continue
             rip = c.raddr.ip.replace("::ffff:", "")
+            lport = c.laddr.port if c.laddr else 0
+            # 방화벽 로그에서 스캔한 IP 가 리스닝 포트에 실제로 붙었으면 경고 (FirewallLogWatcher 규칙 b).
+            # 사설 대역 거르기 전에 본다 — 내부망 기기의 스캔 뒤 연결도 봐야 한다.
+            if c.status == "ESTABLISHED" and lport in listen_ports:
+                firewall_log.note_connection(rip, lport, process_info=lambda pid=c.pid: _proc_info(pid))
             if is_private_ip(rip):
                 continue
-            lport = c.laddr.port if c.laddr else 0
             if c.status in ("SYN_RECV", "ESTABLISHED") and lport < self.EPHEMERAL_START:
                 scan_now[rip].add(lport)
             if c.status == "ESTABLISHED" and rip not in self.seen_remote_ips:

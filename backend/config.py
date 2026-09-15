@@ -91,6 +91,15 @@ PERMISSION_FIX_USE_SUDO = _env_bool("SECDASH_PERMISSION_FIX_USE_SUDO", os.geteui
 BRUTE_FORCE_WINDOW_MIN = _env_int("SECDASH_BRUTE_WINDOW_MIN", 30)
 BRUTE_FORCE_THRESHOLD = _env_int("SECDASH_BRUTE_THRESHOLD", 5)
 
+# --- 방화벽 로그(ufw) 포트 스캔 판정 ---
+# ufw 가 막은 패킷 기록. secdash 계정은 adm 그룹이라 추가 권한 없이 읽는다.
+UFW_LOG_PATH = _env("SECDASH_UFW_LOG", "/var/log/ufw.log")
+# 같은 IP 가 이 시간(초) 안에 서로 다른 포트 N개를 두드리면 스캔으로 본다 (스캔 자체는 이벤트만).
+SCAN_WINDOW_SEC = _env_int("SECDASH_SCAN_WINDOW_SEC", 60)
+SCAN_PORTS = _env_int("SECDASH_SCAN_PORTS", 10)
+# 스캔한 IP 가 이 시간 안에 SSH 로그인 시도·실제 연결을 하면 경고 알림.
+SCAN_FOLLOWUP_HOURS = _env_int("SECDASH_SCAN_FOLLOWUP_HOURS", 24)
+
 # --- 외부 연동 (호스트 로그는 절대 외부로 보내지 않는다) ---
 SLACK_WEBHOOK_URL = _env("SLACK_WEBHOOK_URL")
 ANTHROPIC_API_KEY = _env("ANTHROPIC_API_KEY")
