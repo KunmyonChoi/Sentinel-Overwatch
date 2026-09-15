@@ -13,8 +13,8 @@
         #f17-arch-core .clip { position: absolute; inset: 0; }
       </style>
       <div id="f17-arch-core" data-composition-id="f17-arch-core" data-start="0"
-           data-width="1920" data-height="1080" data-duration="72">
-        <div id="f17-arch-core-clip" class="clip" data-start="0" data-duration="72">
+           data-width="1920" data-height="1080" data-duration="90.12">
+        <div id="f17-arch-core-clip" class="clip" data-start="0" data-duration="90.12">
           <div id="f17-arch-core-e0" style="position:absolute;left:0px;top:0px;width:1920px;height:860px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#eef3f0;"></div>
           <div id="f17-arch-core-e1" style="position:absolute;left:150px;top:70px;width:1400px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:30px;font-weight:700;color:#0e7c6b;line-height:1.5;text-align:left;word-break:keep-all;">8장 · 아키텍처 ②</div>
           <div id="f17-arch-core-e2" style="position:absolute;left:150px;top:112px;width:1500px;height:82px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:62px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;">어디에 쌓이고 어디로 나가나</div>
@@ -54,12 +54,12 @@
           <div id="f17-arch-core-e36" style="position:absolute;left:172px;top:778px;width:1000px;height:28px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:19px;font-weight:400;color:#5c6b64;line-height:1.5;text-align:left;word-break:keep-all;will-change:transform,opacity;">5초 폴링 · 토큰 헤더</div>
           <div id="f17-arch-core-e37" style="position:absolute;left:1240px;top:730px;width:530px;height:76px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:22px;font-weight:700;color:#b8731c;line-height:1.5;text-align:left;word-break:keep-all;will-change:transform,opacity;">나가는 것은 셋뿐 —<br>공개 피드 · 뉴스 제목 · Slack 웹훅</div>
           <div style="position:absolute;left:0px;top:860px;width:1920px;height:220px;background:#17221d;"></div>
-          <div id="f17-arch-core-sub0" style="position:absolute;left:150px;top:919px;width:1620px;height:102px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:34px;color:#ffffff;line-height:1.5;word-break:keep-all;opacity:0;will-change:opacity;">사실은 SQLite에 쌓입니다. 원시 이벤트는 30일, 알림은 90일 보관합니다. 파일 기준선, 처음 보는 주소, 차단 목록도 여기 있습니다.</div>
-          <div id="f17-arch-core-sub1" style="position:absolute;left:150px;top:919px;width:1620px;height:102px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:34px;color:#ffffff;line-height:1.5;word-break:keep-all;opacity:0;will-change:opacity;">판단은 알림 엔진이 맡습니다. 같은 지문이 다시 오면 새 알림을 만들지 않고 횟수를 올립니다. 심각도가 오르면 확인했던 알림도 다시 열립니다.</div>
-          <div id="f17-arch-core-sub2" style="position:absolute;left:150px;top:919px;width:1620px;height:102px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:34px;color:#ffffff;line-height:1.5;word-break:keep-all;opacity:0;will-change:opacity;">위험 단계를 정하는 것은 따로 도는 감시 스레드입니다. 10초마다, 아직 확인되지 않은 알림만 셉니다.</div>
-          <div id="f17-arch-core-sub3" style="position:absolute;left:150px;top:919px;width:1620px;height:102px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:34px;color:#ffffff;line-height:1.5;word-break:keep-all;opacity:0;will-change:opacity;">Slack으로 나가는 것은 큐를 거칩니다. 워커 하나가 분당 열 건까지만 보내고 나머지는 묶습니다. 알림이 몰려도 모니터가 멈추지 않습니다.</div>
-          <div id="f17-arch-core-sub4" style="position:absolute;left:150px;top:919px;width:1620px;height:102px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:34px;color:#ffffff;line-height:1.5;word-break:keep-all;opacity:0;will-change:opacity;">API는 127.0.0.1에만 붙습니다. 모든 요청에 토큰 헤더가 필요하고, 원격에서 볼 때는 SSH 터널을 씁니다.</div>
-          <div id="f17-arch-core-sub5" style="position:absolute;left:150px;top:919px;width:1620px;height:102px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:34px;color:#ffffff;line-height:1.5;word-break:keep-all;opacity:0;will-change:opacity;">호스트 밖으로 나가는 것은 셋뿐입니다. 공개 피드 읽기, 뉴스 제목 번역, 그리고 Slack 웹훅. auth.log 줄과 sudo 명령과 패키지 목록은 나가지 않습니다.</div>
+          <div id="f17-arch-core-sub0" style="position:absolute;left:150px;top:893px;width:1620px;height:153px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:34px;color:#ffffff;line-height:1.5;word-break:keep-all;opacity:0;will-change:opacity;">모니터가 남긴 사실은 SQLite라는, 파일 하나로 된 작은 데이터베이스에 쌓입니다. 사건 기록은 30일, 알림은 90일 동안 보관합니다. 파일의 지문, 처음 보는 접속 주소, 차단한 상대의 목록도 여기에 함께 저장됩니다.</div>
+          <div id="f17-arch-core-sub1" style="position:absolute;left:150px;top:893px;width:1620px;height:153px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:34px;color:#ffffff;line-height:1.5;word-break:keep-all;opacity:0;will-change:opacity;">무엇을 알릴지 판단하는 일은 알림 엔진이 맡습니다. 이미 알린 것과 같은 일이 다시 일어나면, 새 알림을 또 만들지 않고 횟수만 늘립니다. 반대로 그 일이 더 심각해지면, 사용자가 확인했던 알림도 다시 열어서 알려드립니다.</div>
+          <div id="f17-arch-core-sub2" style="position:absolute;left:150px;top:919px;width:1620px;height:102px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:34px;color:#ffffff;line-height:1.5;word-break:keep-all;opacity:0;will-change:opacity;">지금 위험 단계가 어느 정도인지는, 따로 돌아가는 감시 담당이 정합니다. 10초마다, 아직 아무도 확인하지 않은 알림만 세어서 단계를 정합니다.</div>
+          <div id="f17-arch-core-sub3" style="position:absolute;left:150px;top:893px;width:1620px;height:153px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:34px;color:#ffffff;line-height:1.5;word-break:keep-all;opacity:0;will-change:opacity;">Slack으로 보내는 알림은 차례를 기다리는 대기열을 거칩니다. 1분에 열 건까지만 보내고, 넘치는 것은 묶어서 보냅니다. 그래서 알림이 한꺼번에 몰려도 감시가 멈추지 않습니다.</div>
+          <div id="f17-arch-core-sub4" style="position:absolute;left:150px;top:893px;width:1620px;height:153px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:34px;color:#ffffff;line-height:1.5;word-break:keep-all;opacity:0;will-change:opacity;">화면이 정보를 가져오는 통로는 이 컴퓨터 안에서만 열려 있습니다. 모든 요청에는 비밀 열쇠 역할을 하는 토큰이 필요하고, 다른 곳에서 화면을 보고 싶을 때는 SSH 터널, 즉 암호화된 원격 접속 통로를 거쳐서 봅니다.</div>
+          <div id="f17-arch-core-sub5" style="position:absolute;left:150px;top:893px;width:1620px;height:153px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:34px;color:#ffffff;line-height:1.5;word-break:keep-all;opacity:0;will-change:opacity;">이 컴퓨터 밖으로 나가는 것은 딱 세 가지뿐입니다. 공개된 보안 공지를 읽어오는 요청, 보안 뉴스 제목의 번역, 그리고 Slack 알림입니다. 로그인 기록이나 실행한 명령, 설치된 프로그램 목록은 밖으로 나가지 않습니다.</div>
         </div>
       </div>
       <script>
@@ -67,16 +67,16 @@
         (function () {
           const tl = gsap.timeline({ paused: true });
           tl.fromTo("#f17-arch-core-sub0", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none" }, 0.3);
-          tl.to("#f17-arch-core-sub0", { opacity: 0, duration: 0.25, ease: "none" }, 12.563);
-          tl.fromTo("#f17-arch-core-sub1", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none" }, 12.813);
-          tl.to("#f17-arch-core-sub1", { opacity: 0, duration: 0.25, ease: "none" }, 24.698);
-          tl.fromTo("#f17-arch-core-sub2", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none" }, 24.948);
-          tl.to("#f17-arch-core-sub2", { opacity: 0, duration: 0.25, ease: "none" }, 33.811);
-          tl.fromTo("#f17-arch-core-sub3", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none" }, 34.061);
-          tl.to("#f17-arch-core-sub3", { opacity: 0, duration: 0.25, ease: "none" }, 46.135);
-          tl.fromTo("#f17-arch-core-sub4", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none" }, 46.385);
-          tl.to("#f17-arch-core-sub4", { opacity: 0, duration: 0.25, ease: "none" }, 56.759);
-          tl.fromTo("#f17-arch-core-sub5", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none" }, 57.009);
+          tl.to("#f17-arch-core-sub0", { opacity: 0, duration: 0.25, ease: "none" }, 16.95);
+          tl.fromTo("#f17-arch-core-sub1", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none" }, 17.2);
+          tl.to("#f17-arch-core-sub1", { opacity: 0, duration: 0.25, ease: "none" }, 33.52);
+          tl.fromTo("#f17-arch-core-sub2", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none" }, 33.77);
+          tl.to("#f17-arch-core-sub2", { opacity: 0, duration: 0.25, ease: "none" }, 44.19);
+          tl.fromTo("#f17-arch-core-sub3", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none" }, 44.44);
+          tl.to("#f17-arch-core-sub3", { opacity: 0, duration: 0.25, ease: "none" }, 57.95);
+          tl.fromTo("#f17-arch-core-sub4", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none" }, 58.2);
+          tl.to("#f17-arch-core-sub4", { opacity: 0, duration: 0.25, ease: "none" }, 72.87);
+          tl.fromTo("#f17-arch-core-sub5", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none" }, 73.12);
           tl.fromTo("#f17-arch-core-e3", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 0.3);
           tl.fromTo("#f17-arch-core-e4", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 0.35);
           tl.fromTo("#f17-arch-core-e5", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 0.4);
@@ -87,31 +87,31 @@
           tl.fromTo("#f17-arch-core-e10", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 0.65);
           tl.fromTo("#f17-arch-core-e11", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 0.7);
           tl.fromTo("#f17-arch-core-e12", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 0.75);
-          tl.fromTo("#f17-arch-core-e13", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 12.813);
-          tl.fromTo("#f17-arch-core-e14", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 12.893);
-          tl.fromTo("#f17-arch-core-e15", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 12.973);
-          tl.fromTo("#f17-arch-core-e16", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 24.948);
-          tl.fromTo("#f17-arch-core-e17", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 25.028);
-          tl.fromTo("#f17-arch-core-e18", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 25.108);
-          tl.fromTo("#f17-arch-core-e19", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 34.061);
-          tl.fromTo("#f17-arch-core-e20", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 34.141);
-          tl.fromTo("#f17-arch-core-e21", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 34.221);
-          tl.fromTo("#f17-arch-core-e22", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 34.301);
-          tl.fromTo("#f17-arch-core-e23", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 34.381);
-          tl.fromTo("#f17-arch-core-e24", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 34.461);
-          tl.fromTo("#f17-arch-core-e25", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 46.385);
-          tl.fromTo("#f17-arch-core-e26", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 46.441);
-          tl.fromTo("#f17-arch-core-e27", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 46.496);
-          tl.fromTo("#f17-arch-core-e28", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 46.552);
-          tl.fromTo("#f17-arch-core-e29", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 46.607);
-          tl.fromTo("#f17-arch-core-e30", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 46.663);
-          tl.fromTo("#f17-arch-core-e31", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 46.718);
-          tl.fromTo("#f17-arch-core-e32", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 46.774);
-          tl.fromTo("#f17-arch-core-e33", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 46.829);
-          tl.fromTo("#f17-arch-core-e34", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 57.009);
-          tl.fromTo("#f17-arch-core-e35", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 57.089);
-          tl.fromTo("#f17-arch-core-e36", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 57.169);
-          tl.fromTo("#f17-arch-core-e37", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 57.249);
+          tl.fromTo("#f17-arch-core-e13", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 17.2);
+          tl.fromTo("#f17-arch-core-e14", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 17.28);
+          tl.fromTo("#f17-arch-core-e15", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 17.36);
+          tl.fromTo("#f17-arch-core-e16", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 33.77);
+          tl.fromTo("#f17-arch-core-e17", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 33.85);
+          tl.fromTo("#f17-arch-core-e18", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 33.93);
+          tl.fromTo("#f17-arch-core-e19", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 44.44);
+          tl.fromTo("#f17-arch-core-e20", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 44.52);
+          tl.fromTo("#f17-arch-core-e21", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 44.6);
+          tl.fromTo("#f17-arch-core-e22", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 44.68);
+          tl.fromTo("#f17-arch-core-e23", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 44.76);
+          tl.fromTo("#f17-arch-core-e24", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 44.84);
+          tl.fromTo("#f17-arch-core-e25", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 58.2);
+          tl.fromTo("#f17-arch-core-e26", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 58.256);
+          tl.fromTo("#f17-arch-core-e27", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 58.311);
+          tl.fromTo("#f17-arch-core-e28", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 58.367);
+          tl.fromTo("#f17-arch-core-e29", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 58.422);
+          tl.fromTo("#f17-arch-core-e30", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 58.478);
+          tl.fromTo("#f17-arch-core-e31", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 58.533);
+          tl.fromTo("#f17-arch-core-e32", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 58.589);
+          tl.fromTo("#f17-arch-core-e33", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 58.644);
+          tl.fromTo("#f17-arch-core-e34", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 73.12);
+          tl.fromTo("#f17-arch-core-e35", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 73.2);
+          tl.fromTo("#f17-arch-core-e36", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 73.28);
+          tl.fromTo("#f17-arch-core-e37", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 73.36);
           window.__timelines["f17-arch-core"] = tl;
         })();
       </script>

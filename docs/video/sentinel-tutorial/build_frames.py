@@ -1,17 +1,23 @@
 #!/usr/bin/env python3
 """장면 21개와 index.html 을 만든다.
 
-**자막이 이 파일의 시계다.** 내레이션 원고는 STORYBOARD.md 한 곳에만 있고
-여기서 읽어온다. 원고를 고치면 자막도 타이밍도 따라 바뀐다 — 두 곳에 적어두면
-반드시 어긋나기 때문이다.
+내레이션 원고는 STORYBOARD.md 한 곳에만 있고 여기서 읽어온다. 원고를 고치면
+자막도 타이밍도 따라 바뀐다 — 두 곳에 적어두면 반드시 어긋나기 때문이다.
 
-문단마다 머무는 시간은 글자 수로 정한다(초당 5.3자 + 호흡 0.8초). 그 합을
-장면 길이에 맞춰 비례 조정한다. 요소는 문단이 바뀔 때마다 한 무리씩 도착한다.
+**음성이 이 파일의 시계다.** narrate.py 가 만든 assets/narration/manifest.json 이
+있으면 문단별 음성 길이로 자막 교체·요소 도착·장면 길이를 정하고, 음성을 루트에
+배치한다. 음성이 원고와 어긋나면 멈춘다.
+
+음성이 아예 없을 때만 예전 방식으로 돌아간다 — 문단마다 머무는 시간을 글자 수로
+정하고(초당 5.3자 + 호흡 0.8초) 그 합을 STORYBOARD 의 장면 길이에 맞춰 비례 조정한다.
+요소는 어느 쪽이든 문단이 바뀔 때마다 한 무리씩 도착한다.
 
 모션 규칙은 frame.md 를 따른다 — 도착하고 머문다. 나갔다 들어오지 않고,
 카메라도 없다. 설명서에 과시적인 동작은 필요 없다.
 """
+import hashlib
 import html
+import json
 import math
 import pathlib
 import re
@@ -139,7 +145,7 @@ def f03():
     el(PAD, 560, 1060, 210, "", bg=DARK, radius=16)
     el(PAD + 28, 584, 600, 36, "전문가 모드 — 대시보드", size=26, weight=700, color=NEON)
     el(PAD + 28, 632, 1004, 112, "", border=f"1px dashed {NEON_DIM}", radius=12)
-    el(PAD + 28, 674, 1004, 34, "예전 대시보드 그대로 · 패널 11개를 한 화면에",
+    el(PAD + 28, 674, 1004, 34, "모든 정보를 한 화면에 · 패널 11개",
        size=26, color=NEON_DIM, align="center")
     # 모드 전환기 확대 — 첫 문단이 이 이야기라 먼저 온다
     beat(0)
@@ -169,7 +175,7 @@ def screen(x, y, w, h, top_left, *, right=None):
 
 def f04():
     bg(BG)
-    head("3장 · 시나리오 하나", "아무 일 없는 날")
+    head("3장 · 첫 번째 경우", "아무 일 없는 날")
     sx, sy, sw = 320, 250, 1280
     screen(sx, sy, sw, 570, "🛡 내 컴퓨터 지킴이", right="쉬운 화면 | 전문가 화면")
     beat(1)
@@ -204,7 +210,7 @@ def steps(active, labels):
 
 def f05():
     bg(BG)
-    head("3장 · 시나리오 둘", "손볼 일이 생겼다")
+    head("3장 · 두 번째 경우", "손볼 일이 생겼다")
     steps(1, ["① 할 일 카드", "② 미리보기", "③ 결과"])
     sx, sy, sw = 320, 316, 1280
     screen(sx, sy, sw, 500, "←  돌아가기", right="쉬운 화면 | 전문가 화면")
@@ -232,7 +238,7 @@ def f05():
 
 def f06():
     bg(BG)
-    head("3장 · 시나리오 셋", "지킴이가 대신 못 하는 일")
+    head("3장 · 세 번째 경우", "지킴이가 대신 못 하는 일")
     sx, sy, sw = PAD, 250, 1060
     screen(sx, sy, sw, 570, "←  돌아가기")
     el(sx + 40, sy + 96, 700, 36, "지금 확인하세요", size=24, weight=700, color=CRIT)
@@ -815,8 +821,61 @@ def read_storyboard() -> dict:
     return out
 
 
+# 음성이 있으면 음성이 시계다. narrate.py 가 만든 문단별 길이로 자막·요소·장면을 맞춘다.
+NARRATION = pathlib.Path(__file__).parent / "assets" / "narration"
+VO_LEAD = 0.5      # 장면이 시작하고 첫 말이 나오기까지
+VO_GAP = 0.7       # 문단과 문단 사이 쉼
+VO_TAIL = 0.8      # 마지막 말이 끝나고 장면이 넘어가기까지 (앞과 합쳐 1.3초 — 문단 사이보다 조금만 길게)
+SUB_EARLY = 0.2    # 자막은 말보다 조금 먼저 뜬다
+
+
+def load_narration(board: dict) -> dict | None:
+    """문단 id → 음성 정보. 음성이 아예 없으면 None (자막만 있는 판).
+
+    일부만 있거나 원고와 어긋나면 멈춘다. 조용히 글자 수 시계로 돌아가면
+    소리와 자막이 어긋난 영상이 아무 경고 없이 나온다.
+    """
+    mf = NARRATION / "manifest.json"
+    if not mf.exists():
+        return None
+    items = {x["id"]: x for x in json.loads(mf.read_text(encoding="utf-8"))["lines"]}
+    out, problems = {}, []
+    for name, (_, paras) in board.items():
+        for i, text in enumerate(paras):
+            lid = f"{name}-{i}"
+            x = items.get(lid)
+            if x is None:
+                problems.append(f"{lid}: 음성이 없다")
+            elif x["text_sha"] != hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]:
+                problems.append(f"{lid}: 원고가 바뀌었는데 음성은 예전 것이다")
+            elif not (NARRATION / x["file"]).exists():
+                problems.append(f"{lid}: 파일이 없다 ({x['file']})")
+            else:
+                out[lid] = x
+    if problems:
+        raise SystemExit("내레이션이 원고와 맞지 않는다. narrate.py 를 다시 돌려라.\n  "
+                         + "\n  ".join(problems))
+    return out
+
+
+def voiced_schedule(name: str, paras: list[str], voice: dict):
+    """음성 길이로 짠 (자막 구간 목록, 음성 (시작, 길이, 파일) 목록, 장면 길이)."""
+    t, clips = VO_LEAD, []
+    for i in range(len(paras)):
+        x = voice[f"{name}-{i}"]
+        clips.append((round(t, 3), x["duration_s"], x["file"]))
+        t += x["duration_s"] + VO_GAP
+    dur = round(t - VO_GAP + VO_TAIL, 2)
+    sched = []
+    for i, (s, _, _) in enumerate(clips):
+        t0 = max(0.0, s - SUB_EARLY)
+        t1 = clips[i + 1][0] - SUB_EARLY if i + 1 < len(clips) else dur
+        sched.append((round(t0, 3), round(t1, 3)))
+    return sched, clips, dur
+
+
 def subtitle_schedule(paras: list[str], duration: float) -> list[tuple[float, float]]:
-    """문단마다 (시작, 끝). 글자 수로 비례 배분하고 장면 길이에 맞춘다."""
+    """음성이 없을 때. 문단마다 (시작, 끝). 글자 수로 비례 배분하고 장면 길이에 맞춘다."""
     want = [len(p.replace(" ", "")) / CPS + BREATH for p in paras]
     span = duration - LEAD - TAIL
     k = span / sum(want)
@@ -900,7 +959,7 @@ INDEX = """<!doctype html>
   <body>
     <div id="root" data-composition-id="root" data-start="0"
          data-width="1920" data-height="1080" data-duration="{total}">
-{slots}
+{slots}{audio}
     </div>
     <script>
       // 조립만 한다. 장면 안의 움직임은 각 하위 컴포지션이 가진다.
@@ -911,12 +970,11 @@ INDEX = """<!doctype html>
 """
 
 
-def emit_frame(name, cid, fn, dur, paras, bgc):
+def emit_frame(name, cid, fn, dur, paras, bgc, sched):
     _parts.clear(); _anims.clear()
     globals()["_frame_id"] = cid
     beat(0)
     fn()
-    sched = subtitle_schedule(paras, dur)
     tw = []
     for i, (t0, t1) in enumerate(sched):
         tw.append(f'          tl.fromTo("#{cid}-sub{i}", {{ opacity: 0 }}, '
@@ -946,22 +1004,40 @@ def main():
     out = root / "compositions" / "frames"
     out.mkdir(parents=True, exist_ok=True)
     board = read_storyboard()
-    slots, t0 = [], 0.0
+    voice = load_narration(board)
+    print("  시계: " + ("내레이션 음성 (assets/narration)" if voice
+                      else f"자막 읽는 속도 (초당 {CPS}자) — 음성 없음"))
+    slots, audio, t0 = [], [], 0.0
     for name, cid, _sketch_dur, fn in FRAMES:
-        dur, paras = board[name]
+        story_dur, paras = board[name]
+        if voice:
+            sched, clips, dur = voiced_schedule(name, paras, voice)
+        else:
+            dur, clips = story_dur, []
+            sched = subtitle_schedule(paras, dur)
         bgc = DARK if name in DARK_FRAMES else (ACCENT if name == "21-closing" else BG)
-        (out / f"{name}.html").write_text(emit_frame(name, cid, fn, dur, paras, bgc),
+        (out / f"{name}.html").write_text(emit_frame(name, cid, fn, dur, paras, bgc, sched),
                                           encoding="utf-8")
         slots.append(
             f'      <div id="el-{cid}" data-composition-id="{cid}"\n'
             f'           data-composition-src="compositions/frames/{name}.html"\n'
             f'           data-start="{round(t0, 3)}" data-duration="{dur}"\n'
             f'           data-track-index="1" data-width="{W}" data-height="{H}"></div>')
-        print(f"  {name:<22} {dur:>2}s  요소 {len(_parts):>2}  문단 {len(paras)}")
+        # 음성은 루트에 둔다. 경로가 프로젝트 기준으로 분명하고, 시각은 전체 시각이다.
+        for i, (s, d, f) in enumerate(clips):
+            audio.append(
+                f'      <audio id="vo-{name}-{i}" src="assets/narration/{f}"\n'
+                f'             data-start="{round(t0 + s, 3)}" data-duration="{d}"\n'
+                f'             data-track-index="2" data-volume="1"></audio>')
+        print(f"  {name:<22} {dur:>6.2f}s  요소 {len(_parts):>2}  문단 {len(paras)}")
         t0 += dur
     (root / "index.html").write_text(
-        INDEX.format(total=round(t0, 3), slots="\n\n".join(slots)), encoding="utf-8")
-    print(f"\n  index.html — 장면 {len(FRAMES)}개 · {int(t0)}s = {int(t0)//60}분 {int(t0)%60}초")
+        INDEX.format(total=round(t0, 3), slots="\n\n".join(slots),
+                     audio=("\n      <!-- 내레이션: narrate.py 가 만든 문단별 음성 -->\n"
+                            + "\n".join(audio)) if audio else ""),
+        encoding="utf-8")
+    print(f"\n  index.html — 장면 {len(FRAMES)}개 · {t0:.1f}s = {int(t0)//60}분 {int(t0)%60}초"
+          + (f" · 음성 {len(audio)}개" if audio else ""))
 
 
 DARK_FRAMES = {"02-why", "14-install", "15-config"}

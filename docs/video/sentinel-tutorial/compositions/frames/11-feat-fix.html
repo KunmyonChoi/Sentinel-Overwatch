@@ -13,8 +13,8 @@
         #f11-fix .clip { position: absolute; inset: 0; }
       </style>
       <div id="f11-fix" data-composition-id="f11-fix" data-start="0"
-           data-width="1920" data-height="1080" data-duration="68">
-        <div id="f11-fix-clip" class="clip" data-start="0" data-duration="68">
+           data-width="1920" data-height="1080" data-duration="95.33">
+        <div id="f11-fix-clip" class="clip" data-start="0" data-duration="95.33">
           <div id="f11-fix-e0" style="position:absolute;left:0px;top:0px;width:1920px;height:860px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:26px;font-weight:400;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;background:#eef3f0;"></div>
           <div id="f11-fix-e1" style="position:absolute;left:150px;top:70px;width:1400px;height:40px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:30px;font-weight:700;color:#0e7c6b;line-height:1.5;text-align:left;word-break:keep-all;">5장 · 기능 ③</div>
           <div id="f11-fix-e2" style="position:absolute;left:150px;top:112px;width:1500px;height:82px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:62px;font-weight:700;color:#17221d;line-height:1.5;text-align:left;word-break:keep-all;">지킴이가 직접 잠그는 유일한 곳</div>
@@ -41,12 +41,12 @@
           <div id="f11-fix-e23" style="position:absolute;left:1066px;top:660px;width:680px;height:34px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:20px;font-weight:400;color:#0e7c6b;line-height:1.5;text-align:left;word-break:keep-all;will-change:transform,opacity;">stat -c %u == 0</div>
           <div id="f11-fix-e24" style="position:absolute;left:150px;top:756px;width:1620px;height:44px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:27px;font-weight:700;color:#b3261e;line-height:1.5;text-align:center;word-break:keep-all;will-change:transform,opacity;">조치 기능 자체가 공격면이 되지 않게 — 이건 직접 겪고 고친 것이다</div>
           <div style="position:absolute;left:0px;top:860px;width:1920px;height:220px;background:#17221d;"></div>
-          <div id="f11-fix-sub0" style="position:absolute;left:150px;top:919px;width:1620px;height:102px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:34px;color:#ffffff;line-height:1.5;word-break:keep-all;opacity:0;will-change:opacity;">셋째, 파일 권한 조치입니다. 지킴이가 스스로 시스템을 바꾸는 곳은 여기 하나뿐입니다. 그래서 이 하나에 방어를 네 겹 걸었습니다.</div>
-          <div id="f11-fix-sub1" style="position:absolute;left:150px;top:893px;width:1620px;height:153px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:34px;color:#ffffff;line-height:1.5;word-break:keep-all;opacity:0;will-change:opacity;">첫째, 경로를 인자로 받지 않습니다. 무엇을 고칠지는 root 권한으로 도는 진입점이 스스로 다시 검사해서 정합니다. 밖에서 &#x27;이 파일을 고쳐라&#x27;라고 시킬 수 없습니다.</div>
-          <div id="f11-fix-sub2" style="position:absolute;left:150px;top:919px;width:1620px;height:102px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:34px;color:#ffffff;line-height:1.5;word-break:keep-all;opacity:0;will-change:opacity;">둘째, 좁히기만 합니다. 새 권한은 기존 권한과 목표 권한의 교집합입니다. 교집합은 언제나 기존의 부분집합이라, 어떤 경우에도 권한이 넓어지지 않습니다.</div>
-          <div id="f11-fix-sub3" style="position:absolute;left:150px;top:919px;width:1620px;height:102px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:34px;color:#ffffff;line-height:1.5;word-break:keep-all;opacity:0;will-change:opacity;">셋째, 심볼릭 링크를 따라가지 않습니다. 검사한 뒤 적용하기 전 사이에 대상이 링크로 바뀌어도, 링크가 가리키는 파일은 건드리지 않습니다.</div>
-          <div id="f11-fix-sub4" style="position:absolute;left:150px;top:893px;width:1620px;height:153px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:34px;color:#ffffff;line-height:1.5;word-break:keep-all;opacity:0;will-change:opacity;">넷째, 실행 체인이 전부 root 소유일 때만 돕니다. 디렉터리, 진입점, 스캐너, 파이썬 인터프리터 — 하나라도 다른 계정이 쓸 수 있으면 실행을 거부하고 고치는 명령을 알려줍니다.</div>
-          <div id="f11-fix-sub5" style="position:absolute;left:150px;top:893px;width:1620px;height:153px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:34px;color:#ffffff;line-height:1.5;word-break:keep-all;opacity:0;will-change:opacity;">이 네 번째가 왜 필요한지는 직접 겪었습니다. 대시보드 계정이 쓸 수 있는 파일을 root로 실행하면, 그 계정이 뚫리는 순간 그대로 root가 됩니다. 조치 기능 자체가 공격면이 되는 것입니다.</div>
+          <div id="f11-fix-sub0" style="position:absolute;left:150px;top:893px;width:1620px;height:153px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:34px;color:#ffffff;line-height:1.5;word-break:keep-all;opacity:0;will-change:opacity;">세 번째는, 앞에서 보신 파일 잠그기 기능입니다. 지킴이가 스스로 컴퓨터의 설정을 바꾸는 곳은 이 기능 하나뿐입니다. 그래서 이 기능에는 안전장치를 네 겹으로 걸어 두었습니다.</div>
+          <div id="f11-fix-sub1" style="position:absolute;left:150px;top:893px;width:1620px;height:153px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:34px;color:#ffffff;line-height:1.5;word-break:keep-all;opacity:0;will-change:opacity;">첫째, 어떤 파일을 고칠지 바깥에서 지정받지 않습니다. 관리자 권한으로 실행되는 부분이 직접 다시 검사해서, 고칠 파일을 스스로 정합니다. 그래서 누군가 &#x27;이 파일을 고쳐라&#x27; 하고 엉뚱한 파일을 시킬 수가 없습니다.</div>
+          <div id="f11-fix-sub2" style="position:absolute;left:150px;top:919px;width:1620px;height:102px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:34px;color:#ffffff;line-height:1.5;word-break:keep-all;opacity:0;will-change:opacity;">둘째, 잠그기만 합니다. 새 권한은 지금 권한과 목표 권한 양쪽에서 모두 허락된 것만 남깁니다. 그래서 어떤 경우에도 지금보다 더 열리는 일은 생기지 않습니다.</div>
+          <div id="f11-fix-sub3" style="position:absolute;left:150px;top:893px;width:1620px;height:153px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:34px;color:#ffffff;line-height:1.5;word-break:keep-all;opacity:0;will-change:opacity;">셋째, 바로가기를 따라가지 않습니다. 리눅스에서는 이런 바로가기를 심볼릭 링크라고 부르는데, 검사한 뒤 실제로 고치기 직전에 누군가 파일을 바로가기로 바꿔치기해도, 그 바로가기가 가리키는 다른 파일은 건드리지 않습니다.</div>
+          <div id="f11-fix-sub4" style="position:absolute;left:150px;top:893px;width:1620px;height:153px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:34px;color:#ffffff;line-height:1.5;word-break:keep-all;opacity:0;will-change:opacity;">넷째, 이 기능을 실행하는 데 관여하는 모든 것이, 관리자만 고칠 수 있는 상태일 때만 동작합니다. 폴더, 실행 파일, 검사 프로그램, 파이썬까지, 하나라도 다른 계정이 고칠 수 있으면 실행을 거부하고, 그 문제를 고치는 명령을 알려드립니다.</div>
+          <div id="f11-fix-sub5" style="position:absolute;left:150px;top:893px;width:1620px;height:153px;font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-size:34px;color:#ffffff;line-height:1.5;word-break:keep-all;opacity:0;will-change:opacity;">네 번째 장치가 필요한 이유는 이렇습니다. 다른 계정이 고칠 수 있는 파일을 관리자 권한으로 실행하면, 그 계정을 손에 넣은 공격자가 곧바로 관리자 권한까지 얻게 됩니다. 컴퓨터를 지키려고 만든 기능이 오히려 공격의 통로가 되는 셈입니다.</div>
         </div>
       </div>
       <script>
@@ -54,38 +54,38 @@
         (function () {
           const tl = gsap.timeline({ paused: true });
           tl.fromTo("#f11-fix-sub0", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none" }, 0.3);
-          tl.to("#f11-fix-sub0", { opacity: 0, duration: 0.25, ease: "none" }, 9.234);
-          tl.fromTo("#f11-fix-sub1", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none" }, 9.484);
-          tl.to("#f11-fix-sub1", { opacity: 0, duration: 0.25, ease: "none" }, 21.01);
-          tl.fromTo("#f11-fix-sub2", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none" }, 21.26);
-          tl.to("#f11-fix-sub2", { opacity: 0, duration: 0.25, ease: "none" }, 31.871);
-          tl.fromTo("#f11-fix-sub3", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none" }, 32.121);
-          tl.to("#f11-fix-sub3", { opacity: 0, duration: 0.25, ease: "none" }, 41.664);
-          tl.fromTo("#f11-fix-sub4", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none" }, 41.914);
-          tl.to("#f11-fix-sub4", { opacity: 0, duration: 0.25, ease: "none" }, 54.202);
-          tl.fromTo("#f11-fix-sub5", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none" }, 54.452);
+          tl.to("#f11-fix-sub0", { opacity: 0, duration: 0.25, ease: "none" }, 14.25);
+          tl.fromTo("#f11-fix-sub1", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none" }, 14.5);
+          tl.to("#f11-fix-sub1", { opacity: 0, duration: 0.25, ease: "none" }, 30.77);
+          tl.fromTo("#f11-fix-sub2", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none" }, 31.02);
+          tl.to("#f11-fix-sub2", { opacity: 0, duration: 0.25, ease: "none" }, 44.22);
+          tl.fromTo("#f11-fix-sub3", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none" }, 44.47);
+          tl.to("#f11-fix-sub3", { opacity: 0, duration: 0.25, ease: "none" }, 59.49);
+          tl.fromTo("#f11-fix-sub4", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none" }, 59.74);
+          tl.to("#f11-fix-sub4", { opacity: 0, duration: 0.25, ease: "none" }, 77.94);
+          tl.fromTo("#f11-fix-sub5", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none" }, 78.19);
           tl.fromTo("#f11-fix-e3", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 0.3);
-          tl.fromTo("#f11-fix-e4", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 9.484);
-          tl.fromTo("#f11-fix-e5", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 9.564);
-          tl.fromTo("#f11-fix-e6", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 9.644);
-          tl.fromTo("#f11-fix-e7", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 9.724);
-          tl.fromTo("#f11-fix-e8", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 9.804);
-          tl.fromTo("#f11-fix-e9", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 21.26);
-          tl.fromTo("#f11-fix-e10", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 21.34);
-          tl.fromTo("#f11-fix-e11", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 21.42);
-          tl.fromTo("#f11-fix-e12", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 21.5);
-          tl.fromTo("#f11-fix-e13", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 21.58);
-          tl.fromTo("#f11-fix-e14", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 32.121);
-          tl.fromTo("#f11-fix-e15", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 32.201);
-          tl.fromTo("#f11-fix-e16", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 32.281);
-          tl.fromTo("#f11-fix-e17", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 32.361);
-          tl.fromTo("#f11-fix-e18", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 32.441);
-          tl.fromTo("#f11-fix-e19", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 41.914);
-          tl.fromTo("#f11-fix-e20", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 41.994);
-          tl.fromTo("#f11-fix-e21", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 42.074);
-          tl.fromTo("#f11-fix-e22", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 42.154);
-          tl.fromTo("#f11-fix-e23", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 42.234);
-          tl.fromTo("#f11-fix-e24", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 54.452);
+          tl.fromTo("#f11-fix-e4", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 14.5);
+          tl.fromTo("#f11-fix-e5", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 14.58);
+          tl.fromTo("#f11-fix-e6", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 14.66);
+          tl.fromTo("#f11-fix-e7", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 14.74);
+          tl.fromTo("#f11-fix-e8", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 14.82);
+          tl.fromTo("#f11-fix-e9", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 31.02);
+          tl.fromTo("#f11-fix-e10", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 31.1);
+          tl.fromTo("#f11-fix-e11", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 31.18);
+          tl.fromTo("#f11-fix-e12", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 31.26);
+          tl.fromTo("#f11-fix-e13", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 31.34);
+          tl.fromTo("#f11-fix-e14", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 44.47);
+          tl.fromTo("#f11-fix-e15", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 44.55);
+          tl.fromTo("#f11-fix-e16", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 44.63);
+          tl.fromTo("#f11-fix-e17", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 44.71);
+          tl.fromTo("#f11-fix-e18", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 44.79);
+          tl.fromTo("#f11-fix-e19", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 59.74);
+          tl.fromTo("#f11-fix-e20", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 59.82);
+          tl.fromTo("#f11-fix-e21", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 59.9);
+          tl.fromTo("#f11-fix-e22", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 59.98);
+          tl.fromTo("#f11-fix-e23", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 60.06);
+          tl.fromTo("#f11-fix-e24", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 78.19);
           window.__timelines["f11-fix"] = tl;
         })();
       </script>
