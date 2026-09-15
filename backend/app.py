@@ -123,7 +123,12 @@ app = FastAPI(title="Security Dashboard", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", f"http://{config.HOST}:{config.PORT}", f"http://localhost:{config.PORT}"],
+    allow_origins=[
+        "http://localhost:5173", "http://127.0.0.1:5173", f"http://{config.HOST}:{config.PORT}", f"http://localhost:{config.PORT}",
+        # 데스크톱 앱(desktop/, Tauri)이 화면을 담는 출처. Linux·macOS 는 tauri://localhost, Windows 는 http://tauri.localhost.
+        # 토큰 헤더는 그대로 필요하다 — 출처를 허용해도 토큰 없이는 읽을 수 없다.
+        "tauri://localhost", "http://tauri.localhost",
+    ],
     allow_credentials=False,
     allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["Content-Type", "X-API-Token"],

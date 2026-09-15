@@ -1,0 +1,9 @@
+# conda(miniforge) 가 PATH 앞에 있으면 `cc` 가 conda 의 gcc 가 되고, 그 gcc 는 오래된 glibc 용
+# crt1.o(__libc_csu_init/fini)를 쓴다. Ubuntu 24.04(glibc 2.39)에서는 링크가 실패한다.
+# Linux x86_64 에서는 시스템 gcc 로 링크하고 C 코드도 시스템 gcc 로 컴파일한다.
+[target.x86_64-unknown-linux-gnu]
+linker = "/usr/bin/gcc"
+
+[env]
+CC_x86_64_unknown_linux_gnu = "/usr/bin/gcc"
+CXX_x86_64_unknown_linux_gnu = "/usr/bin/g++"

@@ -86,3 +86,9 @@ docs/video/*/.narration-raw/
 docs/video/*/assets/narration/
 # HyperFrames Studio 가 음성 파형을 그리려고 만드는 캐시
 docs/video/*/.waveform-cache/
+
+# 데스크톱 앱(Tauri) 빌드 산출물
+desktop/node_modules/
+desktop/dist/
+desktop/src-tauri/target/
+desktop/src-tauri/gen/
