@@ -49,6 +49,11 @@ FAIL2BAN_JAILS = [j.strip() for j in _env("SECDASH_FAIL2BAN_JAILS", "sshd,recidi
 FAIL2BAN_CLIENT = _env("SECDASH_FAIL2BAN_CLIENT", "/usr/bin/fail2ban-client")
 # root가 아니면 sudo -n 으로 fail2ban-client 를 호출한다 (deploy/sudoers-secdash 참고)
 FAIL2BAN_USE_SUDO = _env_bool("SECDASH_FAIL2BAN_USE_SUDO", os.geteuid() != 0)
+# 관리자 IP·대역(공백·쉼표 구분). 대시보드는 이 주소를 차단하지 않고, apply-host-config.sh 가
+# fail2ban ignoreip 에도 넣는다. 원격 서버에서 비워 두면 관리자가 스스로 차단될 수 있다.
+F2B_IGNOREIP = _env("SECDASH_F2B_IGNOREIP", "")
+# SSH 포트. 로그인해 있는 관리자 세션을 알아보는 데 쓴다(admin_guard).
+SSH_PORTS = {int(x) for x in _env("SECDASH_SSH_PORTS", "22").replace(",", " ").split() if x.isdigit()}
 
 # --- 잡음 억제 ---
 # 이 프로세스가 실행 중인 계정(대시보드 자신)의 sudo/root 세션은 이벤트로 남기지 않는다

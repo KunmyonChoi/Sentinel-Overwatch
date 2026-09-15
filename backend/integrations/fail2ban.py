@@ -33,6 +33,15 @@ def parse_banned_output(out: str) -> dict[str, list[str]]:
     return result
 
 
+def parse_ignoreip_output(out: str) -> list[str]:
+    """`fail2ban-client get <jail> ignoreip` 출력 → 항목 목록.
+
+    형식: "These IP addresses/networks are ignored:" 뒤에 '|- 항목' 줄들과 마지막 '`- 항목',
+    없으면 "No IP address/network is ignored".
+    """
+    return [m.group(1) for m in re.finditer(r"^\s*[|`]-\s*(\S+)\s*$", out, re.M)]
+
+
 class Fail2banClient:
     def __init__(self, jail: str | None = None, use_sudo: bool | None = None, client: str | None = None):
         self.jail = jail or config.FAIL2BAN_JAIL
@@ -130,6 +139,13 @@ class Fail2banClient:
             if m:
                 stats[m.group(1).lower().replace(" ", "_")] = int(m.group(2))
         return stats
+
+    def ignore_list(self) -> list[str] | None:
+        """fail2ban 이 지금 쓰는 차단 예외(ignoreip). 읽지 못하면 None."""
+        rc, out = self._run("get", self.jail, "ignoreip")
+        if rc != 0:
+            return None
+        return parse_ignoreip_output(out)
 
     # --- 제어 ---
     def ban(self, ip: str) -> bool:

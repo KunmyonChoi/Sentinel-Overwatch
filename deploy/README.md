@@ -25,7 +25,7 @@ sudo secdash-<ver>/deploy/install.sh                   # 대상 서버
 
 압축본에는 backend, 빌드된 frontend/dist, deploy, VERSION/RELEASE(커밋·빌드 시각)가 들어 있고 venv·DB·토큰·.env·로그는 포함되지 않는다. `--wheels` 로 pip 휠을 넣으면 인터넷이 없는 서버에도 설치된다(같은 아키텍처·파이썬 버전에서 빌드).
 
-서버별로 설치 후 채우는 것: `/etc/secdash/secdash.env`(Slack 웹훅, 토큰 고정 등), `deploy/fail2ban-secdash.conf` 의 `ignoreip`, `harden.sh` 플래그. Slack 알림 제목에는 호스트명이 붙어 여러 서버가 같은 웹훅을 써도 구분된다.
+서버별로 설치 후 채우는 것: `/etc/secdash/secdash.env`(**관리자 IP `SECDASH_F2B_IGNOREIP` — 원격 서버라면 반드시**, Slack 웹훅, 토큰 고정 등), `harden.sh` 플래그. Slack 알림 제목에는 호스트명이 붙어 여러 서버가 같은 웹훅을 써도 구분된다.
 
 저장소를 직접 clone 한 경우(npm 필요):
 
@@ -43,7 +43,33 @@ sudo deploy/install.sh
 
 ## 호스트 도구 설정
 
-`deploy/apply-host-config.sh` 가 fail2ban 보강(`jail.d/secdash.conf`: ignoreip, bantime.increment, recidive), auditd 규칙, Lynis 크론을 설치한다. install.sh 와 update.sh 가 자동 호출하며, `ignoreip` 에 관리자 대역을 추가한 뒤 다시 실행하면 반영된다.
+`deploy/apply-host-config.sh` 가 fail2ban 보강(`jail.d/secdash.conf`: ignoreip, bantime.increment, recidive), auditd 규칙, Lynis 크론을 설치한다. install.sh 와 update.sh 가 자동 호출한다. `ignoreip` 는 `/etc/secdash/secdash.env` 의 `SECDASH_F2B_IGNOREIP` 를 더해 만들므로, 관리자 대역은 그 파일에 적고 이 스크립트를 다시 실행한다(`/etc/fail2ban/jail.d/secdash.conf` 에 직접 적으면 다음 업데이트에서 지워진다).
+
+## 원격 서버: 자기 자신을 차단하지 않게
+
+원격 서버에서 관리자 IP 가 차단되면 SSH 로 다시 들어올 수 없다(`recidive` 에 걸리면 1주일, 모든 포트).
+fail2ban 의 `ignoreip` 는 로그 분석으로 생긴 차단만 막고 `fail2ban-client set <jail> banip` 으로 넣는 차단은
+막지 않는다. 대시보드의 자동·수동 차단은 그 명령을 쓰므로, 대시보드는 차단 전에 다음 주소를 거른다
+(`backend/admin_guard.py`). 걸러진 경우 차단하지 않고 '차단 보류' 이벤트에 이유를 남긴다.
+
+1. 루프백
+2. `SECDASH_F2B_IGNOREIP` 에 적은 관리자 IP·대역
+3. fail2ban 이 지금 쓰는 `ignoreip`
+4. 로그인을 마치고 열려 있는 SSH 세션의 상대 주소 — 인증 전 연결(비밀번호를 찍어보는 중인 공격자)은 해당하지 않는다
+
+또 공개키 거부(`Failed publickey`)는 브루트포스로 세지 않는다. 에이전트에 키가 여럿이면 올바른 키를 내기 전에
+거부된 키마다 한 줄씩 남기 때문이다(fail2ban 기본 필터와 같은 기준).
+
+그래도 **관리자 IP 는 `SECDASH_F2B_IGNOREIP` 에 적어 두는 것이 가장 확실하다.** 4번은 이미 로그인해 있을 때만
+보호하고, fail2ban 자신의 차단은 1·2번(`ignoreip`)으로만 막힌다. `apply-host-config.sh` 는 목록이 비어 있으면
+지금 접속한 주소를 보여주며 경고한다.
+
+이미 차단됐다면 콘솔(클라우드 콘솔·IPMI)이나 다른 주소에서 들어가 두 jail 모두에서 푼다:
+
+```bash
+sudo fail2ban-client set sshd unbanip <내 IP>
+sudo fail2ban-client set recidive unbanip <내 IP>
+```
 
 ## Lynis 프로파일 (수용·해결 항목 제외)
 

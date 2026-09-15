@@ -287,6 +287,7 @@ export const EVENT_KO = {
   CONTAINER_CONFIG: { icon: 'box', who: '자동 점검' },
   IP_BLOCKED: { icon: 'shield', who: '자동 차단' },
   IP_UNBLOCKED: { icon: 'shield', who: '내가 함' },
+  IP_BLOCK_SKIPPED: { icon: 'shield', who: '자동 점검' },
   SOFTWARE_UPDATE: { icon: 'update', who: '자동' },
   PENDING_UPDATES: { icon: 'update', who: '자동 점검' },
   AUTH_SUCCESS: { icon: 'alert', who: '접속' },
