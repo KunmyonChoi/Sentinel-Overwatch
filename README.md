@@ -40,9 +40,10 @@
 1. **조용히 실패하지 않는다.** 로그를 못 읽거나 fail2ban 을 제어할 수 없으면 모니터 상태가 `제한/중단` 으로 바뀌고 해결 명령이 표시된다. 테스트 파일로 대체하지 않는다.
 2. **한 일만 말한다.** 실제 차단은 fail2ban 이 한다. 연동이 안 되면 "차단됨" 이 아니라 "차단 권고" 와 실행할 명령을 보여준다.
 3. **호스트 로그는 외부로 나가지 않는다.** 한국어 문장은 구조화 필드 기반 템플릿으로 만든다. 외부 번역/AI 평가는 공개 뉴스 제목에만 쓴다.
-4. **원시 이벤트와 알림을 분리한다.** 실패 로그 한 줄은 INFO 이벤트, "30분 내 5회 실패" 가 경고 알림, "실패 후 성공" 이 긴급 알림이다. 알림을 확인(ack)하면 DEFCON 에서 빠진다.
+4. **원시 이벤트와 알림을 분리한다.** 실패 로그 한 줄은 INFO 이벤트, "30분 내 5회 실패" 가 경고 알림, "실패 후 성공" 이 긴급 알림이다. 공개키 거부(`Failed publickey`)는 기록만 하고 실패 횟수에 세지 않는다(에이전트의 키가 차례로 거부된 줄이라 fail2ban 기본 필터도 세지 않는다). 알림을 확인(ack)하면 DEFCON 에서 빠진다.
 5. **계획된 변경은 알림이 아니다.** 패키지 설치가 만든 cron/SUID/설정 파일, `systemctl mask` 링크, snap 갱신은 소유 패키지와 최근 패키지 작업을 대조해 정보 이벤트로만 남긴다. 운영자는 점검 모드를 켜서 작업 중 알림을 자동 확인 처리할 수 있다. sudoers, sshd_config, authorized_keys, ld.so.preload, 그리고 모든 침입 신호는 예외 없이 알린다.
 6. **판단에 필요한 근거를 함께 준다.** 프로세스명·실행 파일·사용자·부모, 파일 diff 와 추가된 키/계정, 누가 방금 어떤 sudo 명령을 실행했는지, 취약한 패키지와 수정 버전.
+7. **관리자 자신을 차단하지 않는다.** 원격 서버에서 관리자 IP 가 막히면 다시 들어올 수 없다. 대시보드는 차단하기 전에 관리자 대역(`SECDASH_F2B_IGNOREIP`), fail2ban 의 `ignoreip`, 로그인을 마친 SSH 세션의 주소를 거르고, 걸리면 차단하지 않고 '차단 보류'와 이유를 남긴다. fail2ban 의 `ignoreip` 는 `fail2ban-client set … banip` 을 막지 않으므로 대시보드가 따로 거른다.
 
 ## 화면 구성
 
@@ -104,6 +105,26 @@ sudo secdash-1.0.0/deploy/install.sh
 저장소를 직접 clone 한 경우에도 `sudo deploy/install.sh` 로 설치할 수 있다(npm 필요). 업데이트는 새 압축본을 풀고 `sudo secdash-<version>/deploy/update.sh`.
 접속은 SSH 터널(`ssh -L 8000:127.0.0.1:8000 서버`)로 http://127.0.0.1:8000 을 열고 `/opt/secdash/backend/.api_token` 값을 한 번 입력한다.
 
+**원격 서버라면 설치 직후 관리자 IP 를 적는다.** 비워 두면 비밀번호를 몇 번 틀린 관리자도 차단될 수 있다.
+
+```bash
+echo 'SECDASH_F2B_IGNOREIP=203.0.113.7 198.51.100.0/24' | sudo tee -a /etc/secdash/secdash.env
+sudo deploy/apply-host-config.sh && sudo systemctl restart secdash   # fail2ban ignoreip 에도 반영된다
+```
+
+저장소에서 `update.sh` 를 돌릴 때, 개발용 `start.sh` 가 만든 개발 토큰이 `frontend/dist` 에 박혀 있으면 웹 화면은 올리지 않고 알린다. 먼저 `(cd frontend && VITE_API_TOKEN= npx vite build)` 로 다시 빌드한다.
+
+### 데스크톱 앱 (같은 컴퓨터에서 트레이로)
+
+브라우저 대신 자기 창을 가진 앱으로 연다. 트레이 아이콘이 지금 상태(이상 없음·살펴보세요·지금 확인하세요·알 수 없음)를 보여주고, 긴급 알림은 OS 알림으로 띄우며, 토큰은 OS 키링에 저장한다. 같은 컴퓨터의 운영 인스턴스(`127.0.0.1:8000`)에 붙는다.
+
+```bash
+cd desktop && npm ci && npm run build
+sudo apt install "./src-tauri/target/release/bundle/deb/Sentinel Overwatch_0.1.0_amd64.deb"   # 앱 메뉴: 내 컴퓨터 지킴이
+```
+
+준비할 패키지, 개발 실행, 보안 설정(CSP·키링)은 [desktop/README.md](desktop/README.md) 를 보라.
+
 권한 모델, 호스트 도구 설정(fail2ban·auditd·Lynis), 강화 스크립트(`deploy/harden.sh`), 시뮬레이션 방법은 [deploy/README.md](deploy/README.md) 를 보라.
 
 ## API
@@ -145,7 +166,9 @@ python3 simulate_attack.py                            # 탐지 파이프라인 �
 | `SECDASH_HOST_ROLE` | – | 서버 역할 메모. 강화 작업 목록의 "Claude 에 붙여넣기용 복사" 본문에 포함 |
 | `SECDASH_AUTH_LOG` / `SECDASH_DPKG_LOG` | /var/log/auth.log, /var/log/dpkg.log | 로그 경로 (시뮬레이션 시 테스트 파일) |
 | `SECDASH_FAIL2BAN_JAIL` / `SECDASH_FAIL2BAN_JAILS` | sshd / sshd,recidive | 차단 요청 jail / 동기화 대상 jail |
-| `SECDASH_BRUTE_THRESHOLD` / `SECDASH_BRUTE_WINDOW_MIN` | 5 / 30 | 브루트포스 판정 |
+| `SECDASH_BRUTE_THRESHOLD` / `SECDASH_BRUTE_WINDOW_MIN` | 5 / 30 | 브루트포스 판정 (공개키 거부는 세지 않음) |
+| `SECDASH_F2B_IGNOREIP` | – | 관리자 IP·대역(공백 구분). 대시보드가 차단하지 않고, `apply-host-config.sh` 가 fail2ban `ignoreip` 에도 넣는다. **원격 서버라면 반드시** |
+| `SECDASH_SSH_PORTS` | 22 | 로그인해 있는 관리자 SSH 세션을 알아보는 포트 (차단 보호용) |
 | `SECDASH_NETWORK_IGNORE_PROCESSES` | – | 외부 연결 이벤트에서 제외할 프로세스 (예: `firefox,chrome`) |
 | `SLACK_WEBHOOK_URL` / `SECDASH_NOTIFY_MAX_PER_MINUTE` | – / 10 | 알림 발송, 분당 제한(초과분 집계) |
 | `ANTHROPIC_API_KEY`, `SECDASH_INTEL_TRANSLATE` | –, 1 | 뉴스 제목 번역/긴급도 (호스트 로그 미전송) |
@@ -157,6 +180,7 @@ python3 simulate_attack.py                            # 탐지 파이프라인 �
 - 포트 스캔 탐지는 커널 소켓 테이블 기반 휴리스틱이라 SYN 스캔 대부분을 놓친다. 필요하면 방화벽 로그나 IDS 를 붙여라.
 - 파일 무결성은 자체 해시다. 규제 요건이 있으면 AIDE 를 병행하고 이 대시보드는 표시 계층으로 써라.
 - auditd 가 없으면 프로세스 실행 이력(execve)은 30초 샘플링으로만 본다. `deploy/install.sh` 는 auditd 와 최소 규칙을 설치해 이 공백을 메운다.
+- 데스크톱 앱은 같은 컴퓨터의 백엔드(`127.0.0.1:8000`)에만 붙는다. 원격 서버를 보려면 SSH 터널을 직접 열어 둔다. Linux 트레이(AppIndicator)는 아이콘 클릭을 받지 않아 창은 트레이 메뉴로 연다.
 - 서버 한 대 단위다. 여러 서버를 한 화면에서 보려면 Wazuh 같은 중앙 관리 도구가 필요하며, 그때 이 대시보드는 그 위의 한국어 트리아지 뷰로 쓸 수 있다.
 
 ## 라이선스
