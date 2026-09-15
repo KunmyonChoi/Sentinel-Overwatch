@@ -1,8 +1,24 @@
-# Security Dashboard (Sentinel Overwatch)
+<p align="center">
+  <img src="frontend/public/sentinel.svg" width="120" height="120" alt="Sentinel Overwatch">
+</p>
 
-중요 서버용 보안 관제 대시보드. **검증된 호스트 도구 위에서 동작하는 뷰/트리아지 계층**으로 설계되어 있다.
-탐지를 직접 재발명하기보다 fail2ban, rsyslog(auth.log), auditd, dpkg/apt, /proc, Lynis, Ubuntu USN 을 진실 원천으로 삼고,
-그 위에서 상관 분석 → 알림(Alert) → 한국어 조치 안내 → 확인/해결 워크플로를 제공한다.
+<h1 align="center">Security Dashboard (Sentinel Overwatch)</h1>
+
+<p align="center">
+  중요 서버용 보안 관제 대시보드. <b>검증된 호스트 도구 위에서 동작하는 뷰/트리아지 계층</b>으로 설계되어 있다.
+  탐지를 직접 재발명하기보다 fail2ban, rsyslog(auth.log), auditd, dpkg/apt, /proc, Lynis, Ubuntu USN 을 진실 원천으로 삼고,
+  그 위에서 상관 분석 → 알림(Alert) → 한국어 조치 안내 → 확인/해결 워크플로를 제공한다.
+</p>
+
+<p align="center">
+  <a href="https://github.com/KunmyonChoi/Sentinel-Overwatch/releases/download/tutorial-v1/sentinel-tutorial-1080p.mp4">
+    <img src="docs/video/sentinel-tutorial/preview.gif" width="720" alt="내 컴퓨터 지킴이 사용 안내 영상 미리보기">
+  </a>
+</p>
+<p align="center">
+  <a href="https://github.com/KunmyonChoi/Sentinel-Overwatch/releases/download/tutorial-v1/sentinel-tutorial-1080p.mp4">▶ 사용 안내 영상 보기 (MP4 · 1080p · 25분)</a>
+  · <a href="https://github.com/KunmyonChoi/Sentinel-Overwatch/releases/download/tutorial-v1/sentinel-tutorial-720p.mp4">720p</a>
+</p>
 
 ```
  auth.log ──┐                                   ┌─ 알림 (OPEN → ACKED → RESOLVED)
