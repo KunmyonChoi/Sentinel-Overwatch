@@ -1,0 +1,17 @@
+[Desktop Entry]
+Categories={{categories}}
+{{#if comment}}
+Comment={{comment}}
+{{/if}}
+Comment[ko]=내 컴퓨터에 무슨 일이 있었는지 알려주는 보안 지킴이
+Exec={{exec}}
+StartupWMClass={{exec}}
+Icon={{icon}}
+Name={{name}}
+Name[ko]=내 컴퓨터 지킴이
+Keywords=security;fail2ban;ssh;보안;지킴이;
+Terminal=false
+Type=Application
+{{#if mime_type}}
+MimeType={{mime_type}}
+{{/if}}

@@ -117,6 +117,10 @@ sudo deploy/update.sh          # 코드만 반영하고 재시작 (DB·토큰·�
 sudo deploy/update.sh --deps   # requirements 가 바뀐 경우
 ```
 
+`update.sh` 는 저장소의 `frontend/dist` 를 그대로 올린다. 개발용 `start.sh` 는 `frontend/.env.local` 에 개발 토큰을
+적으므로, 그 상태로 빌드한 dist 에는 토큰이 박힌다. `update.sh` 는 그런 dist 를 발견하면 웹 화면을 올리지 않고
+알린다 — 올리기 전에 `(cd frontend && VITE_API_TOKEN= npx vite build)` 로 다시 빌드한다.
+
 ## 권한 모델
 
 | 필요 권한 | 제공 방법 | 용도 |
