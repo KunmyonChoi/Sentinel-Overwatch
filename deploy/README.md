@@ -38,7 +38,7 @@ sudo deploy/install.sh
 2. 전용 계정 `secdash` 생성 (+ `adm` 그룹: auth.log 읽기)
 3. `/opt/secdash` 에 복사, venv 생성(휠이 있으면 오프라인 설치), 빌드된 dist 가 없을 때만 npm 빌드
 4. `/etc/secdash/secdash.env` 설정 파일
-5. `/etc/sudoers.d/secdash` (fail2ban-client 만 허용) 와 systemd 유닛 설치
+5. `/etc/sudoers.d/secdash` (fail2ban-client·방화벽/docker 읽기·권한 조치 진입점만, 인자까지 고정) 와 systemd 유닛 설치
 6. 서비스 시작, API 토큰 출력
 
 ## 호스트 도구 설정

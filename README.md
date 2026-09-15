@@ -35,6 +35,137 @@
 - **[방어 범위](https://kunmyonchoi.github.io/Sentinel-Overwatch/coverage.html)** — 차단·탐지·불가로 나눈 공격 패턴과 다음 조치<br>
   <sub>[원본](docs/coverage.html)</sub>
 
+## 지원 환경
+
+| 구성 | 확인한 환경 | 필요한 것 | 지원하지 않음 |
+|---|---|---|---|
+| 서버 (백엔드·웹 화면) | Ubuntu 24.04 LTS · x86_64 | systemd, apt/dpkg, rsyslog(`/var/log/auth.log`), Python 3.10 이상. fail2ban·auditd·Lynis 는 설치 스크립트가 넣는다 | RHEL·Fedora·Arch 같은 비 Debian 계열, macOS, Windows |
+| 데스크톱 앱 | Ubuntu 24.04 LTS · amd64 (deb, AppImage) | glibc 2.39 이상, WebKitGTK 4.1, AppIndicator 트레이 | Ubuntu 22.04 이하(glibc 2.35), macOS, Windows |
+| 웹 화면을 여는 컴퓨터 | — | 최신 Chrome·Firefox·Edge·Safari, 원격이면 SSH 터널 | — |
+| 빌드 머신 (개발자) | Ubuntu 24.04 LTS | Node 20.19+ 또는 22.12+ (vite 7). 데스크톱 앱은 Rust stable 추가 | — |
+
+- **시험하지 않은 환경.** Ubuntu 22.04 LTS, Debian 12·13, ARM64 는 같은 apt·systemd 도구를 쓰지만 확인하지 않았다.
+- **Debian 에서는** 취약점 공지 대조가 비어 있다. USN 은 Ubuntu 릴리스별 공지라 Debian 코드네임과 맞는 항목이 없다. 뉴스와 다른 모니터는 영향이 없다.
+- **데스크톱 앱 트레이는** Ubuntu 기본 데스크톱에서 보인다. 순수 GNOME 에서는 AppIndicator 확장을 켜야 한다.
+
+## 설치와 사용
+
+처음 쓰는 분을 위한 순서다. 코드를 빌드할 필요는 없다 — 만들어 둔 설치 파일을 받아 설치한다.
+
+### 먼저 알아둘 말
+
+- **서버** — 지킴이를 설치해 지킬 컴퓨터. 원격 서버일 수도, 지금 쓰는 내 PC 일 수도 있다.
+- **터미널** — 명령을 글자로 입력하는 창. Ubuntu 데스크톱에서는 `Ctrl` + `Alt` + `T` 로 연다. 원격 서버라면 `ssh 사용자@서버주소` 로 접속한 창이 곧 서버의 터미널이다. 아래 회색 상자의 명령을 한 줄씩 붙여 넣고 `Enter` 를 누른다(`#` 뒤는 설명이라 입력하지 않아도 된다).
+- **`sudo`** — 관리자 권한으로 실행한다는 뜻. 처음 한 번 **내 계정 비밀번호**를 묻는다. 입력하는 동안 화면에 글자가 보이지 않는 것이 정상이다.
+- **API 토큰** — 지킴이 화면에 들어가기 위한 긴 비밀 문자열. 설치할 때 서버가 자동으로 만든다. 비밀번호처럼 다루고 다른 사람에게 보여주지 않는다.
+
+### 1. 설치 파일 받기 (서버의 터미널에서)
+
+```bash
+cd ~
+wget https://github.com/KunmyonChoi/Sentinel-Overwatch/releases/download/v1.0.0/secdash-1.0.0.tar.gz
+wget https://github.com/KunmyonChoi/Sentinel-Overwatch/releases/download/v1.0.0/secdash-1.0.0.tar.gz.sha256
+sha256sum -c secdash-1.0.0.tar.gz.sha256      # "secdash-1.0.0.tar.gz: OK" 가 나와야 한다
+tar xzf secdash-1.0.0.tar.gz                  # secdash-1.0.0 폴더가 생긴다
+```
+
+`OK` 가 아니면 파일이 깨졌거나 바뀐 것이니 설치하지 말고 다시 받는다.
+
+### 2. 설치하기
+
+```bash
+sudo secdash-1.0.0/deploy/install.sh
+```
+
+필요한 도구(fail2ban·auditd·Lynis)를 설치하고, 지킴이 전용 계정과 서비스를 만들어 켠다. 인터넷이 연결되어 있어야 하며 몇 분 걸린다.
+끝나면 마지막에 이런 줄이 보인다.
+
+```
+  대시보드 : http://127.0.0.1:8000  (원격이면 ssh -L 8000:127.0.0.1:8000 <서버>)
+  API 토큰 : 3f9c…(긴 문자열)
+```
+
+**API 토큰** 줄의 문자열이 5단계에서 넣을 토큰이다. 지금 복사해 두지 않아도 된다 — 언제든 다시 볼 수 있다.
+
+### 3. 원격 서버라면: 내 IP 를 먼저 등록한다
+
+같은 컴퓨터에 설치했다면 건너뛴다.
+
+지킴이는 비밀번호를 여러 번 틀린 주소를 차단한다. 원격 서버에서 **내 주소가 차단되면 다시 접속할 수 없다**(최대 1주일). 그래서 설치 직후 내 주소를 "차단하지 않을 주소"로 등록한다.
+
+```bash
+echo $SSH_CLIENT | cut -d' ' -f1      # 서버가 보는 내 IP. 예: 203.0.113.7
+```
+
+나온 주소를 넣어 등록한다(아래 `203.0.113.7` 을 바꾼다). 집·사무실처럼 여러 곳에서 접속하면 공백으로 구분해 모두 적는다.
+
+```bash
+echo 'SECDASH_F2B_IGNOREIP=203.0.113.7' | sudo tee -a /etc/secdash/secdash.env
+sudo secdash-1.0.0/deploy/apply-host-config.sh && sudo systemctl restart secdash
+```
+
+인터넷 공유기나 통신사가 주소를 자주 바꾸는 환경이면 주소가 바뀔 때마다 다시 등록해야 한다.
+
+### 4. 화면 열기
+
+지킴이 화면은 보안을 위해 **서버 자신(`127.0.0.1`)에서만** 열린다. 인터넷에 그대로 드러나지 않는다.
+
+- **같은 컴퓨터에 설치했다면**: 브라우저 주소창에 `http://127.0.0.1:8000` 을 입력한다.
+- **원격 서버라면**: 내 컴퓨터에서 SSH 터널을 연다. 터널은 "내 컴퓨터의 8000번 문을 두드리면 서버의 8000번 문으로 이어 주는" 암호화된 통로다. 내 컴퓨터의 터미널(Windows 는 PowerShell)에서:
+  ```bash
+  ssh -L 8000:127.0.0.1:8000 사용자@서버주소
+  ```
+  접속된 이 창은 **닫지 말고 둔 채로**, 내 컴퓨터 브라우저에서 `http://127.0.0.1:8000` 을 연다. 창을 닫으면 화면도 끊긴다.
+
+### 5. 토큰 넣기 (처음 한 번)
+
+화면을 처음 열면 **"API 토큰 필요"** 창이 뜬다.
+
+1. 서버의 터미널에서 토큰을 표시한다. 토큰 파일은 지킴이 계정만 읽을 수 있어서 `sudo` 가 필요하다.
+   ```bash
+   sudo cat /opt/secdash/backend/.api_token
+   ```
+2. 나온 긴 문자열을 드래그해 복사한다(터미널에서는 `Ctrl` + `Shift` + `C`). 앞뒤 공백은 넣지 않아도 알아서 지운다.
+3. 창의 입력칸에 붙여 넣고(`Ctrl` + `V`) **연결** 을 누른다. 입력한 글자는 `●` 로 가려져 보인다.
+
+토큰은 **그 브라우저에만** 저장되어 다음부터는 묻지 않는다. 다른 브라우저, 다른 컴퓨터, 시크릿 창에서 열면 다시 묻는다.
+토큰이 틀렸거나 서버에서 토큰이 바뀌면 같은 창이 다시 뜬다 — 1번부터 다시 하면 된다.
+
+### 6. 데스크톱 앱 (선택, Ubuntu 24.04 이상 amd64)
+
+브라우저 대신 자기 창을 가진 앱으로 연다. 화면 위쪽 막대(트레이)에 아이콘이 늘 떠서 지금 상태(이상 없음·살펴보세요·지금 확인하세요·알 수 없음)를 보여주고, 긴급 알림은 바탕화면 알림으로 띄운다.
+앱은 **이 컴퓨터의 `127.0.0.1:8000`** 에 붙는다 — 같은 컴퓨터에 지킴이를 설치했거나, 4단계의 SSH 터널이 열려 있어야 한다.
+
+```bash
+cd ~
+wget https://github.com/KunmyonChoi/Sentinel-Overwatch/releases/download/desktop-v0.1.0/sentinel-overwatch_0.1.0_amd64.deb
+wget https://github.com/KunmyonChoi/Sentinel-Overwatch/releases/download/desktop-v0.1.0/SHA256SUMS
+sha256sum -c --ignore-missing SHA256SUMS      # "…deb: OK"
+sudo apt install ./sentinel-overwatch_0.1.0_amd64.deb
+```
+
+앱 메뉴에서 **내 컴퓨터 지킴이**를 실행하고, 5단계와 같은 토큰을 한 번 넣는다. 앱에서는 토큰이 **OS 키링**(Ubuntu 의 '암호와 키')에 저장된다.
+창을 닫아도 앱은 트레이에 남는다. 창은 트레이 아이콘을 눌러 나오는 메뉴의 **창 열기**로, 끝낼 때는 **종료**로. 자세한 내용은 [desktop/README.md](desktop/README.md).
+
+### 업데이트
+
+새 버전의 설치 파일을 1단계처럼 받아 풀고, 새 폴더의 `update.sh` 를 실행한다(`<버전>` 을 바꾼다). DB·토큰·설정은 그대로 남는다.
+
+```bash
+sudo secdash-<버전>/deploy/update.sh --deps
+```
+
+### 잘 안 될 때
+
+| 증상 | 확인할 것 |
+|---|---|
+| 브라우저가 "연결할 수 없음" | 서비스가 켜져 있는지 `systemctl status secdash` (`active (running)` 이어야 함). 원격이면 SSH 터널 창이 열려 있는지 |
+| 토큰 창이 계속 다시 뜬다 | `sudo cat /opt/secdash/backend/.api_token` 으로 다시 복사해 넣는다. 다른 서버의 토큰이 아닌지 |
+| 모니터 상태가 "제한"·"중단" | 화면에 표시된 해결 명령을 서버에서 실행한다 |
+| 무엇이 잘못됐는지 모르겠다 | `sudo journalctl -u secdash -n 50` 의 마지막 줄들을 본다 |
+
+권한 모델, 호스트 도구 설정(fail2ban·auditd·Lynis), 강화 스크립트(`deploy/harden.sh`), 시뮬레이션 방법은 [deploy/README.md](deploy/README.md) 를 보라.
+
 ## 원칙
 
 1. **조용히 실패하지 않는다.** 로그를 못 읽거나 fail2ban 을 제어할 수 없으면 모니터 상태가 `제한/중단` 으로 바뀌고 해결 명령이 표시된다. 테스트 파일로 대체하지 않는다.
@@ -83,93 +214,9 @@
 - **주 1회**: 강화 작업 목록에서 새 항목만 결정한다. "Claude 에 붙여넣기용 복사" 로 호스트 역할·상세·이미 결정한 항목이 담긴 브리프를 복사해 의논하고, 수용/해결로 정한 항목은 `deploy/lynis-custom.prf` 에 `skip-test=` 로, 적용할 항목은 `deploy/harden.sh` 에 넣는다.
 - **알림이 늘었다고 느낄 때**: 원인이 대시보드 자신이거나 계획 변경이면 코드나 정책을 고친다. 알림을 일일이 지우는 것은 해결이 아니다.
 
-## 지원 환경
-
-| 구성 | 확인한 환경 | 필요한 것 | 지원하지 않음 |
-|---|---|---|---|
-| 서버 (백엔드·웹 화면) | Ubuntu 24.04 LTS · x86_64 | systemd, apt/dpkg, rsyslog(`/var/log/auth.log`), Python 3.10 이상. fail2ban·auditd·Lynis 는 설치 스크립트가 넣는다 | RHEL·Fedora·Arch 같은 비 Debian 계열, macOS, Windows |
-| 데스크톱 앱 | Ubuntu 24.04 LTS · amd64 (deb, AppImage) | glibc 2.39 이상, WebKitGTK 4.1, AppIndicator 트레이 | Ubuntu 22.04 이하(glibc 2.35), macOS, Windows |
-| 웹 화면을 여는 컴퓨터 | — | 최신 Chrome·Firefox·Edge·Safari, 원격이면 SSH 터널 | — |
-| 빌드 머신 | Ubuntu 24.04 LTS | Node 20.19+ 또는 22.12+ (vite 7). 데스크톱 앱은 Rust stable 추가 | — |
-
-- **시험하지 않은 환경.** Ubuntu 22.04 LTS, Debian 12·13, ARM64 는 같은 apt·systemd 도구를 쓰지만 확인하지 않았다.
-- **Debian 에서는** 취약점 공지 대조가 비어 있다. USN 은 Ubuntu 릴리스별 공지라 Debian 코드네임과 맞는 항목이 없다. 뉴스와 다른 모니터는 영향이 없다.
-- **데스크톱 앱 트레이는** Ubuntu 기본 데스크톱에서 보인다. 순수 GNOME 에서는 AppIndicator 확장을 켜야 한다.
-
-## 실행
-
-개발:
-
-```bash
-./start.sh          # backend 127.0.0.1:8000 + vite 127.0.0.1:5173, 토큰 자동 주입
-```
-
-운영 (전용 계정 + capability + sudoers + systemd). 대상 서버에는 python3-venv 와 apt 만 있으면 된다.
-
-```bash
-# 빌드 머신에서 한 번
-deploy/build-release.sh            # dist-release/secdash-<version>.tar.gz + .sha256  (--wheels: 오프라인용 pip 휠 포함)
-
-# 대상 서버에서
-sha256sum -c secdash-1.0.0.tar.gz.sha256 && tar xzf secdash-1.0.0.tar.gz
-sudo secdash-1.0.0/deploy/install.sh
-```
-
-저장소를 직접 clone 한 경우에도 `sudo deploy/install.sh` 로 설치할 수 있다(npm 필요). 업데이트는 새 압축본을 풀고 `sudo secdash-<version>/deploy/update.sh`.
-접속은 SSH 터널(`ssh -L 8000:127.0.0.1:8000 서버`)로 http://127.0.0.1:8000 을 열고 `/opt/secdash/backend/.api_token` 값을 한 번 입력한다.
-
-**원격 서버라면 설치 직후 관리자 IP 를 적는다.** 비워 두면 비밀번호를 몇 번 틀린 관리자도 차단될 수 있다.
-
-```bash
-echo 'SECDASH_F2B_IGNOREIP=203.0.113.7 198.51.100.0/24' | sudo tee -a /etc/secdash/secdash.env
-sudo deploy/apply-host-config.sh && sudo systemctl restart secdash   # fail2ban ignoreip 에도 반영된다
-```
-
-저장소에서 `update.sh` 를 돌릴 때, 개발용 `start.sh` 가 만든 개발 토큰이 `frontend/dist` 에 박혀 있으면 웹 화면은 올리지 않고 알린다. 먼저 `(cd frontend && VITE_API_TOKEN= npx vite build)` 로 다시 빌드한다.
-
-### 데스크톱 앱 (같은 컴퓨터에서 트레이로 · Ubuntu 24.04 이상 amd64)
-
-브라우저 대신 자기 창을 가진 앱으로 연다. 트레이 아이콘이 지금 상태(이상 없음·살펴보세요·지금 확인하세요·알 수 없음)를 보여주고, 긴급 알림은 OS 알림으로 띄우며, 토큰은 OS 키링에 저장한다. 같은 컴퓨터의 운영 인스턴스(`127.0.0.1:8000`)에 붙는다.
-
-```bash
-cd desktop && npm ci && npm run build
-sudo apt install "./src-tauri/target/release/bundle/deb/Sentinel Overwatch_0.1.0_amd64.deb"   # 앱 메뉴: 내 컴퓨터 지킴이
-```
-
-준비할 패키지, 개발 실행, 보안 설정(CSP·키링)은 [desktop/README.md](desktop/README.md) 를 보라.
-
-권한 모델, 호스트 도구 설정(fail2ban·auditd·Lynis), 강화 스크립트(`deploy/harden.sh`), 시뮬레이션 방법은 [deploy/README.md](deploy/README.md) 를 보라.
-
-## API
-
-모든 `/api` 요청은 `X-API-Token` 헤더가 필요하다 (`backend/.api_token` 또는 `SECDASH_API_TOKEN`). 커스텀 헤더라 브라우저 CSRF 로는 호출할 수 없다.
-
-| 경로 | 설명 |
-|---|---|
-| `GET /api/stats` | DEFCON(미확인 알림 기반), 24h 집계, 리소스, 탐지 공백, 점검 모드 |
-| `GET /api/alerts?status=active\|all` · `POST /api/alerts/{id}/ack\|resolve` | 알림 조회/확인/해결 |
-| `POST /api/alerts/ack-all` | 미확인 알림 일괄 확인 (`ids` 또는 `rule`, 메모) |
-| `GET/POST/DELETE /api/maintenance` | 점검 모드 조회/시작(`minutes`, `note`)/종료 |
-| `GET /api/events` | 원시 이벤트 (`include_simulation=false` 로 테스트 제외) |
-| `GET /api/blocked` · `POST /api/blocked` · `POST /api/blocked/{ip}/unblock` | fail2ban 차단 목록/수동 차단/해제 |
-| `GET /api/monitors` | 모니터 health(ok/degraded/down), 사유, 해결 힌트 |
-| `GET /api/host` | 호스트, 버전, 실행 권한 점검, 미적용 업데이트, USB 저장장치 차단 상태 |
-| `GET /api/accounts` | root 와 사람 계정의 잠김/만료, 권한 그룹, SSH 키, 마지막 로그인 |
-| `GET /api/hardening` · `GET /api/hardening/brief?item=` | Lynis 강화 지수·경고·제안 / 대화형 도구에 붙여넣을 마크다운 브리프 |
-| `GET /api/intel` | 뉴스 + USN (이 서버 영향 여부) |
-| `GET /api/summary/korean` | 현재 상황 한국어 요약 |
-
-## 테스트
-
-```bash
-cd backend && venv/bin/python -m pytest -q tests     # 파서·상관 규칙·알림 엔진·점검 모드·무결성·auditd·Lynis·fail2ban·계정·API
-python3 simulate_attack.py                            # 탐지 파이프라인 점검 (TEST DATA 로 표시, DEFCON/Slack/fail2ban 영향 없음)
-./clear_simulation.sh                                 # 시뮬레이션 흔적 정리
-```
-
 ## 설정
 
-`backend/.env` 또는 환경 변수. 운영에서는 `/etc/secdash/secdash.env`(예시: `deploy/secdash.env.example`). 전체 목록은 `backend/config.py`.
+운영에서는 `/etc/secdash/secdash.env`(예시: `deploy/secdash.env.example`), 개발에서는 `backend/.env` 또는 환경 변수. 고친 뒤 `sudo systemctl restart secdash`. 전체 목록은 `backend/config.py`.
 
 | 변수 | 기본값 | 설명 |
 |---|---|---|
@@ -195,6 +242,71 @@ python3 simulate_attack.py                            # 탐지 파이프라인 �
 - auditd 가 없으면 프로세스 실행 이력(execve)은 30초 샘플링으로만 본다. `deploy/install.sh` 는 auditd 와 최소 규칙을 설치해 이 공백을 메운다.
 - 데스크톱 앱은 같은 컴퓨터의 백엔드(`127.0.0.1:8000`)에만 붙는다. 원격 서버를 보려면 SSH 터널을 직접 열어 둔다. Linux 트레이(AppIndicator)는 아이콘 클릭을 받지 않아 창은 트레이 메뉴로 연다.
 - 서버 한 대 단위다. 여러 서버를 한 화면에서 보려면 Wazuh 같은 중앙 관리 도구가 필요하며, 그때 이 대시보드는 그 위의 한국어 트리아지 뷰로 쓸 수 있다.
+- 제거 스크립트는 아직 없다.
+
+## 개발자용
+
+### 개발 실행
+
+```bash
+./start.sh          # backend 127.0.0.1:8000 + vite 127.0.0.1:5173
+```
+
+`start.sh` 는 백엔드 토큰을 `frontend/.env.local` 의 `VITE_API_TOKEN` 에 적어 개발 화면에 **자동 주입**한다. 그래서 개발 중에는 토큰 창이 뜨지 않는다.
+이 파일이 남은 채 운영용 화면을 빌드하면 토큰이 화면 코드에 박히므로, 운영 빌드는 반드시 비워서 한다(`VITE_API_TOKEN= npx vite build`). `deploy/build-release.sh` 와 `desktop` 빌드는 알아서 비운다.
+같은 컴퓨터에 운영 인스턴스가 8000 을 쓰고 있으면 `SECDASH_PORT=8001 SECDASH_UI_PORT=5174 ./start.sh`.
+
+### 설치 파일 직접 만들기
+
+운영 구성은 전용 계정 + capability + sudoers + systemd 다. 대상 서버에는 python3-venv 와 apt 만 있으면 된다.
+
+```bash
+# 빌드 머신에서
+deploy/build-release.sh            # dist-release/secdash-<version>.tar.gz + .sha256  (--wheels: 오프라인용 pip 휠 포함)
+
+# 대상 서버에서
+sha256sum -c secdash-1.0.0.tar.gz.sha256 && tar xzf secdash-1.0.0.tar.gz
+sudo secdash-1.0.0/deploy/install.sh
+```
+
+저장소를 직접 clone 해 `sudo deploy/install.sh` 로 설치할 수도 있다. 이때는 화면을 빌드하므로 Node 20.19+ 가 필요하다 — **Ubuntu 24.04 의 apt `nodejs` 는 18.19 라 빌드되지 않는다**(nvm 등으로 설치).
+저장소에서 `update.sh` 를 돌릴 때 개발 토큰이 `frontend/dist` 에 박혀 있으면 웹 화면은 올리지 않고 알린다. 먼저 `(cd frontend && VITE_API_TOKEN= npx vite build)` 로 다시 빌드한다.
+
+### 데스크톱 앱 빌드
+
+```bash
+cd desktop && npm ci && npm run build
+# → src-tauri/target/release/bundle/deb/…deb, bundle/appimage/…AppImage
+```
+
+준비할 패키지, 개발 실행, 보안 설정(CSP·키링)은 [desktop/README.md](desktop/README.md) 를 보라.
+
+### API
+
+모든 `/api` 요청은 `X-API-Token` 헤더가 필요하다 (`backend/.api_token` 또는 `SECDASH_API_TOKEN`). 커스텀 헤더라 브라우저 CSRF 로는 호출할 수 없다.
+
+| 경로 | 설명 |
+|---|---|
+| `GET /api/stats` | DEFCON(미확인 알림 기반), 24h 집계, 리소스, 탐지 공백, 점검 모드 |
+| `GET /api/alerts?status=active\|all` · `POST /api/alerts/{id}/ack\|resolve` | 알림 조회/확인/해결 |
+| `POST /api/alerts/ack-all` | 미확인 알림 일괄 확인 (`ids` 또는 `rule`, 메모) |
+| `GET/POST/DELETE /api/maintenance` | 점검 모드 조회/시작(`minutes`, `note`)/종료 |
+| `GET /api/events` | 원시 이벤트 (`include_simulation=false` 로 테스트 제외) |
+| `GET /api/blocked` · `POST /api/blocked` · `POST /api/blocked/{ip}/unblock` | fail2ban 차단 목록/수동 차단/해제 |
+| `GET /api/monitors` | 모니터 health(ok/degraded/down), 사유, 해결 힌트 |
+| `GET /api/host` | 호스트, 버전, 실행 권한 점검, 미적용 업데이트, USB 저장장치 차단 상태 |
+| `GET /api/accounts` | root 와 사람 계정의 잠김/만료, 권한 그룹, SSH 키, 마지막 로그인 |
+| `GET /api/hardening` · `GET /api/hardening/brief?item=` | Lynis 강화 지수·경고·제안 / 대화형 도구에 붙여넣을 마크다운 브리프 |
+| `GET /api/intel` | 뉴스 + USN (이 서버 영향 여부) |
+| `GET /api/summary/korean` | 현재 상황 한국어 요약 |
+
+### 테스트
+
+```bash
+cd backend && venv/bin/python -m pytest -q tests     # 파서·상관 규칙·알림 엔진·점검 모드·무결성·auditd·Lynis·fail2ban·계정·API
+python3 simulate_attack.py                            # 탐지 파이프라인 점검 (TEST DATA 로 표시, DEFCON/Slack/fail2ban 영향 없음)
+./clear_simulation.sh                                 # 시뮬레이션 흔적 정리
+```
 
 ## 라이선스
 
