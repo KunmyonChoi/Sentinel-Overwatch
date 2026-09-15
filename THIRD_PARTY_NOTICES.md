@@ -58,9 +58,9 @@ Sentinel Overwatch 는 Apache License 2.0 으로 배포된다. 아래는 릴리�
 | magic-string | 0.30.21 | MIT |
 | motion-dom | 12.26.2 | MIT |
 | motion-utils | 12.24.10 | MIT |
-| nanoid | 3.3.11 | MIT |
+| nanoid | 3.3.19 | MIT |
 | picocolors | 1.1.1 | ISC |
-| postcss | 8.5.6 | MIT |
+| postcss | 8.5.28 | MIT |
 | react | 19.2.3 | MIT |
 | react-dom | 19.2.3 | MIT |
 | react-redux | 9.2.0 | MIT |
@@ -83,8 +83,8 @@ Sentinel Overwatch 는 Apache License 2.0 으로 배포된다. 아래는 릴리�
 | package | version | license |
 |---|---|---|
 | fastapi | 0.141.1 | MIT |
-| uvicorn | 0.52.4 | BSD-3-Clause |
-| sqlalchemy | 2.0.52 | MIT |
+| uvicorn | 0.53.0 | BSD-3-Clause |
+| sqlalchemy | 2.0.53 | MIT |
 | psutil | 7.2.2 | BSD-3-Clause |
 | requests | 2.34.2 | Apache Software License |
 | pydantic | 2.13.5 | MIT |
@@ -1843,7 +1843,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### nanoid 3.3.11 (MIT)
+### nanoid 3.3.19 (MIT)
 
 ```
 The MIT License (MIT)
@@ -1888,12 +1888,12 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ```
 
-### postcss 8.5.6 (MIT)
+### postcss 8.5.28 (MIT)
 
 ```
 The MIT License (MIT)
 
-Copyright 2013 Andrey Sitnik <andrey@sitnik.ru>
+Copyright 2013 Andrey Sitnik <andrey@sitnik.es>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in

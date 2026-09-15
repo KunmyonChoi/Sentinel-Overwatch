@@ -29,7 +29,14 @@ rsync -a --exclude venv --exclude '*.db*' --exclude .api_token --exclude .env --
     "$ROOT/backend" "$STAGE/"
 rsync -a "$ROOT/frontend/dist" "$STAGE/frontend/"
 rsync -a --exclude build-release.sh "$ROOT/deploy" "$STAGE/"
-"$ROOT/backend/venv/bin/python" "$ROOT/deploy/gen-notices.py" >/dev/null 2>&1 || python3 "$ROOT/deploy/gen-notices.py" >/dev/null 2>&1 || true
+# 제3자 고지는 대상 서버가 실제로 받게 될 버전으로 만든다. 개발 venv 나 시스템 파이썬의 버전을 적으면
+# 고지가 틀린 채로 조용히 나간다(실제로 그랬다). 그래서 빌드 때마다 빈 venv 에 requirements 를 새로 받는다.
+NOTICES_VENV="$OUT/.notices-venv"
+rm -rf "$NOTICES_VENV"
+python3 -m venv "$NOTICES_VENV"
+"$NOTICES_VENV/bin/pip" install -q -r "$ROOT/backend/requirements.txt"
+"$NOTICES_VENV/bin/python" "$ROOT/deploy/gen-notices.py" >/dev/null
+rm -rf "$NOTICES_VENV"
 cp "$ROOT/README.md" "$ROOT/LICENSE" "$ROOT/THIRD_PARTY_NOTICES.md" "$STAGE/"
 [ -d "$ROOT/docs" ] && rsync -a "$ROOT/docs" "$STAGE/"
 printf '%s\n' "$VERSION" > "$STAGE/VERSION"
