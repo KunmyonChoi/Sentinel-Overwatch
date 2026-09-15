@@ -45,6 +45,16 @@ _SUDO_CMD_RE = re.compile(r"^\s*(?P<user>\S+)\s*:\s*(?P<fail>[^;]*?)\s*;?\s*(?:T
 _SESSION_RE = re.compile(r"session opened for user (?P<user>[^\s(]+)(?:\(uid=\d+\))? by (?P<by>[^\s(]*)(?:\(uid=(?P<by_uid>\d+)\))?")
 
 
+def _counts_as_failure(p: dict) -> bool:
+    """브루트포스 집계에 넣을 실패인가.
+
+    공개키 거부(Failed publickey)는 세지 않는다. SSH 에이전트에 키가 여럿이면 올바른 키를 내기 전에
+    거부된 키마다 한 줄씩 남는다(LogLevel VERBOSE — harden.sh 가 켠다). 그걸 세면 정상적으로 접속하는
+    관리자가 몇 번 만에 자기 IP 를 차단당한다. fail2ban 기본(normal) 필터도 publickey 는 세지 않는다.
+    """
+    return p.get("method") != "publickey"
+
+
 def _resolve_by(m) -> str:
     by = m.group("by") or ""
     if by:
@@ -234,12 +244,14 @@ class AuthLogWatcher(BaseMonitor):
     def _on_auth_failure(self, p: dict, sim: bool):
         d = {"user": p["user"], "ip": p["ip"], "method": p.get("method", "")}
         self.log_event("AUTH_FAILURE", "INFO", f"Failed {d['method']} for {d['user']} from {d['ip']}", d, is_simulation=sim)
-        self._record_failure(p["ip"], p["user"], sim)
+        if _counts_as_failure(p):
+            self._record_failure(p["ip"], p["user"], sim)
 
     def _on_invalid_user(self, p: dict, sim: bool):
         d = {"user": p["user"], "ip": p["ip"]}
         self.log_event("INVALID_USER", "INFO", f"Invalid user {d['user']} from {d['ip']}", d, is_simulation=sim)
-        self._record_failure(p["ip"], p["user"], sim)
+        if _counts_as_failure(p):
+            self._record_failure(p["ip"], p["user"], sim)
 
     def _record_failure(self, ip: str, user: str, sim: bool):
         now = utcnow()
@@ -411,7 +423,7 @@ class AuthLogWatcher(BaseMonitor):
             ).all()
             for e in rows:
                 d = e.details_dict()
-                if d.get("ip"):
+                if d.get("ip") and _counts_as_failure(d):
                     self._failures[d["ip"]].append((e.timestamp, d.get("user", "?")))
         except Exception as ex:
             self.log.error(f"seed failures failed: {ex}")

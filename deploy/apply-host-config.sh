@@ -14,11 +14,20 @@ install_if_changed() {  # src dst mode
     return 1
 }
 
-# 1) fail2ban
+# 1) fail2ban — ignoreip 는 /etc/secdash/secdash.env 의 SECDASH_F2B_IGNOREIP 를 더해 만든다.
+#    관리자 대역을 /etc 의 설정 파일에 직접 적으면 이 스크립트가 저장소 파일로 덮어써 지워지기 때문이다.
+#    값이 잘못됐으면 설정을 바꾸지 않는다(틀린 설정으로 fail2ban 을 다시 읽게 하지 않는다).
 if command -v fail2ban-client >/dev/null; then
-    if install_if_changed "$SRC/deploy/fail2ban-secdash.conf" /etc/fail2ban/jail.d/secdash.conf 0644; then
-        fail2ban-client reload >/dev/null && echo "   fail2ban reloaded (jails: $(fail2ban-client status | grep -o 'Jail list:.*' | cut -d: -f2 | xargs))"
+    f2b_conf=$(mktemp)
+    client_ip=$(who -m 2>/dev/null | sed -n 's/.*(\([0-9a-fA-F:.]*\)).*/\1/p')
+    if python3 "$SRC/deploy/fail2ban_ignoreip.py" "$SRC/deploy/fail2ban-secdash.conf" /etc/secdash/secdash.env --client "$client_ip" > "$f2b_conf"; then
+        if install_if_changed "$f2b_conf" /etc/fail2ban/jail.d/secdash.conf 0644; then
+            fail2ban-client reload >/dev/null && echo "   fail2ban reloaded (jails: $(fail2ban-client status | grep -o 'Jail list:.*' | cut -d: -f2 | xargs))"
+        fi
+    else
+        echo "   !! fail2ban 설정을 바꾸지 않았습니다 — /etc/secdash/secdash.env 의 SECDASH_F2B_IGNOREIP 를 고친 뒤 다시 실행하세요"
     fi
+    rm -f "$f2b_conf"
 fi
 
 # 2) auditd

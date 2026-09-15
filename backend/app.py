@@ -376,6 +376,8 @@ def block_ip(body: BanBody, db: Session = Depends(get_db)):
     except ValueError:
         raise HTTPException(400, "invalid ip")
     result = BanManager(db).ban_ip(body.ip, body.reason)
+    if result["status"] == "PROTECTED":
+        raise HTTPException(409, f"차단하지 않았습니다: {result['why']}")
     return {"ip": body.ip, **result}
 
 

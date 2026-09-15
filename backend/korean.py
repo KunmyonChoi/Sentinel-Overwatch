@@ -16,6 +16,7 @@ EVENT_TYPE_KO = {
     "IP_BLOCKED": "IP 차단",
     "IP_UNBLOCKED": "IP 차단 해제",
     "IP_BLOCK_RECOMMENDED": "IP 차단 권고",
+    "IP_BLOCK_SKIPPED": "IP 차단 보류",
     "NETWORK_LISTENER": "리스닝 포트",
     "NETWORK_CONN": "외부 연결",
     "PORT_SCAN": "포트 스캔 의심",
@@ -95,6 +96,8 @@ def event_ko(event_type: str, d: dict | None = None) -> str:
         return f"IP {d.get('ip', '?')} 차단됨 ({d.get('source', '?')}) — 사유: {d.get('reason', '?')}"
     if t == "IP_UNBLOCKED":
         return f"IP {d.get('ip', '?')} 차단 해제 ({d.get('by', '수동')})"
+    if t == "IP_BLOCK_SKIPPED":
+        return f"IP {d.get('ip', '?')} 차단하지 않음 — {d.get('why', '보호된 주소')}"
     if t == "IP_BLOCK_RECOMMENDED":
         return f"IP {d.get('ip', '?')} 차단 권고 — fail2ban 을 사용할 수 없어 자동 차단하지 못함"
     if t == "NETWORK_LISTENER":

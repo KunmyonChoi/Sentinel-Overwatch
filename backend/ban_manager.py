@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 import config
 import korean
 from database import BlockedIP, Event, utcnow
+from admin_guard import protection_reason
 from integrations.fail2ban import Fail2banClient
 
 logger = logging.getLogger("ban_manager")
@@ -22,9 +23,11 @@ def manual_block_command(ip: str) -> str:
 
 
 class BanManager:
-    def __init__(self, db: Session, client: Fail2banClient | None = None):
+    def __init__(self, db: Session, client: Fail2banClient | None = None, guard=None):
         self.db = db
         self.client = client or Fail2banClient()
+        # 차단하면 안 되는 주소(관리자·로그인한 세션)를 거른다. 테스트에서 바꿔 끼울 수 있게 주입받는다.
+        self.guard = guard or protection_reason
 
     def _log(self, event_type: str, severity: str, description: str, details: dict, is_simulation: bool = False):
         self.db.add(Event(
@@ -37,6 +40,18 @@ class BanManager:
         row = self.db.query(BlockedIP).filter(BlockedIP.ip_address == ip_address).first()
         if row and row.status == "ACTIVE":
             return {"status": "ACTIVE", "changed": False}
+
+        # 원격 서버에서 관리자 자신을 차단하면 다시 들어올 수 없다. fail2ban 의 ignoreip 는
+        # `set <jail> banip` 을 막지 않으므로 여기서 거른다. 차단하지 않았다는 사실과 이유는 남긴다.
+        if not is_simulation:
+            guard = self.guard(ip_address, self.client)
+            if guard:
+                logger.warning(f"not banning {ip_address}: protected ({guard['kind']})")
+                self._log("IP_BLOCK_SKIPPED", "WARNING",
+                          f"IP {ip_address} not blocked: protected ({guard['kind']}). Reason for block: {reason}",
+                          {"ip": ip_address, "reason": reason, "protected_by": guard["kind"], "why": guard["text"]})
+                self.db.commit()
+                return {"status": "PROTECTED", "changed": False, "why": guard["text"]}
 
         available, why, _hint = (False, "시뮬레이션", "") if is_simulation else self.client.availability()
         if available:

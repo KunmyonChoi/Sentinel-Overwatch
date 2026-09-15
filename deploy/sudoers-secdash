@@ -9,6 +9,7 @@ Cmnd_Alias SECDASH_F2B = /usr/bin/fail2ban-client status, \
                          /usr/bin/fail2ban-client status *, \
                          /usr/bin/fail2ban-client get * banip, \
                          /usr/bin/fail2ban-client get * banip *, \
+                         /usr/bin/fail2ban-client get * ignoreip, \
                          /usr/bin/fail2ban-client set * banip *, \
                          /usr/bin/fail2ban-client set * unbanip *
 
