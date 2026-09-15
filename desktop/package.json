@@ -1,0 +1,15 @@
+{
+  "name": "sentinel-desktop",
+  "private": true,
+  "version": "0.1.0",
+  "description": "내 컴퓨터 지킴이 — 트레이에 상주하는 데스크톱 창. 화면은 frontend/ 를 그대로 담는다.",
+  "scripts": {
+    "build:web": "cd ../frontend && VITE_API_TOKEN= VITE_API_BASE=http://127.0.0.1:8000 npx vite build --outDir ../desktop/dist --emptyOutDir",
+    "dev": "tauri dev",
+    "build": "npm run build:web && tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.11.4"
+  }
+}

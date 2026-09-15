@@ -143,3 +143,16 @@ def test_usn_recheck_does_nothing_when_package_list_is_unreadable(db, monkeypatc
     IntelMonitor(feeds=[], usn_url="")._recheck_open()
     db.expire_all()
     assert db.query(database.Alert).one().status == "OPEN"
+
+
+def test_cors_allows_desktop_app_origin_only(client):
+    """데스크톱 앱(Tauri)의 출처는 preflight 를 통과하고, 모르는 출처는 통과하지 못한다."""
+    pre = {"Access-Control-Request-Method": "GET", "Access-Control-Request-Headers": "X-API-Token"}
+    for origin in ("tauri://localhost", "http://tauri.localhost"):
+        r = client.options("/api/stats", headers={**pre, "Origin": origin})
+        assert r.status_code == 200
+        assert r.headers.get("access-control-allow-origin") == origin
+    r = client.options("/api/stats", headers={**pre, "Origin": "https://evil.example"})
+    assert r.headers.get("access-control-allow-origin") is None
+    # 출처를 허용해도 토큰 없이는 읽을 수 없다.
+    assert client.get("/api/stats", headers={"Origin": "tauri://localhost"}).status_code == 401
