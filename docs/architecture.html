@@ -132,7 +132,7 @@
 
 <div class="page">
   <header>
-    <div class="eyebrow">security-dashboard · v1.0.0 · 2026-09-09</div>
+    <div class="eyebrow">security-dashboard · v1.0.0 · 2026-09-15</div>
     <h1>Sentinel Overwatch 아키텍처</h1>
     <div class="back" style="font-size:13px;color:var(--muted)"><a href="coverage.html" style="color:var(--accent);text-decoration:none">방어 범위 문서 →</a> · <a href="index.html" style="color:var(--accent);text-decoration:none">문서 목차</a></div>
     <p class="lead">검증된 호스트 도구를 진실 원천으로 두고, 그 위에서 사실(Event)과 판단(Alert)을 분리해 한국어로 조치를 안내하는 뷰·트리아지 계층. 아래 그림은 데이터가 어디서 들어와 어디로 나가는지, 계획된 변경이 어떻게 걸러지는지, 그리고 무엇이 호스트 밖으로 나가는지를 보여준다.</p>
@@ -148,7 +148,7 @@
     </div>
     <figure>
       <div class="frame">
-        <svg viewBox="0 0 1130 800" role="img" aria-label="호스트 진실 원천이 열한 개 모니터를 거쳐 이벤트 버스로 모이고, 사실은 SQLite 에, 판단은 알림 엔진에 저장되며, 알림 엔진과 DEFCON 감시가 속도 제한된 알림 큐를 통해 Slack 으로 나가고, 토큰으로 보호된 API 가 브라우저 대시보드에 데이터를 준다. 인터넷 밖으로 나가는 것은 Ubuntu USN 과 뉴스 피드 읽기, 뉴스 제목 번역, Slack 웹훅뿐이다.">
+        <svg viewBox="0 0 1130 816" role="img" aria-label="호스트 진실 원천이 열네 개 모니터를 거쳐 이벤트 버스로 모이고, 사실은 SQLite 에, 판단은 알림 엔진에 저장되며, 알림 엔진과 DEFCON 감시가 속도 제한된 알림 큐를 통해 Slack 으로 나가고, 토큰으로 보호된 API 가 브라우저 대시보드와 데스크톱 앱에 데이터를 준다. 인터넷 밖으로 나가는 것은 Ubuntu USN 과 뉴스 피드 읽기, 뉴스 제목 번역, Slack 웹훅뿐이다.">
           <defs>
             <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
               <polygon points="0,0 10,5 0,10" fill="currentColor"></polygon>
@@ -198,8 +198,9 @@
           <text x="668" y="150" class="lbl">sha256 60s · 스캔 5m</text>
           <text x="668" y="163" class="lbl">Lynis 보고서 diff (일 1회)</text>
           <line x1="845" y1="118" x2="845" y2="188" class="edge" marker-start="url(#ah)" marker-end="url(#ah)"></line>
-          <text x="852" y="150" class="lbl mono">sudo -n fail2ban-client</text>
-          <text x="852" y="163" class="lbl">banned · banip · unbanip</text>
+          <text x="852" y="140" class="lbl mono">sudo -n fail2ban-client</text>
+          <text x="852" y="153" class="lbl">banned · banip · unbanip</text>
+          <text x="852" y="166" class="lbl">get ignoreip (차단 보류 판단)</text>
           <line x1="1029" y1="118" x2="1029" y2="188" class="edge-ext" marker-end="url(#ah-ext)"></line>
           <text x="1036" y="156" class="lbl-ext">1h · JSON/RSS GET</text>
 
@@ -229,9 +230,10 @@
           <text x="661" y="258" text-anchor="middle" class="d">새 경고만 알림 · 지수 하락 알림</text>
 
           <rect x="760" y="206" width="170" height="66" rx="4" class="box-mon"></rect>
-          <text x="845" y="228" text-anchor="middle" class="t">Fail2banSync · BanManager</text>
-          <text x="845" y="244" text-anchor="middle" class="d">sshd·recidive 30s 동기화</text>
-          <text x="845" y="258" text-anchor="middle" class="d">연동 불가 시 "차단 권고"</text>
+          <text x="845" y="225" text-anchor="middle" class="t">Fail2banSync · BanManager</text>
+          <text x="845" y="239" text-anchor="middle" class="d">sshd·recidive 30s 동기화</text>
+          <text x="845" y="252" text-anchor="middle" class="d">관리자 IP·접속 세션은 차단 보류</text>
+          <text x="845" y="265" text-anchor="middle" class="d">연동 불가 시 "차단 권고"</text>
 
           <rect x="944" y="206" width="170" height="66" rx="4" class="box-mon"></rect>
           <text x="1029" y="228" text-anchor="middle" class="t">IntelMonitor</text>
@@ -246,7 +248,7 @@
           <line x1="845" y1="272" x2="845" y2="308" class="edge"></line>
           <line x1="1029" y1="272" x2="1029" y2="308" class="edge"></line>
           <line x1="60" y1="308" x2="1080" y2="308" class="bus"></line>
-          <text x="60" y="326" class="lbl">11개 모니터: health(ok/degraded/down) 노출 · 사실은 log_event, 판단은 raise_alert · 패키지 작업의 부산물·mask·snap 은 사실로만 남김</text>
+          <text x="60" y="326" class="lbl">14개 모니터 (방화벽 노출·파일 권한·컨테이너 설정 점검 포함): health(ok/degraded/down) 노출 · 사실은 log_event, 판단은 raise_alert · 패키지 부산물·mask·snap 은 사실로만</text>
 
           <!-- bus → layer 3 -->
           <line x1="272" y1="308" x2="272" y2="356" class="edge" marker-end="url(#ah)"></line>
@@ -334,18 +336,19 @@
           <line x1="272" y1="660" x2="272" y2="708" class="edge" marker-start="url(#ah)" marker-end="url(#ah)"></line>
           <text x="280" y="688" class="lbl">JSON · 5s 폴링 · X-API-Token</text>
 
-          <!-- Layer 5: browser -->
-          <rect x="24" y="710" width="496" height="70" rx="4" class="box"></rect>
-          <text x="40" y="734" class="t">브라우저 · React 대시보드</text>
+          <!-- Layer 5: browser · desktop app -->
+          <rect x="24" y="710" width="496" height="88" rx="4" class="box"></rect>
+          <text x="40" y="734" class="t">브라우저 · 데스크톱 앱 · React 대시보드</text>
           <text x="40" y="752" class="d">알림 확인/해결 · 점검 모드 · 계정 상태(잠금/되살리기) · 강화 작업 목록 · USB 차단 상태 · 모니터 health</text>
-          <text x="40" y="768" class="d mono">원격: ssh -L 8000:127.0.0.1:8000 서버</text>
+          <text x="40" y="768" class="d">데스크톱 앱(Tauri): 같은 화면 · 트레이 상태 · 긴급 알림은 OS 알림 · 토큰은 OS 키링</text>
+          <text x="40" y="784" class="d mono">원격: ssh -L 8000:127.0.0.1:8000 서버</text>
 
           <text x="560" y="740" class="d">호스트 밖으로 나가는 것은 세 가지뿐:</text>
           <text x="560" y="756" class="d">공개 피드 GET · 뉴스 제목 번역 · Slack 웹훅.</text>
           <text x="560" y="772" class="d">auth.log 줄, sudo 명령, 패키지 목록은 나가지 않는다.</text>
         </svg>
       </div>
-      <figcaption>데이터는 위에서 아래로만 흐른다. 호스트 데몬과 로그(1층)를 열한 모니터가 읽고(2층), 사실은 SQLite 에, 판단은 알림 엔진에 쌓인다(3층). API 는 저장소만 읽고 쓰며(4층), 브라우저는 API 만 본다(5층). 점선 상자만이 인터넷 경계를 넘는다.</figcaption>
+      <figcaption>데이터는 위에서 아래로만 흐른다. 호스트 데몬과 로그(1층)를 열네 모니터가 읽고(2층), 사실은 SQLite 에, 판단은 알림 엔진에 쌓인다(3층). API 는 저장소만 읽고 쓰며(4층), 브라우저와 데스크톱 앱은 API 만 본다(5층). 점선 상자만이 인터넷 경계를 넘는다.</figcaption>
     </figure>
   </section>
 
@@ -353,7 +356,7 @@
     <h2>2. 사건 하나가 지나가는 길: SSH 브루트포스</h2>
     <figure>
       <div class="frame">
-        <svg viewBox="0 0 1130 250" role="img" aria-label="auth.log 의 실패 줄이 파싱되어 INFO 이벤트가 되고, 30분 창에서 5회를 넘으면 WARNING 알림과 fail2ban 차단이 일어나며, 같은 IP 에서 로그인이 성공하면 CRITICAL 알림이 되어 DEFCON 1 과 Slack 알림으로 이어진다.">
+        <svg viewBox="0 0 1130 250" role="img" aria-label="auth.log 의 실패 줄이 파싱되어 INFO 이벤트가 되고, 30분 창에서 5회를 넘으면 WARNING 알림과 fail2ban 차단이 일어나며(관리자 IP 나 로그인해 있는 SSH 세션의 IP 면 차단은 보류하고, 공개키 거부는 세지 않는다), 같은 IP 에서 로그인이 성공하면 CRITICAL 알림이 되어 DEFCON 1 과 Slack 알림으로 이어진다.">
           <defs>
             <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
               <polygon points="0,0 10,5 0,10" fill="currentColor"></polygon>
@@ -388,10 +391,11 @@
           <text x="778" y="81" text-anchor="middle" class="d">fingerprint brute_force:ip</text>
 
           <line x1="866" y1="60" x2="906" y2="60" class="edge" marker-end="url(#ah2)"></line>
-          <rect x="908" y="28" width="206" height="64" rx="4" class="box-core"></rect>
-          <text x="1011" y="50" text-anchor="middle" class="t">BanManager → fail2ban</text>
-          <text x="1011" y="67" text-anchor="middle" class="d mono">set sshd banip 203.0.113.9</text>
-          <text x="1011" y="81" text-anchor="middle" class="d">불가 시 RECOMMENDED + 명령 표시</text>
+          <rect x="908" y="28" width="206" height="80" rx="4" class="box-core"></rect>
+          <text x="1011" y="48" text-anchor="middle" class="t">BanManager → fail2ban</text>
+          <text x="1011" y="64" text-anchor="middle" class="d">관리자 IP·접속 세션이면 보류</text>
+          <text x="1011" y="78" text-anchor="middle" class="d mono">set sshd banip 203.0.113.9</text>
+          <text x="1011" y="92" text-anchor="middle" class="d">불가 시 RECOMMENDED + 명령 표시</text>
 
           <!-- Row 2 -->
           <rect x="16" y="150" width="196" height="64" rx="4" class="box"></rect>
@@ -426,10 +430,11 @@
           <!-- vertical link -->
           <line x1="778" y1="92" x2="778" y2="148" class="edge" stroke-dasharray="3 3"></line>
           <text x="786" y="124" class="lbl">같은 IP 의 실패 창 유지</text>
+          <text x="16" y="112" class="lbl">Failed publickey 는 실패 창에 세지 않는다 — 키가 여럿인 SSH 에이전트가 관리자를 가두지 않게.</text>
           <text x="16" y="128" class="lbl">시뮬레이션([SIMULATION] 태그)은 같은 길을 가되 is_simulation=1 로 표시되어 DEFCON · Slack · fail2ban 에 닿지 않는다.</text>
         </svg>
       </div>
-      <figcaption>같은 로그 파일에서 시작하지만 첫 줄은 사실(INFO)에 그치고, 창 집계를 넘긴 순간에만 경고 알림과 차단 요청이 생긴다. 실패 이력이 있는 IP 의 성공 로그인은 곧바로 긴급 알림이며, DEFCON 전이와 Slack 발송은 GET 핸들러가 아니라 감시 스레드가 담당한다.</figcaption>
+      <figcaption>같은 로그 파일에서 시작하지만 첫 줄은 사실(INFO)에 그치고, 창 집계를 넘긴 순간에만 경고 알림과 차단 요청이 생긴다. 차단 직전에는 그 IP 가 관리자 목록(<code>SECDASH_F2B_IGNOREIP</code>, fail2ban ignoreip)에 있거나 지금 로그인해 있는 SSH 세션의 주소인지 확인해, 그렇다면 차단하지 않고 “차단 보류(IP_BLOCK_SKIPPED)” 사실만 남긴다. 실패 이력이 있는 IP 의 성공 로그인은 곧바로 긴급 알림이며, DEFCON 전이와 Slack 발송은 GET 핸들러가 아니라 감시 스레드가 담당한다.</figcaption>
     </figure>
   </section>
 
@@ -487,7 +492,7 @@
         <li><strong>사실과 판단의 분리.</strong> 원시 이벤트는 근거로 남고, 알림만이 사람의 시간을 요구한다. 심각도는 알림에만 붙는다.</li>
         <li><strong>호스트 로그는 안에 머문다.</strong> 한국어는 템플릿으로 만든다. 외부 API 에 나가는 것은 공개 뉴스 제목뿐이다.</li>
         <li><strong>계획된 변경은 알림이 아니다.</strong> 패키지가 만든 cron·SUID·설정, mask 링크, snap 갱신은 소유 패키지와 최근 패키지 작업을 대조해 사실로만 남긴다. 운영자는 점검 모드로 작업 창을 선언한다. sudoers·sshd_config·authorized_keys·ld.so.preload 와 침입 신호는 예외 없이 알린다.</li>
-        <li><strong>최소 권한.</strong> root 대신 전용 계정 + 세 개의 capability + fail2ban-client 일곱 명령만 허용하는 sudoers.</li>
+        <li><strong>최소 권한.</strong> root 대신 전용 계정 + 세 개의 capability + 명령과 인자 형태를 고정한 sudoers: fail2ban-client 여덟 명령, 방화벽·docker 읽기 다섯 명령, root 소유 권한 조치 진입점 하나(점검·적용). 그 밖의 root 명령은 없다.</li>
       </ul>
     </section>
   </div>
@@ -503,8 +508,11 @@
           <tr><td>root 데몬 → secdash 프로세스</td><td>auth.log 읽기</td><td><code>adm</code> 그룹</td><td>쓰기 · 다른 로그</td></tr>
           <tr><td>보호 파일 → secdash</td><td>/etc/shadow, sudoers, 타 사용자 authorized_keys, cron spool, audit.log, lynis-report.dat</td><td><code>CAP_DAC_READ_SEARCH</code></td><td>쓰기 (ProtectSystem=strict)</td></tr>
           <tr><td>타 사용자 프로세스 → secdash</td><td>exe · cwd · fd · 소켓 귀속</td><td><code>CAP_SYS_PTRACE</code> · <code>CAP_NET_ADMIN</code></td><td>ptrace attach 는 사용하지 않음</td></tr>
-          <tr><td>secdash → fail2ban</td><td>status · banned · banip · unbanip</td><td><code>sudo -n fail2ban-client</code> (sudoers 일곱 명령)</td><td>그 밖의 모든 root 명령</td></tr>
+          <tr><td>secdash → fail2ban</td><td>status · banned · banip/ignoreip 조회 · banip · unbanip</td><td><code>sudo -n fail2ban-client</code> (sudoers 여덟 명령)</td><td>jail 설정 변경·중지 등 그 밖의 fail2ban 명령</td></tr>
+          <tr><td>secdash → 방화벽·docker</td><td>방화벽 규칙, 컨테이너 설정 (읽기만)</td><td><code>ufw status verbose</code> · <code>iptables -S</code> · <code>docker ps -q</code> · <code>docker inspect</code> · <code>docker version</code></td><td>규칙 변경 · 컨테이너 실행·중지</td></tr>
+          <tr><td>secdash → 권한 조치 (root)</td><td>느슨한 파일 권한 좁히기</td><td><code>secdash-fix-permissions</code> [<code>--apply</code>] · 진입점과 스캐너는 root 소유(<code>/usr/local/sbin</code>, <code>/usr/local/lib/secdash</code>) · 대상은 root 가 직접 다시 스캔</td><td>경로 지정 · 권한 넓히기 · 서비스 계정이 쓸 수 있는 코드를 root 로 실행</td></tr>
           <tr><td>브라우저 → API</td><td>조회 · ack/resolve · 차단/해제</td><td><code>X-API-Token</code> 헤더 · 127.0.0.1 바인드 · SSH 터널</td><td>토큰 없는 요청(401) · 타 출처 CSRF</td></tr>
+          <tr><td>데스크톱 앱 → API</td><td>브라우저와 같은 조회·조작 · 트레이 상태 · 긴급 OS 알림</td><td><code>X-API-Token</code> (OS 키링 보관) · CORS 에 Tauri 출처만 추가 · CSP <code>connect-src</code> 127.0.0.1:8000</td><td>앱 화면에서 다른 호스트로 연결 · 토큰 없는 요청(401)</td></tr>
           <tr><td>호스트 → 인터넷</td><td>USN JSON · 뉴스 RSS · 뉴스 제목 번역 · Slack 웹훅</td><td>아웃바운드 HTTPS</td><td>로그 줄 · 명령줄 · 패키지 목록 · IP</td></tr>
         </tbody>
       </table>
@@ -515,7 +523,7 @@
     <h2>6. 설치와 강화의 경로</h2>
     <figure>
       <div class="frame">
-        <svg viewBox="0 0 1130 130" role="img" aria-label="빌드 머신에서 릴리스 압축본을 만들고, 대상 서버에서 install.sh 가 계정·권한·systemd·sudoers 와 fail2ban·auditd·Lynis 설정을 설치하며, 그 뒤 harden.sh 를 dry-run 으로 검토하고 apply 로 적용한다. Lynis 결과는 대시보드로 돌아와 다음 결정을 만든다.">
+        <svg viewBox="0 0 1130 130" role="img" aria-label="빌드 머신에서 릴리스 압축본을 만들고, 대상 서버에서 install.sh 가 계정·권한·systemd·sudoers 와 fail2ban·auditd·Lynis 설정(관리자 IP 는 secdash.env 에서 fail2ban ignoreip 로)을 설치하며, 그 뒤 harden.sh 를 dry-run 으로 검토하고 apply 로 적용한다. Lynis 결과는 대시보드로 돌아와 다음 결정을 만든다.">
           <defs>
             <marker id="ah6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
               <polygon points="0,0 10,5 0,10" fill="currentColor"></polygon>
@@ -529,9 +537,10 @@
           <line x1="216" y1="59" x2="256" y2="59" class="edge" marker-end="url(#ah6)"></line>
           <text x="236" y="50" text-anchor="middle" class="lbl">scp</text>
           <rect x="258" y="24" width="240" height="70" rx="4" class="box-core"></rect>
-          <text x="378" y="48" text-anchor="middle" class="t">install.sh (대상 서버)</text>
-          <text x="378" y="65" text-anchor="middle" class="d">secdash 계정 · capability · systemd · sudoers</text>
-          <text x="378" y="80" text-anchor="middle" class="d">apply-host-config: fail2ban·auditd·Lynis 설정</text>
+          <text x="378" y="44" text-anchor="middle" class="t">install.sh · update.sh (대상 서버)</text>
+          <text x="378" y="59" text-anchor="middle" class="d">secdash 계정 · capability · systemd · sudoers</text>
+          <text x="378" y="73" text-anchor="middle" class="d">apply-host-config: fail2ban·auditd·Lynis 설정</text>
+          <text x="378" y="87" text-anchor="middle" class="d mono">ignoreip ← SECDASH_F2B_IGNOREIP</text>
 
           <line x1="498" y1="59" x2="538" y2="59" class="edge" marker-end="url(#ah6)"></line>
           <rect x="540" y="24" width="240" height="70" rx="4" class="box-core"></rect>
@@ -549,7 +558,7 @@
           <text x="814" y="124" text-anchor="middle" class="lbl">결정(적용/수용/해결)이 다음 harden.sh 와 프로파일로 되돌아간다</text>
         </svg>
       </div>
-      <figcaption>대상 서버에는 git 이나 node 가 필요 없다. 설치 스크립트가 호스트 도구까지 갖추고, 강화는 항상 dry-run 을 먼저 보여준 뒤 적용한다. Lynis 가 남긴 제안은 알림이 아니라 결정 목록이며, 결정은 프로파일과 스크립트 플래그로 기록된다.</figcaption>
+      <figcaption>대상 서버에는 git 이나 node 가 필요 없다. 설치 스크립트가 호스트 도구까지 갖추고, 강화는 항상 dry-run 을 먼저 보여준 뒤 적용한다. fail2ban 의 ignoreip 는 <code>/etc/secdash/secdash.env</code> 의 <code>SECDASH_F2B_IGNOREIP</code> 에서 만들어 업데이트해도 지워지지 않고, <code>update.sh</code> 는 개발 토큰이 박힌 <code>frontend/dist</code> 를 배포하지 않고 멈춘다. Lynis 가 남긴 제안은 알림이 아니라 결정 목록이며, 결정은 프로파일과 스크립트 플래그로 기록된다.</figcaption>
     </figure>
   </section>
 </div>
