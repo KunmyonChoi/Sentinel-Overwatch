@@ -83,6 +83,19 @@
 - **주 1회**: 강화 작업 목록에서 새 항목만 결정한다. "Claude 에 붙여넣기용 복사" 로 호스트 역할·상세·이미 결정한 항목이 담긴 브리프를 복사해 의논하고, 수용/해결로 정한 항목은 `deploy/lynis-custom.prf` 에 `skip-test=` 로, 적용할 항목은 `deploy/harden.sh` 에 넣는다.
 - **알림이 늘었다고 느낄 때**: 원인이 대시보드 자신이거나 계획 변경이면 코드나 정책을 고친다. 알림을 일일이 지우는 것은 해결이 아니다.
 
+## 지원 환경
+
+| 구성 | 확인한 환경 | 필요한 것 | 지원하지 않음 |
+|---|---|---|---|
+| 서버 (백엔드·웹 화면) | Ubuntu 24.04 LTS · x86_64 | systemd, apt/dpkg, rsyslog(`/var/log/auth.log`), Python 3.10 이상. fail2ban·auditd·Lynis 는 설치 스크립트가 넣는다 | RHEL·Fedora·Arch 같은 비 Debian 계열, macOS, Windows |
+| 데스크톱 앱 | Ubuntu 24.04 LTS · amd64 (deb, AppImage) | glibc 2.39 이상, WebKitGTK 4.1, AppIndicator 트레이 | Ubuntu 22.04 이하(glibc 2.35), macOS, Windows |
+| 웹 화면을 여는 컴퓨터 | — | 최신 Chrome·Firefox·Edge·Safari, 원격이면 SSH 터널 | — |
+| 빌드 머신 | Ubuntu 24.04 LTS | Node 20.19+ 또는 22.12+ (vite 7). 데스크톱 앱은 Rust stable 추가 | — |
+
+- **시험하지 않은 환경.** Ubuntu 22.04 LTS, Debian 12·13, ARM64 는 같은 apt·systemd 도구를 쓰지만 확인하지 않았다.
+- **Debian 에서는** 취약점 공지 대조가 비어 있다. USN 은 Ubuntu 릴리스별 공지라 Debian 코드네임과 맞는 항목이 없다. 뉴스와 다른 모니터는 영향이 없다.
+- **데스크톱 앱 트레이는** Ubuntu 기본 데스크톱에서 보인다. 순수 GNOME 에서는 AppIndicator 확장을 켜야 한다.
+
 ## 실행
 
 개발:
@@ -114,7 +127,7 @@ sudo deploy/apply-host-config.sh && sudo systemctl restart secdash   # fail2ban 
 
 저장소에서 `update.sh` 를 돌릴 때, 개발용 `start.sh` 가 만든 개발 토큰이 `frontend/dist` 에 박혀 있으면 웹 화면은 올리지 않고 알린다. 먼저 `(cd frontend && VITE_API_TOKEN= npx vite build)` 로 다시 빌드한다.
 
-### 데스크톱 앱 (같은 컴퓨터에서 트레이로)
+### 데스크톱 앱 (같은 컴퓨터에서 트레이로 · Ubuntu 24.04 이상 amd64)
 
 브라우저 대신 자기 창을 가진 앱으로 연다. 트레이 아이콘이 지금 상태(이상 없음·살펴보세요·지금 확인하세요·알 수 없음)를 보여주고, 긴급 알림은 OS 알림으로 띄우며, 토큰은 OS 키링에 저장한다. 같은 컴퓨터의 운영 인스턴스(`127.0.0.1:8000`)에 붙는다.
 
