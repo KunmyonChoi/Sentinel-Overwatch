@@ -36,7 +36,7 @@ function Fold({ id, title, hint, right, isOpen, onToggle, children }) {
 
 const FOLDS = ['exposure', 'config', 'accounts', 'blocked', 'monitors', 'hardening', 'alerts', 'health', 'feed', 'intel'];
 
-export default function ExpertView({ stats, host, events, alerts, onChanged, tick }) {
+export default function ExpertView({ stats, host, events, alerts, alertCounts = null, onChanged, tick }) {
     // 예전 대시보드의 장점은 '한 번에 다 보인다'였다. 그것을 되돌릴 수 있어야 한다.
     const [open, setOpen] = useState(new Set(['exposure']));
     const isOpen = (id) => open.has(id);
@@ -98,7 +98,7 @@ export default function ExpertView({ stats, host, events, alerts, onChanged, tic
                     </Fold>
 
                     <Fold id="alerts" isOpen={isOpen} onToggle={toggle} title="알림 전체" hint="확인한 것까지 포함한 알림 목록">
-                        <AlertsPanel alerts={alerts} onChanged={onChanged} />
+                        <AlertsPanel alerts={alerts} counts={alertCounts} onChanged={onChanged} />
                     </Fold>
 
                     <Fold id="health" isOpen={isOpen} onToggle={toggle} title="컴퓨터 상태" hint="처리 장치·메모리·저장 공간과 24시간 흐름">
