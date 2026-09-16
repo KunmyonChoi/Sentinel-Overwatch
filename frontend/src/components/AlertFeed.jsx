@@ -25,11 +25,18 @@ function groupEvents(events) {
     return groups;
 }
 
-export default function AlertFeed({ events }) {
+export default function AlertFeed({ events, counts = null, limit = 0, onLoadMore }) {
     const [filter, setFilter] = useState('ALL');
     const [hideSim, setHideSim] = useState(false);
     const [expanded, setExpanded] = useState(new Set());
     const [copied, setCopied] = useState(null);
+
+    // 피드는 최근 N건만 불러온다. 아래 개수·필터는 모두 '불러온 것' 기준이므로,
+    // 기록에 더 있다는 사실을 숨기지 않는다.
+    const total = counts?.total ?? events.length;
+    const older = Math.max(0, total - events.length);
+    const maxLimit = counts?.max_limit ?? 0;
+    const canLoadMore = !!onLoadMore && limit > 0 && limit < maxLimit;
 
     const copy = (key, text) => { navigator.clipboard.writeText(text); setCopied(key); setTimeout(() => setCopied(null), 1500); };
 
@@ -68,7 +75,19 @@ export default function AlertFeed({ events }) {
                 <span>라이브 피드 <span className="text-xs text-gray-500 font-normal">원시 이벤트</span></span>
                 <label className="text-xs text-gray-500 font-normal flex items-center gap-1 cursor-pointer"><input type="checkbox" checked={hideSim} onChange={e => setHideSim(e.target.checked)} /> 시뮬레이션 숨김</label>
             </h2>
-            <div className="flex gap-1 mb-3">
+            {older > 0 && (
+                <div className="mb-2 flex items-center justify-between gap-2 border border-gray-700 bg-black/30 px-2 py-1 rounded text-[11px] text-gray-400">
+                    <span style={{ wordBreak: 'keep-all' }}>
+                        최근 {events.length}건만 불러왔습니다 · 기록에는 {total}건이 있습니다 (아래 개수와 필터는 불러온 {events.length}건 기준)
+                    </span>
+                    {canLoadMore ? (
+                        <button onClick={onLoadMore} className="flex-shrink-0 border border-gray-600 text-gray-300 hover:border-neon-green hover:text-neon-green px-2 py-0.5 rounded">더 보기</button>
+                    ) : (
+                        <span className="flex-shrink-0 text-gray-500">한 번에 최대 {maxLimit || events.length}건까지 보냅니다</span>
+                    )}
+                </div>
+            )}
+            <div className="flex gap-1 mb-3" title={`개수는 불러온 ${events.length}건 기준입니다`}>
                 {FILTERS.map(f => (
                     <button key={f} onClick={() => setFilter(f)} className={`text-xs px-2 py-1 rounded border font-mono ${filter === f ? 'bg-neon-green/20 border-neon-green text-neon-green' : 'border-gray-700 text-gray-500 hover:border-gray-500 hover:text-gray-300'}`}>
                         {f === 'ALL' ? '전체' : SEVERITY_KO[f]}{f !== 'ALL' && <span className="ml-1 opacity-60">({base.filter(e => e.severity === f).length})</span>}

@@ -20,20 +20,41 @@ function CopyButton({ text }) {
     );
 }
 
-export default function AlertsPanel({ alerts, onChanged }) {
+export default function AlertsPanel({ alerts, counts = null, limit = 0, onLoadMore, onChanged }) {
     const [open, setOpen] = useState(new Set());
     const [showAcked, setShowAcked] = useState(true);
     const [busy, setBusy] = useState(null);
 
     const visible = alerts.filter(a => showAcked || a.status === 'OPEN');
-    const openCount = alerts.filter(a => a.status === 'OPEN').length;
+
+    // 머리글 숫자는 서버가 센 전체 건수(/api/alerts/count)다. 불러온 행을 세면 목록이 limit 에서
+    // 잘리는 순간 시스템 상태 패널과 다른 숫자를 말하게 된다 — 같은 사실인데 숫자가 둘이 된다.
+    // counts 가 아직 없는 첫 렌더에서만 불러온 행으로 대신한다.
+    const fetchedOpen = alerts.filter(a => a.status === 'OPEN').length;
+    const openCount = counts ? counts.open : fetchedOpen;
+    const ackedCount = counts ? counts.acked : alerts.length - fetchedOpen;
+    const simCount = counts ? counts.simulation : alerts.filter(a => a.is_simulation).length;
+
+    // 지금 걸린 필터에서 '전부'는 몇 건인가. 확인된 알림을 숨기면 미확인 건수가 기준이 된다.
+    const trueTotal = showAcked ? openCount + ackedCount : openCount;
+    const hidden = Math.max(0, trueTotal - visible.length);
+    const maxLimit = counts?.max_limit ?? 0;
+    const canLoadMore = !!onLoadMore && limit > 0 && limit < maxLimit;
+
+    // '모두 확인' 이 실제로 손댈 행. 목록이 잘렸으면 미확인 알림이 화면 밖에 있을 수 있으므로
+    // 버튼이 말하는 숫자와 실제로 처리하는 숫자가 반드시 같아야 한다.
+    const ackTargets = visible.filter(a => a.status === 'OPEN');
 
     const toggle = (id) => setOpen(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
     const ackAll = async () => {
-        const targets = visible.filter(a => a.status === 'OPEN');
+        const targets = ackTargets;
         if (targets.length === 0) return;
-        const note = prompt(`표시된 미확인 알림 ${targets.length}건을 모두 확인 처리합니다.\n같은 알림이 다시 생겨도 심각도가 오르지 않는 한 다시 알리지 않습니다.\n메모(선택):`, '');
+        const unseen = Math.max(0, openCount - targets.length);
+        const note = prompt(
+            `지금 화면에 있는 미확인 알림 ${targets.length}건을 확인 처리합니다.`
+            + (unseen > 0 ? `\n미확인은 모두 ${openCount}건입니다. 아직 불러오지 않은 ${unseen}건은 그대로 남습니다 — "더 보기"로 불러온 뒤 다시 누르세요.` : '')
+            + `\n같은 알림이 다시 생겨도 심각도가 오르지 않는 한 다시 알리지 않습니다.\n메모(선택):`, '');
         if (note === null) return;
         setBusy('all');
         try {
@@ -66,11 +87,17 @@ export default function AlertsPanel({ alerts, onChanged }) {
     return (
         <div className="border border-neon-green/30 bg-cyber-black/80 backdrop-blur-sm p-4 rounded-sm neon-border">
             <h2 className="text-xl font-bold text-neon-green mb-3 border-b border-neon-green/30 pb-2 flex items-center justify-between">
-                <span className="flex items-center gap-2"><Bell className="w-5 h-5" /> 알림 <span className="text-sm font-normal text-gray-400">(미확인 {openCount} / 진행 중 {alerts.length - openCount})</span></span>
+                <span className="flex items-center gap-2"><Bell className="w-5 h-5" /> 알림 <span
+                    className="text-sm font-normal text-gray-400"
+                    title={`서버가 센 전체 건수입니다 (화면에 불러온 ${alerts.length}건이 아니라 DB 전체).`
+                        + (simCount > 0 ? ` 테스트 데이터 ${simCount}건이 포함되어 있습니다 — 시스템 상태 패널의 숫자는 테스트를 제외합니다.` : '')}
+                >(미확인 {openCount} / 진행 중 {ackedCount})</span></span>
                 <span className="flex items-center gap-3 font-normal">
-                    {openCount > 0 && (
-                        <button onClick={ackAll} disabled={busy === 'all'} className="text-xs border border-blue-500/50 text-blue-300 hover:bg-blue-500/20 px-2 py-1 rounded flex items-center gap-1" title="표시된 미확인 알림을 모두 확인 처리">
-                            <CheckSquare className="w-3 h-3" /> 모두 확인 ({visible.filter(a => a.status === 'OPEN').length})
+                    {ackTargets.length > 0 && (
+                        <button onClick={ackAll} disabled={busy === 'all'} className="text-xs border border-blue-500/50 text-blue-300 hover:bg-blue-500/20 px-2 py-1 rounded flex items-center gap-1"
+                            title={`지금 화면에 있는 미확인 알림 ${ackTargets.length}건만 확인 처리합니다`
+                                + (openCount > ackTargets.length ? ` (미확인 전체 ${openCount}건 중 나머지는 아직 불러오지 않았습니다)` : '')}>
+                            <CheckSquare className="w-3 h-3" /> 모두 확인 ({ackTargets.length})
                         </button>
                     )}
                     <label className="text-xs text-gray-500 flex items-center gap-1 cursor-pointer">
@@ -78,8 +105,24 @@ export default function AlertsPanel({ alerts, onChanged }) {
                     </label>
                 </span>
             </h2>
+            {/* 잘린 목록은 완전해 보인다 — 그게 조용한 실패다. 몇 건을 못 보고 있는지 말해 준다. */}
+            {hidden > 0 && (
+                <div className="mb-2 flex items-center justify-between gap-2 border border-yellow-600/40 bg-yellow-900/10 px-2 py-1.5 rounded text-[11px] text-yellow-200">
+                    <span style={{ wordBreak: 'keep-all' }}>
+                        {showAcked ? `전체 ${trueTotal}건 중 ${visible.length}건 표시` : `미확인 ${trueTotal}건 중 ${visible.length}건 표시`}
+                        {' · '}나머지 {hidden}건은 아직 불러오지 않았습니다
+                    </span>
+                    {canLoadMore ? (
+                        <button onClick={onLoadMore} className="flex-shrink-0 border border-yellow-500/60 text-yellow-200 hover:bg-yellow-500/20 px-2 py-0.5 rounded">더 보기</button>
+                    ) : (
+                        <span className="flex-shrink-0 text-yellow-500/80">한 번에 최대 {maxLimit || visible.length}건까지 보냅니다</span>
+                    )}
+                </div>
+            )}
             {visible.length === 0 ? (
-                <div className="text-gray-500 text-sm py-3 text-center">처리할 알림이 없습니다.</div>
+                <div className="text-gray-500 text-sm py-3 text-center">
+                    {hidden > 0 ? '불러온 범위에는 알림이 없습니다. 위의 "더 보기"를 눌러 주세요.' : '처리할 알림이 없습니다.'}
+                </div>
             ) : (
                 <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1 scrollbar-hide">
                     {visible.map(a => {
