@@ -17,9 +17,10 @@ import shutil
 import subprocess
 import time
 
+import config
 from alerts import raise_alert
 from monitor.base import BaseMonitor, TailReader
-from monitor.process_audit import TMP_DIRS, TOOL_NAMES
+from monitor.process_audit import TOOL_NAMES, exec_origin, normalize_exe
 
 AUDIT_LOG = "/var/log/audit/audit.log"
 RULES_PATH = "/etc/audit/rules.d/secdash.rules"
@@ -132,6 +133,8 @@ class AuditMonitor(BaseMonitor):
         self._reader: TailReader | None = None
         self._pending: dict[int, AuditEvent] = {}
         self._recent_writes: dict[tuple, float] = {}
+        self._recent_execs: dict[tuple, float] = {}
+        self._benign_execs: set[str] = set()
         self.exec_count = 0
 
     # --- 상태 ---
@@ -216,26 +219,57 @@ class AuditMonitor(BaseMonitor):
         elif key == "secdash_modules":
             self._on_module(ev, user, exe, comm, success)
 
+    def _dedup_exec(self, key: tuple) -> bool:
+        """같은 사건이 창 안에서 다시 오면 True (조용히 넘긴다).
+
+        auditd 는 대화형 세션의 execve 를 전부 흘려보낸다. 창이 없으면 같은 지문의 알림
+        '발생 횟수' 가 실행 횟수만큼 올라가, 한 알림이 수십만 번으로 표시된다.
+        """
+        now = time.time()
+        window = max(0, config.EXEC_DEDUP_SEC)
+        if now - self._recent_execs.get(key, 0.0) < window:
+            return True
+        self._recent_execs[key] = now
+        for k in [k for k, t in self._recent_execs.items() if now - t > max(window * 4, 300)]:
+            self._recent_execs.pop(k, None)
+        return False
+
     def _on_exec(self, ev: AuditEvent, user: str, exe: str, comm: str):
         self.exec_count += 1
         cmd = ev.command
         name = os.path.basename(ev.args[0]).lower() if ev.args else comm.lower()
         d = {"user": user, "exe": exe, "command": cmd[:300], "cwd": ev.cwd, "pid": sc_int(ev.syscall.get("pid")), "ppid": sc_int(ev.syscall.get("ppid"))}
-        if exe.startswith(TMP_DIRS):
+        origin = exec_origin(exe)
+        if origin:
+            key = normalize_exe(origin["path"])
+            d |= {"name": name, "origin": origin["kind"], "origin_ko": origin["reason_ko"],
+                  "mount": origin["mount"], "fstype": origin["fstype"]}
+            if not origin["suspicious"]:
+                # 임시 경로이지만 페이로드를 떨어뜨릴 수 없는 자리. 실행 파일마다 한 번만 남긴다.
+                if key not in self._benign_execs:
+                    self._benign_execs.add(key)
+                    d |= {"indicator": "exec_from_tmp_ignored",
+                          "indicator_ko": f"임시 디렉터리 경로이지만 페이로드를 떨어뜨릴 수 없는 자리 ({origin['path']})"}
+                    self.log_event("PROCESS_INDICATOR", "INFO", f"exec_from_tmp ignored: {exe} ({origin['kind']})", d)
+                return
+            if self._dedup_exec(("exec_from_tmp", key, user)):
+                return
             sev = "CRITICAL" if user == "root" else "WARNING"
-            d |= {"indicator": "exec_from_tmp", "indicator_ko": f"임시 디렉터리의 바이너리 실행 ({exe})", "name": name}
+            d |= {"indicator": "exec_from_tmp", "indicator_ko": f"임시 디렉터리의 바이너리 실행 ({origin['path']})"}
             self.log_event("PROCESS_INDICATOR", sev, f"exec_from_tmp: {cmd[:120]} (user {user})", d)
             raise_alert(
-                "proc_exec_from_tmp", sev, f"exec from tmp: {exe} (user {user})",
-                fingerprint=f"proc:exec_from_tmp:{exe}:{user}",
+                "proc_exec_from_tmp", sev, f"exec from tmp: {origin['path']} (user {user})",
+                fingerprint=f"proc:exec_from_tmp:{key}:{user}",
                 title_ko=f"임시 디렉터리의 바이너리 실행 — {name} (사용자 {user})",
-                summary_ko=f"명령: {cmd[:120]} · 작업 디렉터리 {ev.cwd}",
-                action_ko=f"`sudo ls -l {exe}` 로 파일을 확인하고 출처를 모르면 보존한 채 실행 계정의 세션을 조사하세요.",
+                summary_ko=f"명령: {cmd[:120]} · 작업 디렉터리 {ev.cwd} · 판정: {origin['reason_ko']}",
+                action_ko=f"`sudo ls -l {origin['path']}` 로 파일을 확인하고 출처를 모르면 보존한 채 실행 계정의 세션을 조사하세요.",
                 evidence=cmd, details=d,
             )
             return
         if name in TOOL_NAMES or comm.lower() in TOOL_NAMES:
             tool = name if name in TOOL_NAMES else comm.lower()
+            if self._dedup_exec(("security_tool", tool, user)):
+                return
             d |= {"tool": tool, "name": name, "parent": "", "cmdline": cmd[:300]}
             self.log_event("PROCESS_TOOL", "WARNING", f"Security tool '{tool}' executed by {user}: {cmd[:120]}", d)
             raise_alert(

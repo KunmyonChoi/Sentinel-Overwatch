@@ -22,28 +22,40 @@ import { ShieldAlert } from 'lucide-react';
 import ModeSwitch from './ModeSwitch';
 import InstanceBadge from './InstanceBadge';
 
-async function loadCore() {
-  const [stats, events, alerts] = await Promise.all([
+// 목록은 서버에서 limit 으로 잘린다. 그래서 전체 건수도 같이 받는다 — 머리글 숫자를
+// '불러온 행'으로 세면 목록이 잘리는 순간 시스템 상태 패널과 다른 숫자를 말하게 된다.
+const ALERT_PAGE = 100;
+const EVENT_PAGE = 150;
+
+async function loadCore(limits) {
+  const [stats, events, alerts, alertCount, eventCount] = await Promise.all([
     api('/api/stats'),
-    api('/api/events?limit=150'),
-    api('/api/alerts?status=active'),
+    api(`/api/events?limit=${limits.events}`),
+    api(`/api/alerts?status=active&limit=${limits.alerts}`),
+    api('/api/alerts/count?status=active'),
+    api('/api/events/count'),
   ]);
-  return { stats, events, alerts };
+  return { stats, events, alerts, alertCount, eventCount };
 }
 
 export default function Dashboard({ onMode }) {
-  const [core, setCore] = useState({ stats: null, events: [], alerts: [] });
+  const [core, setCore] = useState({ stats: null, events: [], alerts: [], alertCount: null, eventCount: null });
   const [host, setHost] = useState(null);
   const [needToken, setNeedToken] = useState(() => !getToken());
   const [tick, setTick] = useState(0);
+  const [limits, setLimits] = useState({ alerts: ALERT_PAGE, events: EVENT_PAGE });
   const aliveRef = useRef(true);
+  // 폴링 타이머는 한 번만 만들고 최신 limit 은 ref 로 읽는다 — '더 보기'로 늘린 범위가
+  // 다음 갱신에서 100건으로 되돌아가지 않아야 한다.
+  const limitsRef = useRef(limits);
+  useEffect(() => { limitsRef.current = limits; }, [limits]);
 
   // 주기 갱신: 토큰이 있을 때만. 401 이면 TokenGate 표시.
   useEffect(() => {
     aliveRef.current = true;
     const run = () => {
       if (!getToken()) return;
-      loadCore()
+      loadCore(limitsRef.current)
         .then((d) => { if (aliveRef.current) { setCore(d); setNeedToken(false); } })
         .catch((err) => { if (err.status !== 401) console.error('refresh failed', err); });
       setTick((t) => t + 1);
@@ -71,11 +83,21 @@ export default function Dashboard({ onMode }) {
     return () => { alive = false; clearTimeout(t0); clearInterval(iv); };
   }, [needToken]);
 
-  const { stats, events, alerts } = core;
+  const { stats, events, alerts, alertCount, eventCount } = core;
   const isDefcon1 = stats?.status === 'DEFCON 1';
   const isDefcon3 = stats?.status === 'DEFCON 3';
   const badge = isDefcon1 ? 'text-neon-red border-neon-red' : isDefcon3 ? 'text-yellow-400 border-yellow-400' : 'text-neon-green border-neon-green';
-  const refreshNow = () => loadCore().then(setCore).catch(() => {});
+  const refreshNow = () => loadCore(limitsRef.current).then(setCore).catch(() => {});
+  // 더 보기: 잘린 목록을 더 불러온다. 서버가 한 번에 보내는 최대치(max_limit)를 넘기지 않는다.
+  const loadMore = (key) => {
+    const max = (key === 'alerts' ? alertCount?.max_limit : eventCount?.max_limit) || 0;
+    const step = key === 'alerts' ? ALERT_PAGE : EVENT_PAGE;
+    const next = Math.min(limits[key] + step, max || limits[key]);
+    if (next <= limits[key]) return;
+    const nextLimits = { ...limits, [key]: next };
+    setLimits(nextLimits);
+    loadCore(nextLimits).then(setCore).catch(() => {});
+  };
 
   return (
     <div className="min-h-screen cyber-grid p-6 flex flex-col gap-6">
@@ -118,9 +140,9 @@ export default function Dashboard({ onMode }) {
           <ThreatIntel />
         </section>
         <section className="lg:col-span-2 flex flex-col min-h-[500px] gap-4">
-          <AlertsPanel alerts={alerts} onChanged={refreshNow} />
+          <AlertsPanel alerts={alerts} counts={alertCount} limit={limits.alerts} onLoadMore={() => loadMore('alerts')} onChanged={refreshNow} />
           <BlockListPanel tick={tick} />
-          <AlertFeed events={events} />
+          <AlertFeed events={events} counts={eventCount} limit={limits.events} onLoadMore={() => loadMore('events')} />
         </section>
       </main>
     </div>

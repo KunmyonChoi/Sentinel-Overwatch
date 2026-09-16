@@ -200,6 +200,71 @@ const RULES = {
   },
 };
 
+// ---- 급함의 종류 ----
+//
+// 같은 WARNING 안에 성격이 다른 둘이 섞여 있다.
+// '밀린 보안 업데이트'는 오늘 중에 해두면 되는 일이고,
+// '처음 보는 곳에서 로그인 성공'은 지금 남이 들어와 있을 수 있다는 뜻이다.
+// 이 둘에 같은 문장("급하지는 않지만")을 쓰면 뒤의 경우에 거짓 안심을 준다.
+// 그래서 홈 첫 문장을 고를 때와 할 일 순서를 정할 때 이 분류를 쓴다.
+// 알림의 심각도(severity) 자체는 백엔드 것을 그대로 두고, 여기서 바꾸지 않는다.
+//
+//   SIGNAL   누가 들어왔거나, 들어와서 무언가 했을 수 있는 흔적
+//   UNKNOWN  지킴이가 판단하지 못한 것 — '괜찮다'가 아니라 '모른다'
+//   CARE     해두면 더 단단해지는 것. 오늘 중에 하면 된다
+//
+// 분류는 백엔드가 이미 그어둔 선을 따라간다. alerts.py 의 점검 모드 목록에는
+// "침입 신호는 절대 포함하지 않는다"고 적혀 있고, README 원칙 5 도 "모든 침입 신호는
+// 예외 없이 알린다"고 말한다. 다만 점검 모드 목록은 '계획 작업 중에 덮어도 되는 것'의
+// 기준이라 무결성·영속화·커널 모듈까지 들어 있다. 그건 작업 창이 열려 있을 때의 이야기고,
+// 평소에 이 알림이 올라왔다면 그대로 침입 신호다 — 그래서 여기서는 SIGNAL 로 둔다.
+export const URGENCY = { SIGNAL: 'signal', UNKNOWN: 'unknown', CARE: 'care' };
+
+const SIGNAL_RULES = new Set([
+  // 로그인과 권한: 남이 들어왔거나, 권한을 얻으려 한 흔적
+  'new_login_ip', 'login_after_failures', 'root_ssh_login', 'sudo_failure', 'account_change',
+  // 들어와서 남긴 것: 설정 파일, 특별한 권한, 커널, 프로그램을 가로채는 자리
+  'integrity_change', 'persistence_suid', 'kernel_module', 'ld_preload_write',
+  // 공격에 쓰이는 도구가 돌았거나, 지킴이 역할을 하던 패키지가 사라진 것
+  'security_tool', 'security_package_removed',
+  // 문을 두드려 보고 나서 실제로 행동까지 한 경우 (두드리기만 한 port_scan 과 다르다)
+  'scan_then_auth', 'scan_then_connection', 'internal_scan',
+]);
+
+// 백엔드가 이름을 조립해서 만드는 계열. persistence_cron·persistence_systemd,
+// proc_exec_from_tmp·proc_shell_over_socket 처럼 새 이름이 언제든 늘어날 수 있어서
+// 하나씩 적지 않고 앞자리로 잡는다. 늘어난 이름도 빠짐없이 침입 신호로 잡힌다.
+const SIGNAL_PREFIXES = ['persistence_', 'proc_'];
+
+const CARE_RULES = new Set([
+  'file_permission', 'exposed_port', 'new_listener', 'container_config',
+  'pending_security_updates', 'reboot_required', 'usn_affects_host',
+  'lynis_warning', 'lynis_index_drop',
+  // 문을 두드려만 봤거나(열린 문이 없으면 아무 일도 없다),
+  // 지킴이가 이미 막아서 들어오지 못한 것. 여기에 '오늘 바로'라고 쓰면 겁만 준다.
+  'port_scan', 'brute_force',
+  'high_cpu', 'high_memory', 'disk_full', 'process_spike', 'time_unsynced',
+]);
+
+// 감시가 멈춘 자리. 침입 신호라고 말하면 거짓이고, 괜찮다고 말해도 거짓이다.
+const UNKNOWN_RULES = new Set(['monitor_blind_spot']);
+
+/**
+ * 규칙 하나의 급함 종류.
+ *
+ * 모르는 규칙은 CARE 로 내려보내지 않는다. 처음 보는 알림을 조용히 '급하지 않음'으로
+ * 만드는 것이 이 화면이 저지를 수 있는 가장 나쁜 실패다 (파일 맨 위의 원칙과 같다).
+ * 그래서 목록에 없는 이름은 UNKNOWN 이 되어 "오늘 바로 확인하세요"로 올라간다.
+ */
+export function urgencyOf(rule) {
+  const r = String(rule || '');
+  if (UNKNOWN_RULES.has(r)) return URGENCY.UNKNOWN;
+  if (SIGNAL_RULES.has(r)) return URGENCY.SIGNAL;
+  if (SIGNAL_PREFIXES.some((p) => r.startsWith(p))) return URGENCY.SIGNAL;
+  if (CARE_RULES.has(r)) return URGENCY.CARE;
+  return URGENCY.UNKNOWN;
+}
+
 // 본인이 한 일이 아닐 때의 공통 안내
 export const JUDGE_STEPS = [
   { b: '인터넷 선을 잠시 뽑으세요.', t: '무선이면 와이파이를 끄면 돼요.' },
@@ -233,6 +298,7 @@ export function buildTasks(alerts) {
       id: key,
       rule,
       kind: spec.kind,
+      urgency: urgencyOf(rule),
       icon: spec.icon || 'alert',
       severity: worst,
       count: n,
@@ -253,8 +319,13 @@ export function buildTasks(alerts) {
     });
   }
 
+  // 긴급이 먼저, 그다음은 급함의 종류 순서다. 같은 WARNING 이라도 침입 신호가
+  // 밀린 업데이트보다 위에 있어야 한다 — 위에서부터 읽는 화면이기 때문이다.
   const rank = { CRITICAL: 0, WARNING: 1 };
-  tasks.sort((a, b) => rank[a.severity] - rank[b.severity] || String(b.seenAt).localeCompare(String(a.seenAt)));
+  const urgencyRank = { [URGENCY.SIGNAL]: 0, [URGENCY.UNKNOWN]: 1, [URGENCY.CARE]: 2 };
+  tasks.sort((a, b) => rank[a.severity] - rank[b.severity]
+    || urgencyRank[a.urgency] - urgencyRank[b.urgency]
+    || String(b.seenAt).localeCompare(String(a.seenAt)));
   return tasks;
 }
 
@@ -263,8 +334,18 @@ export function buildTasks(alerts) {
  *
  * stats 를 못 읽었으면 '이상 없음'이라고 말하면 안 된다. 지킴이가 죽어 있는데
  * 큰 글씨로 안전하다고 말하는 것이 이 화면이 저지를 수 있는 가장 나쁜 거짓말이다.
+ *
+ * '살펴보세요' 단계의 첫 문장은 할 일의 종류에 따라 갈라진다. 침입 신호가 하나라도
+ * 있으면 "급하지는 않지만"이라고 말하지 않는다 — 그 말이 맞는 경우는 위생 작업뿐이다.
+ * 단계 이름(이상 없음·살펴보세요·지금 확인하세요)은 docs/ux/plan.md §6 그대로 두고,
+ * 바뀌는 것은 그 아래 한 줄이다. 단계를 늘리지도, DEFCON 같은 말을 꺼내지도 않는다.
+ *
+ * 두 번째 인자는 할 일 목록(buildTasks 결과)이다. 개수만 넘기면 종류를 알 수 없어
+ * 예전처럼 위생 작업 문장을 쓴다.
  */
-export function statusOf(stats, taskCount, conn = 'ok') {
+export function statusOf(stats, tasks, conn = 'ok') {
+  const list = Array.isArray(tasks) ? tasks : [];
+  const taskCount = Array.isArray(tasks) ? tasks.length : (tasks || 0);
   if (!stats || conn !== 'ok') {
     return conn === 'down'
       ? { key: 'unknown', label: '상태를 알 수 없어요', lead: '지킴이와 연결하지 못했어요. 안전한지 아닌지 지금은 말씀드릴 수 없어요.' }
@@ -273,7 +354,29 @@ export function statusOf(stats, taskCount, conn = 'ok') {
   const s = stats?.status;
   if (s === 'DEFCON 1') return { key: 'crit', label: '지금 확인하세요', lead: '바로 살펴봐야 할 일이 있어요.' };
   if (s === 'DEFCON 3' || taskCount > 0) {
-    return { key: 'warn', label: '살펴보세요', lead: `손볼 일이 ${taskCount === 1 ? '한' : taskCount} 가지 있어요. 급하지는 않지만 오늘 중에 해두는 게 좋아요.` };
+    const of = (u) => list.filter((t) => t.urgency === u);
+    const signals = of(URGENCY.SIGNAL);
+    const unknowns = of(URGENCY.UNKNOWN);
+    // 침입 신호: 무슨 신호인지 한 줄로 말하고, 오늘 바로 보라고 한다.
+    if (signals.length) {
+      return {
+        key: 'warn', label: '살펴보세요', urgency: URGENCY.SIGNAL,
+        lead: `${signals[0].title}. `
+          + (signals.length > 1 ? `이런 신호가 ${signals.length}가지 있어요. ` : '')
+          + '직접 하신 일이 아니라면 오늘 바로 확인하세요.',
+      };
+    }
+    // 판단하지 못한 것: 괜찮다고도, 위험하다고도 말하지 않는다. 모른다고 말한다.
+    if (unknowns.length) {
+      return {
+        key: 'warn', label: '살펴보세요', urgency: URGENCY.UNKNOWN,
+        lead: `${unknowns[0].title}. 지킴이가 판단하지 못한 일이에요. 오늘 바로 확인하세요.`,
+      };
+    }
+    return {
+      key: 'warn', label: '살펴보세요', urgency: URGENCY.CARE,
+      lead: `손볼 일이 ${taskCount === 1 ? '한' : taskCount} 가지 있어요. 급하지는 않지만 오늘 중에 해두는 게 좋아요.`,
+    };
   }
   return { key: 'ok', label: '이상 없음', lead: '지금 손볼 일이 없어요. 이 창을 닫으셔도 돼요.' };
 }

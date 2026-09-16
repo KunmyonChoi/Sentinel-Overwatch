@@ -177,15 +177,35 @@ def _blocked_dict(b: BlockedIP) -> dict:
 
 
 # --- 엔드포인트 -------------------------------------------------------------
-@app.get("/api/events")
-def get_events(limit: int = 100, include_simulation: bool = True, severity: str | None = None, db: Session = Depends(get_db)):
+# 목록 엔드포인트는 limit 에서 잘린다. 잘린 목록이 '전부'처럼 보이면 그게 바로 조용한 실패라서,
+# 화면이 "몇 건 중 몇 건"을 말할 수 있도록 같은 조건의 전체 건수를 세는 짝 엔드포인트를 둔다.
+# 목록과 건수가 어긋나면 숫자가 둘로 갈리므로, 조건은 _events_query / _alerts_query 한 곳에서만 만든다.
+LIST_MAX_LIMIT = 500
+
+
+def _events_query(db: Session, include_simulation: bool, severity: str | None):
     q = db.query(Event).filter(Event.event_type != "THREAT_INTEL")
     if not include_simulation:
         q = q.filter(Event.is_simulation == False)  # noqa: E712
     if severity:
         q = q.filter(Event.severity == severity.upper())
-    rows = q.order_by(Event.timestamp.desc(), Event.id.desc()).limit(min(limit, 500)).all()
+    return q
+
+
+@app.get("/api/events")
+def get_events(limit: int = 100, include_simulation: bool = True, severity: str | None = None, db: Session = Depends(get_db)):
+    rows = (
+        _events_query(db, include_simulation, severity)
+        .order_by(Event.timestamp.desc(), Event.id.desc())
+        .limit(min(limit, LIST_MAX_LIMIT)).all()
+    )
     return [_event_dict(e) for e in rows]
+
+
+@app.get("/api/events/count")
+def count_events(include_simulation: bool = True, severity: str | None = None, db: Session = Depends(get_db)):
+    """`GET /api/events` 와 같은 조건의 전체 건수 (목록의 limit 과 무관)."""
+    return {"total": _events_query(db, include_simulation, severity).count(), "max_limit": LIST_MAX_LIMIT}
 
 
 @app.get("/api/intel")
@@ -214,15 +234,52 @@ def get_intel(limit: int = 30, db: Session = Depends(get_db)):
     return out
 
 
-@app.get("/api/alerts")
-def get_alerts(status: str = "active", limit: int = 100, db: Session = Depends(get_db)):
+def _alerts_query(db: Session, status: str):
     q = db.query(Alert)
     if status == "active":
         q = q.filter(Alert.status.in_(["OPEN", "ACKED"]))
     elif status != "all":
         q = q.filter(Alert.status == status.upper())
-    rows = q.order_by(Alert.last_seen_at.desc()).limit(min(limit, 500)).all()
+    return q
+
+
+@app.get("/api/alerts")
+def get_alerts(status: str = "active", limit: int = 100, db: Session = Depends(get_db)):
+    rows = (
+        _alerts_query(db, status)
+        # id 를 동률 기준으로 둔다. limit 을 늘려 다시 불러올 때 앞쪽 순서가 흔들리면
+        # '더 보기' 가 같은 알림을 빠뜨리거나 두 번 보여줄 수 있다.
+        .order_by(Alert.last_seen_at.desc(), Alert.id.desc())
+        .limit(min(limit, LIST_MAX_LIMIT)).all()
+    )
     return [alert_engine.serialize(a) for a in rows]
+
+
+@app.get("/api/alerts/count")
+def count_alerts(status: str = "active", db: Session = Depends(get_db)):
+    """
+    `GET /api/alerts` 와 같은 조건의 상태별 전체 건수.
+
+    화면 머리글의 숫자는 '불러온 행의 개수'가 아니라 이 값이어야 한다. 목록이 100건에서
+    잘리면 머리글은 "진행 중 99"라고 말하고 시스템 상태 패널은 "185 대응 중"이라고 말한다.
+    같은 사실인데 숫자가 둘이면 사용자는 어느 쪽이 참인지 알 방법이 없다.
+
+    시뮬레이션(테스트) 행도 목록에 나오므로 여기서도 함께 센다. DEFCON 을 계산하는
+    `/api/stats` 는 시뮬레이션을 빼기 때문에, 그 차이를 화면이 설명할 수 있도록
+    `simulation` 으로 따로 알려준다.
+    """
+    rows = _alerts_query(db, status).with_entities(Alert.status, Alert.severity, Alert.is_simulation).all()
+    open_rows = [r for r in rows if r[0] == "OPEN"]
+    return {
+        "total": len(rows),
+        "open": len(open_rows),
+        "acked": sum(1 for r in rows if r[0] == "ACKED"),
+        "resolved": sum(1 for r in rows if r[0] == "RESOLVED"),
+        "open_critical": sum(1 for r in open_rows if r[1] == "CRITICAL"),
+        "open_warning": sum(1 for r in open_rows if r[1] == "WARNING"),
+        "simulation": sum(1 for r in rows if r[2]),
+        "max_limit": LIST_MAX_LIMIT,
+    }
 
 
 class AckBody(BaseModel):

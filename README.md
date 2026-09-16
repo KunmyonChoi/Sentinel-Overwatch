@@ -196,16 +196,53 @@ sudo secdash-<버전>/deploy/update.sh --deps
 | 라이브 피드 | 원시 이벤트(한국어 + 원문). 시뮬레이션은 TEST DATA 표시 | 알림의 근거를 찾을 때 |
 | 점검 모드 (헤더) | 시간과 메모를 정하면 그동안의 설정·패키지·영속화 알림은 자동 확인, 침입 신호는 그대로 | 계획 작업 전에 켜기 |
 
+### 화면 예시
+
+작은 그림을 누르면 원본 크기로 볼 수 있다. 모두 **예시 데이터**이며 실제 서버 정보가 아니다.
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <a href="docs/images/screens/plain-home.png"><img src="docs/images/screens/plain-home-thumb.png" alt="쉬운 화면 홈: 살펴보세요 상태, 할 일 두 가지, 열린 문·밀린 업데이트·막은 접속 시도 요약"></a><br>
+      <b>쉬운 화면 — 홈</b><br><sub>지금 상태 한 줄, 할 일 카드, 안심 정보 세 칸</sub>
+    </td>
+    <td width="50%" align="center">
+      <a href="docs/images/screens/plain-task.png"><img src="docs/images/screens/plain-task-thumb.png" alt="할 일 상세: 무슨 일인가, 왜 문제인가, 이렇게 하시면 돼요, 지킴이가 본 것, 붙여넣기용 복사"></a><br>
+      <b>할 일 상세</b><br><sub>무슨 일·왜 문제·순서, 근거, 가리고 복사하기</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <a href="docs/images/screens/plain-history.png"><img src="docs/images/screens/plain-history-thumb.png" alt="기록 화면: 로그인 성공, 포트 스캔, 차단, 업데이트 점검을 시간 순서로 나열"></a><br>
+      <b>무슨 일이 있었는지</b><br><sub>지킴이가 한 일과 생긴 일을 시간 순서로 · 파일로 저장</sub>
+    </td>
+    <td width="50%" align="center">
+      <a href="docs/images/screens/plain-expert.png"><img src="docs/images/screens/plain-expert-thumb.png" alt="자세히 보기: 열린 문, 파일과 프로그램 설정, 계정, 막은 상대 등 접이식 패널"></a><br>
+      <b>자세히 보기</b><br><sub>전문가 패널을 쉬운 말 설명과 함께 접이식으로</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <a href="docs/images/screens/expert-dashboard.png"><img src="docs/images/screens/expert-dashboard-thumb.png" alt="전문가 화면: 현재 상황 요약, DEFCON, 알림, IP 차단 목록, 라이브 피드"></a><br>
+      <b>전문가 화면</b><br><sub>요약·DEFCON·알림·차단 목록·라이브 피드를 한 화면에</sub>
+    </td>
+    <td width="50%" align="center">
+      <a href="docs/images/desktop-app.png"><img src="docs/images/screens/desktop-app-thumb.png" alt="데스크톱 앱 창에서 열린 같은 홈 화면"></a><br>
+      <b>데스크톱 앱</b><br><sub>같은 화면을 트레이 상주 앱으로 · 긴급 알림은 OS 알림</sub>
+    </td>
+  </tr>
+</table>
+
 ## 탐지 항목
 
 | 모니터 | 소스 | 알림 규칙 |
 |---|---|---|
 | AuthLogWatcher | auth.log | 브루트포스, 실패 후 성공(긴급), 새 공인 IP 로그인, root 직접 로그인, sudo 실패, 계정/권한 그룹 변경 |
-| AuditMonitor | auditd (`deploy/audit-secdash.rules`) | 대화형 세션의 모든 execve(도구·임시 디렉터리 실행 즉시 탐지), 핵심 파일 쓰기의 주체, ld.so.preload 쓰기(긴급), 커널 모듈 로드 |
+| AuditMonitor | auditd (`deploy/audit-secdash.rules`) | 대화형 세션의 모든 execve(도구·쓰기 가능한 임시 디렉터리 실행 즉시 탐지, 같은 실행 파일의 반복 실행은 `SECDASH_EXEC_DEDUP_SEC` 창으로 묶음), 핵심 파일 쓰기의 주체, ld.so.preload 쓰기(긴급), 커널 모듈 로드 |
 | Fail2banSync | `fail2ban-client banned` | sshd·recidive jail 차단 목록 동기화, 수동 차단/해제, jail 비활성 시 제한 표시 |
 | FirewallLogWatcher | ufw 차단 로그(`/var/log/ufw.log`) | 막힌 포트 스캔은 이벤트와 하루 요약으로만 남김(알림 아님). 스캔한 IP 가 24시간 안에 SSH 로그인 시도·성공하거나 리스닝 포트에 실제로 연결하면 경고, 내부망 주소의 스캔은 곧바로 경고. 숫자는 최소치, 자동 차단 없음 |
 | NetworkWatcher | /proc/net | 외부 인터페이스 새 리스너(프로세스 포함, 그 포트가 닫히면 자동 해결), 새 외부 연결, 포트 스캔(저신뢰) |
-| ProcessAudit | /proc (30초 샘플링, auditd 폴백) | 셸 stdin/stdout 이 소켓(리버스 셸, 긴급), /tmp·/dev/shm 실행, 삭제된 실행 파일, 공격/진단 도구 실행 |
+| ProcessAudit | /proc (30초 샘플링, auditd 폴백) | 셸 stdin/stdout 이 소켓(리버스 셸, 긴급), **쓰기 가능한** /tmp·/dev/shm 실행(읽기 전용 이미지 마운트는 정보 이벤트만), 삭제된 실행 파일, 공격/진단 도구 실행 |
 | IntegrityMonitor | sha256 + DB 기준선 | passwd/group/shadow/sudoers(.d)/sshd_config(.d)/authorized_keys/ld.so.preload/modprobe.d/sysctl.d — diff 와 최근 관리자 활동 첨부, 서비스 중지 중 변경도 탐지 |
 | PersistenceMonitor | cron, systemd, SUID | 새/변경된 cron·유닛(curl\|sh, /dev/tcp 패턴이면 긴급), 새 SUID/SGID. 패키지 소유·mask 링크·snap 유닛은 정보만 |
 | UpdateMonitor | dpkg.log, apt | 패키지 제거(보안 패키지면 긴급, 누가 실행했는지 첨부, 다시 설치되면 자동 해결), 미적용 보안 업데이트, 재부팅 대기 (적용/재부팅 시 자동 해결) |
@@ -239,6 +276,8 @@ sudo secdash-<버전>/deploy/update.sh --deps
 | `SECDASH_F2B_IGNOREIP` | – | 관리자 IP·대역(공백 구분). 대시보드가 차단하지 않고, `apply-host-config.sh` 가 fail2ban `ignoreip` 에도 넣는다. **원격 서버라면 반드시** |
 | `SECDASH_SSH_PORTS` | 22 | 로그인해 있는 관리자 SSH 세션을 알아보는 포트 (차단 보호용) |
 | `SECDASH_NETWORK_IGNORE_PROCESSES` | – | 외부 연결 이벤트에서 제외할 프로세스 (예: `firefox,chrome`) |
+| `SECDASH_TMP_EXEC_ALLOW` | – | 임시 디렉터리 실행 판정에서 제외할 실행 파일 경로 패턴(쉼표 구분, `*` 글롭). 읽기 전용으로 자기를 마운트하는 프로그램(AppImage 등)은 코드가 이미 거르므로 보통 비워 둔다. 쓰기 가능한 경로를 넣으면 그만큼 눈을 감는 것이다 |
+| `SECDASH_EXEC_DEDUP_SEC` | 60 | 같은 실행 파일의 execve 가 이 시간(초) 안에 반복되면 알림 횟수를 올리지 않는다 |
 | `SLACK_WEBHOOK_URL` / `SECDASH_NOTIFY_MAX_PER_MINUTE` | – / 10 | 알림 발송, 분당 제한(초과분 집계) |
 | `ANTHROPIC_API_KEY`, `SECDASH_INTEL_TRANSLATE` | –, 1 | 뉴스 제목 번역/긴급도 (호스트 로그 미전송) |
 | `SECDASH_INTEL_FEEDS` / `SECDASH_USN_FEED` / `SECDASH_USN_MATCH` | THN RSS / Ubuntu USN / 1 | 인텔 소스, USN ↔ 설치 패키지 대조 |
@@ -256,6 +295,11 @@ sudo secdash-<버전>/deploy/update.sh --deps
 - 확인(ack)만 된 알림은 30일(`SECDASH_ACKED_AGE_DAYS`) 뒤 "시간이 지나 닫혔다"는 메모와 함께 자동 해결로 정리된다. 상태 계열 규칙만 대상이다. 정리 시점에 그 조건이 아직 남아 있는지를 다시 확인하지는 않으므로, 노출 포트·파일 권한·컨테이너 설정이 여전히 그대로라면 해당 모니터가 다시 기동할 때(서비스 재시작) 새 알림으로 올라온다. 침입 신호는 정리하지 않는다 — 그 목록은 사람이 해결로 닫아야 줄어든다.
 - 파일 무결성은 자체 해시다. 규제 요건이 있으면 AIDE 를 병행하고 이 대시보드는 표시 계층으로 써라.
 - auditd 가 없으면 프로세스 실행 이력(execve)은 30초 샘플링으로만 본다. `deploy/install.sh` 는 auditd 와 최소 규칙을 설치해 이 공백을 메운다.
+- **임시 디렉터리 실행**은 경로 이름만으로 판단하지 않는다. 이 규칙이 잡으려는 것은 '`/tmp` 라는 이름' 이 아니라 '아무나 파일을 떨어뜨릴 수 있는 자리에서의 실행' 이다. 경로가 `/tmp` 안이라도 읽기 전용으로 마운트된 이미지(AppImage 의 자기 마운트, squashfs, ISO) 안의 파일이면 그 자리에는 페이로드를 떨어뜨릴 수 없으므로 알림이 아니라 정보 이벤트로 실행 파일마다 한 번만 남긴다. 그래서 보지 못하는 것:
+  - **읽기 전용 이미지 안에 이미 심어진 코드**: 이미지의 서명을 확인하지 않는다. 공격자가 AppImage 나 squashfs 이미지 자체를 바꿔치기해 건네줬다면 그 안에서의 실행은 걸러진다. 이미지 파일(`~/Applications/*.AppImage` 등)의 출처와 해시는 따로 확인해야 한다.
+  - **마운트가 사라진 뒤의 `.mount_*` 경로**: AppImage 가 새 버전으로 교체되면 아직 돌고 있는 예전 프로세스의 경로가 '지워진 파일' 로 보인다. `.mount_*` 디렉터리까지 사라진 경우만 그 잔상으로 보고 넘긴다. 공격자가 `/tmp/.mount_xxx/` 라는 이름의 디렉터리를 만들어 페이로드를 실행한 뒤 그 디렉터리째 지우면 이 경우에 섞일 수 있다.
+  - `SECDASH_TMP_EXEC_ALLOW` 에 넣은 경로는 그만큼 눈을 감는 것이다. 쓰기 가능한 경로는 넣지 마라.
+- auditd 는 대화형 세션의 execve 를 전부 흘려보내므로, 같은 실행 파일의 반복 실행은 `SECDASH_EXEC_DEDUP_SEC`(기본 60초) 창으로 묶는다. 알림의 '발생 횟수' 는 실행 횟수가 아니라 '그 창에서 적어도 한 번 실행된 횟수' 다. 정확한 실행 횟수가 필요하면 auditd 로그를 직접 봐야 한다.
 - 데스크톱 앱은 같은 컴퓨터의 백엔드(`127.0.0.1:8000`)에만 붙는다. 원격 서버를 보려면 SSH 터널을 직접 열어 둔다. Linux 트레이(AppIndicator)는 아이콘 클릭을 받지 않아 창은 트레이 메뉴로 연다.
 - 서버 한 대 단위다. 여러 서버를 한 화면에서 보려면 Wazuh 같은 중앙 관리 도구가 필요하며, 그때 이 대시보드는 그 위의 한국어 트리아지 뷰로 쓸 수 있다.
 - 제거 스크립트는 아직 없다.
@@ -304,10 +348,12 @@ cd desktop && npm ci && npm run build
 | 경로 | 설명 |
 |---|---|
 | `GET /api/stats` | DEFCON(미확인 알림 기반), 24h 집계, 리소스, 탐지 공백, 점검 모드 |
-| `GET /api/alerts?status=active\|all` · `POST /api/alerts/{id}/ack\|resolve` | 알림 조회/확인/해결 |
+| `GET /api/alerts?status=active\|all&limit=` · `POST /api/alerts/{id}/ack\|resolve` | 알림 조회(`limit` 기본 100·최대 500)/확인/해결 |
+| `GET /api/alerts/count?status=active\|all` | 목록과 같은 조건의 전체 건수 (`total`·`open`·`acked`·`resolved`·`open_critical`·`open_warning`·`simulation`·`max_limit`). 머리글 숫자는 불러온 행이 아니라 이 값을 쓴다 |
 | `POST /api/alerts/ack-all` | 미확인 알림 일괄 확인 (`ids` 또는 `rule`, 메모) |
 | `GET/POST/DELETE /api/maintenance` | 점검 모드 조회/시작(`minutes`, `note`)/종료 |
-| `GET /api/events` | 원시 이벤트 (`include_simulation=false` 로 테스트 제외) |
+| `GET /api/events` | 원시 이벤트 (`include_simulation=false` 로 테스트 제외, `limit` 기본 100·최대 500) |
+| `GET /api/events/count` | 목록과 같은 조건(`include_simulation`, `severity`)의 전체 건수 (`total`·`max_limit`) |
 | `GET /api/blocked` · `POST /api/blocked` · `POST /api/blocked/{ip}/unblock` | fail2ban 차단 목록/수동 차단/해제 |
 | `GET /api/monitors` | 모니터 health(ok/degraded/down), 사유, 해결 힌트 |
 | `GET /api/host` | 호스트, 버전, 실행 권한 점검, 미적용 업데이트, USB 저장장치 차단 상태 |
