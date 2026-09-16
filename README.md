@@ -367,9 +367,13 @@ cd desktop && npm ci && npm run build
 
 ```bash
 cd backend && venv/bin/python -m pytest -q tests     # 파서·상관 규칙·알림 엔진·점검 모드·무결성·auditd·Lynis·fail2ban·계정·API
+cd frontend && npm test                              # 쉬운 화면의 판정(할 일 분류·홈 첫 문장·지금 할 수 있는 것)과 트레이 알림
 python3 simulate_attack.py                            # 탐지 파이프라인 점검 (TEST DATA 로 표시, DEFCON/Slack/fail2ban 영향 없음)
 ./clear_simulation.sh                                 # 시뮬레이션 흔적 정리
 ```
+
+PR 을 올리기 전에 백엔드 `pytest` 와 프런트엔드 `npm test` 가 모두 통과해야 한다.
+프런트엔드는 고쳐가며 볼 때 `npm run test:watch` 를 쓴다 (Node 20.19+).
 
 ## 라이선스
 
