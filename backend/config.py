@@ -64,6 +64,14 @@ except KeyError:
     SELF_USER = ""
 # 외부 연결 이벤트에서 무시할 프로세스 이름 (쉼표 구분, 예: firefox,chrome)
 NETWORK_IGNORE_PROCESSES = {p.strip().lower() for p in _env("SECDASH_NETWORK_IGNORE_PROCESSES", "").split(",") if p.strip()}
+# 임시 디렉터리 실행 판정에서 제외할 실행 파일 경로 패턴 (쉼표 구분, fnmatch 글롭).
+# AppImage 처럼 읽기 전용으로 자기를 마운트하는 경로는 코드가 이미 걸러내므로 보통 비워 둔다.
+# 쓰기 가능한 경로를 여기에 넣으면 그만큼 눈을 감는 것이다.
+TMP_EXEC_ALLOW = [p.strip() for p in _env("SECDASH_TMP_EXEC_ALLOW", "").split(",") if p.strip()]
+# 같은 실행 파일의 execve 가 이 시간(초) 안에 반복되면 알림 횟수를 올리지 않는다.
+# auditd 는 대화형 세션의 execve 를 전부 흘려보내므로, 이 창이 없으면 한 알림의
+# '발생 횟수' 가 실행 횟수만큼(수십만까지) 올라간다.
+EXEC_DEDUP_SEC = _env_int("SECDASH_EXEC_DEDUP_SEC", 60)
 
 # --- 노출 면 판정 ---
 # 외부에 열려 있어도 정상인 포트 ("22/tcp,443/tcp" 형식). 여기 없는 포트가 외부에서 도달 가능하면 알림.
