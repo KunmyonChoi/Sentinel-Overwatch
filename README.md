@@ -204,11 +204,11 @@ sudo secdash-<버전>/deploy/update.sh --deps
 | AuditMonitor | auditd (`deploy/audit-secdash.rules`) | 대화형 세션의 모든 execve(도구·임시 디렉터리 실행 즉시 탐지), 핵심 파일 쓰기의 주체, ld.so.preload 쓰기(긴급), 커널 모듈 로드 |
 | Fail2banSync | `fail2ban-client banned` | sshd·recidive jail 차단 목록 동기화, 수동 차단/해제, jail 비활성 시 제한 표시 |
 | FirewallLogWatcher | ufw 차단 로그(`/var/log/ufw.log`) | 막힌 포트 스캔은 이벤트와 하루 요약으로만 남김(알림 아님). 스캔한 IP 가 24시간 안에 SSH 로그인 시도·성공하거나 리스닝 포트에 실제로 연결하면 경고, 내부망 주소의 스캔은 곧바로 경고. 숫자는 최소치, 자동 차단 없음 |
-| NetworkWatcher | /proc/net | 외부 인터페이스 새 리스너(프로세스 포함), 새 외부 연결, 포트 스캔(저신뢰) |
+| NetworkWatcher | /proc/net | 외부 인터페이스 새 리스너(프로세스 포함, 그 포트가 닫히면 자동 해결), 새 외부 연결, 포트 스캔(저신뢰) |
 | ProcessAudit | /proc (30초 샘플링, auditd 폴백) | 셸 stdin/stdout 이 소켓(리버스 셸, 긴급), /tmp·/dev/shm 실행, 삭제된 실행 파일, 공격/진단 도구 실행 |
 | IntegrityMonitor | sha256 + DB 기준선 | passwd/group/shadow/sudoers(.d)/sshd_config(.d)/authorized_keys/ld.so.preload/modprobe.d/sysctl.d — diff 와 최근 관리자 활동 첨부, 서비스 중지 중 변경도 탐지 |
 | PersistenceMonitor | cron, systemd, SUID | 새/변경된 cron·유닛(curl\|sh, /dev/tcp 패턴이면 긴급), 새 SUID/SGID. 패키지 소유·mask 링크·snap 유닛은 정보만 |
-| UpdateMonitor | dpkg.log, apt | 패키지 제거(보안 패키지면 긴급, 누가 실행했는지 첨부), 미적용 보안 업데이트 |
+| UpdateMonitor | dpkg.log, apt | 패키지 제거(보안 패키지면 긴급, 누가 실행했는지 첨부, 다시 설치되면 자동 해결), 미적용 보안 업데이트, 재부팅 대기 (적용/재부팅 시 자동 해결) |
 | ResourceMonitor | psutil, timedatectl | CPU/메모리/디스크/프로세스 급증, NTP 동기화 끊김 (해소 시 자동 해결) |
 | IntelMonitor | 뉴스 RSS, Ubuntu USN | USN 영향 패키지 ↔ 설치 버전 대조 → 이 서버에 실제 영향 있는 공지만 알림 |
 | LynisMonitor | Lynis 크론 결과 | 새 경고 알림, 사라지면 자동 해결, 강화 지수 하락 알림, 제안은 강화 작업 목록으로 표시 |
@@ -243,6 +243,7 @@ sudo secdash-<버전>/deploy/update.sh --deps
 | `ANTHROPIC_API_KEY`, `SECDASH_INTEL_TRANSLATE` | –, 1 | 뉴스 제목 번역/긴급도 (호스트 로그 미전송) |
 | `SECDASH_INTEL_FEEDS` / `SECDASH_USN_FEED` / `SECDASH_USN_MATCH` | THN RSS / Ubuntu USN / 1 | 인텔 소스, USN ↔ 설치 패키지 대조 |
 | `SECDASH_EVENT_RETENTION_DAYS` / `SECDASH_ALERT_RETENTION_DAYS` | 30 / 90 | 보존 기간 (기동 1시간 뒤부터 적용) |
+| `SECDASH_ACKED_AGE_DAYS` | 30 | 확인(ack)만 된 채 이 기간 동안 다시 관찰되지 않은 **상태 계열** 알림을 자동 해결로 정리 (0 이면 끄기). 침입 신호는 정리하지 않고 남겨둔 건수를 이벤트로 남긴다 |
 
 ## 한계 (알고 쓰기)
 
@@ -252,6 +253,7 @@ sudo secdash-<버전>/deploy/update.sh --deps
   - **허용된 포트에 대한 스캔**: 막히지 않으니 기록이 없다. 이건 여전히 NetworkWatcher 의 소켓 표 휴리스틱(저신뢰)뿐이다. FIN·NULL·Xmas 스캔(SYN 없는 TCP)도 스캔으로 세지 않는다.
   - **ufw 가 아닌 방화벽**(nftables 직접 규칙, firewalld, 클라우드 보안 그룹)의 기록은 읽지 않는다. 필요하면 IDS(Suricata 등)를 붙여라.
   - 시작할 때는 파일 끝부터 읽는다(재시작 전 기록은 다시 읽지 않는다). 하루 요약은 대시보드가 켜져 있던 동안만 센다.
+- 확인(ack)만 된 알림은 30일(`SECDASH_ACKED_AGE_DAYS`) 뒤 "시간이 지나 닫혔다"는 메모와 함께 자동 해결로 정리된다. 상태 계열 규칙만 대상이다. 정리 시점에 그 조건이 아직 남아 있는지를 다시 확인하지는 않으므로, 노출 포트·파일 권한·컨테이너 설정이 여전히 그대로라면 해당 모니터가 다시 기동할 때(서비스 재시작) 새 알림으로 올라온다. 침입 신호는 정리하지 않는다 — 그 목록은 사람이 해결로 닫아야 줄어든다.
 - 파일 무결성은 자체 해시다. 규제 요건이 있으면 AIDE 를 병행하고 이 대시보드는 표시 계층으로 써라.
 - auditd 가 없으면 프로세스 실행 이력(execve)은 30초 샘플링으로만 본다. `deploy/install.sh` 는 auditd 와 최소 규칙을 설치해 이 공백을 메운다.
 - 데스크톱 앱은 같은 컴퓨터의 백엔드(`127.0.0.1:8000`)에만 붙는다. 원격 서버를 보려면 SSH 터널을 직접 열어 둔다. Linux 트레이(AppIndicator)는 아이콘 클릭을 받지 않아 창은 트레이 메뉴로 연다.

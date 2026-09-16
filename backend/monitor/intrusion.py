@@ -22,7 +22,7 @@ from datetime import datetime, timedelta
 import psutil
 
 import config
-from alerts import raise_alert
+from alerts import auto_resolve, open_fingerprints, raise_alert
 from database import Event, KnownListener, KnownLoginIP, SessionLocal, utcnow
 from integrations.accounts import PRIVILEGED_GROUPS
 from monitor import firewall_log
@@ -494,6 +494,9 @@ class NetworkWatcher(BaseMonitor):
         super().__init__(interval)
         self.source = "psutil.net_connections (/proc/net)"
         self.known_listeners: set[str] = set()
+        # 내가 알림으로 올린 리스너의 지문. 그 문이 닫히면 알림도 닫아야 하므로 기억한다
+        # (재시작해도 잊지 않게 setup 에서 DB 의 살아 있는 알림으로 되찾는다).
+        self._listener_alerts: set[str] = set()
         self.seen_remote_ips: set[str] = set()
         self._scan_tracker: dict[str, set[int]] = {}
         self._scan_alerted: set[str] = set()
@@ -504,6 +507,7 @@ class NetworkWatcher(BaseMonitor):
             self.known_listeners = {r.key for r in db.query(KnownListener).all()}
         finally:
             db.close()
+        self._listener_alerts = open_fingerprints("new_listener")
         # 시작 시점의 리스너는 기준선으로 조용히 등록
         try:
             conns = psutil.net_connections(kind="inet")
@@ -526,11 +530,13 @@ class NetworkWatcher(BaseMonitor):
     def _listener_key(c, info: dict) -> str:
         return f"{c.laddr.ip}:{c.laddr.port}/{info.get('process') or '?'}"
 
-    def _remember_listener(self, c, silent: bool):
+    def _remember_listener(self, c, silent: bool) -> str:
+        """리스너 하나를 기준선에 등록하고, 처음 본 것이면 알림을 올린다. 그 리스너의 지문을 돌려준다."""
         info = _proc_info(c.pid)
         key = self._listener_key(c, info)
+        fp = f"listener:{c.laddr.port}:{info.get('process') or '?'}"
         if key in self.known_listeners:
-            return
+            return fp
         self.known_listeners.add(key)
         db = SessionLocal()
         try:
@@ -540,21 +546,23 @@ class NetworkWatcher(BaseMonitor):
         finally:
             db.close()
         if silent:
-            return
+            return fp
         loopback = c.laddr.ip in ("127.0.0.1", "::1")
         d = {"address": c.laddr.ip, "port": c.laddr.port, **info}
         if loopback:
             self.log_event("NETWORK_LISTENER", "INFO", f"New loopback listener {c.laddr.ip}:{c.laddr.port} ({info.get('process')})", d)
-            return
+            return fp
         self.log_event("NETWORK_LISTENER", "WARNING", f"New listener {c.laddr.ip}:{c.laddr.port} ({info.get('process')}, user {info.get('user')})", d)
+        self._listener_alerts.add(fp)
         raise_alert(
             "new_listener", "WARNING", f"New listening port {c.laddr.port} ({info.get('process') or 'unknown'})",
-            fingerprint=f"listener:{c.laddr.port}:{info.get('process') or '?'}",
+            fingerprint=fp,
             title_ko=f"새 리스닝 포트 {c.laddr.port} 열림 ({info.get('process') or '알 수 없는 프로세스'})",
             summary_ko=f"바인드 주소 {c.laddr.ip}, 실행 파일 {info.get('exe') or '?'}, 사용자 {info.get('user') or '?'}",
             action_ko=f"의도한 서비스면 확인(ack) 처리하세요. 아니라면 `sudo ss -ltnp | grep :{c.laddr.port}` 로 프로세스를 확인하고 종료한 뒤 방화벽에서 포트를 막으세요.",
             details=d,
         )
+        return fp
 
     def tick(self):
         try:
@@ -564,9 +572,13 @@ class NetworkWatcher(BaseMonitor):
             return
         scan_now: dict[str, set[int]] = defaultdict(set)
         listen_ports = {c.laddr.port for c in conns if c.status == "LISTEN" and c.laddr}
+        listener_fps: set[str] = set()
+        unattributed = False
         for c in conns:
             if c.status == "LISTEN" and c.laddr:
-                self._remember_listener(c, silent=False)
+                if c.pid is None:
+                    unattributed = True
+                listener_fps.add(self._remember_listener(c, silent=False))
                 continue
             if not c.raddr:
                 continue
@@ -591,6 +603,15 @@ class NetworkWatcher(BaseMonitor):
                     self.log.info(f"[cloud] {desc}")
                 else:
                     self.log_event("NETWORK_CONN", "INFO", desc, d)
+
+        # 열렸던 문이 닫혔으면 그 알림도 닫는다. '새 리스너' 알림은 지금 열려 있는 문 하나를
+        # 가리키는데, 그 문이 사라진 뒤에도 남아 있으면 이미 없는 일을 사람이 계속 본다.
+        # 프로세스를 귀속하지 못한 소켓이 있는 주기에는 아무것도 닫지 않는다 — 지문에 프로세스
+        # 이름이 들어가므로, 이름을 모르는 채로 대조하면 아직 열려 있는 문을 닫아 버린다.
+        if not unattributed:
+            for fp in sorted(self._listener_alerts - listener_fps):
+                auto_resolve(fp, "그 포트가 더는 열려 있지 않음 (프로그램이 종료되었거나 포트를 닫았음)")
+                self._listener_alerts.discard(fp)
 
         for rip, ports in scan_now.items():
             combined = self._scan_tracker.get(rip, set()) | ports

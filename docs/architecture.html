@@ -445,7 +445,7 @@
       <h2>3. 알림의 생애주기와 DEFCON</h2>
       <figure>
         <div class="frame">
-          <svg viewBox="0 0 640 230" role="img" aria-label="알림은 OPEN 에서 시작해 확인하면 ACKED, 해결하면 RESOLVED 가 된다. 심각도가 오르면 ACKED 에서 다시 OPEN 으로 돌아가고, 조건이 사라지면 시스템이 자동으로 RESOLVED 처리한다. DEFCON 은 OPEN 상태의 알림만 센다.">
+          <svg viewBox="0 0 640 230" role="img" aria-label="알림은 OPEN 에서 시작해 확인하면 ACKED, 해결하면 RESOLVED 가 된다. 심각도가 오르면 ACKED 에서 다시 OPEN 으로 돌아가고, 조건이 사라지면 시스템이 자동으로 RESOLVED 처리한다. 확인만 된 채 기본 30일이 지난 상태 계열 알림도 자동으로 RESOLVED 로 정리되지만, 침입 신호는 그 정리에서 빠져 ACKED 로 남는다. DEFCON 은 OPEN 상태의 알림만 센다.">
             <defs>
               <marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
                 <polygon points="0,0 10,5 0,10" fill="currentColor"></polygon>
@@ -467,12 +467,14 @@
             <text x="206" y="84" text-anchor="middle" class="lbl">확인(ack)</text>
             <line x1="395" y1="92" x2="468" y2="92" class="edge" marker-end="url(#ah3)"></line>
             <text x="431" y="84" text-anchor="middle" class="lbl">해결(resolve)</text>
+            <path d="M 395 112 L 468 112" class="edge" marker-end="url(#ah3)"></path>
+            <text x="431" y="126" text-anchor="middle" class="lbl">확인만 30일(기본값)</text>
 
             <path d="M 243 112 L 170 112" class="edge" marker-end="url(#ah3)"></path>
             <text x="206" y="126" text-anchor="middle" class="lbl">심각도 상승 → 재오픈</text>
 
             <path d="M 95 130 L 95 180 L 545 180 L 545 132" class="edge" marker-end="url(#ah3)"></path>
-            <text x="320" y="196" text-anchor="middle" class="lbl">auto_resolve · 조건 해소 (CPU 정상화, 보안 업데이트 적용 등) · 직접 해결도 가능</text>
+            <text x="320" y="196" text-anchor="middle" class="lbl">auto_resolve · 조건 해소 (포트 닫힘, 권한 좁혀짐, 업데이트 적용, 패키지 재설치 등) · 직접 해결도 가능</text>
 
             <path d="M 60 70 L 60 40 L 130 40 L 130 70" class="edge" marker-end="url(#ah3)"></path>
             <text x="95" y="30" text-anchor="middle" class="lbl">같은 fingerprint 재발 → count +1</text>
@@ -482,7 +484,7 @@
             <text x="20" y="220" class="lbl">DEFCON 1 = OPEN CRITICAL 존재 · DEFCON 3 = OPEN WARNING 존재 · SAFE = OPEN 없음 · 침입 신호는 점검 모드와 무관</text>
           </svg>
         </div>
-        <figcaption>운영자가 "봤다"고 표시하는 것만으로 레벨이 내려가고, 원인이 재발하면 새 알림 대신 횟수가 올라간다. 점검 모드를 켜 두면 설정·패키지·영속화 알림은 근거만 남기고 ACKED 로 태어난다. 브루트포스, 실패 후 성공, 리버스 셸, 계정 변경 같은 침입 신호는 언제나 OPEN 이다.</figcaption>
+        <figcaption>운영자가 "봤다"고 표시하는 것만으로 레벨이 내려가고, 원인이 재발하면 새 알림 대신 횟수가 올라간다. 점검 모드를 켜 두면 설정·패키지·영속화 알림은 근거만 남기고 ACKED 로 태어난다. 브루트포스, 실패 후 성공, 리버스 셸, 계정 변경 같은 침입 신호는 언제나 OPEN 이다.<br>확인(ACKED)은 무기한이 아니다. 상태 계열 규칙(노출 포트, 파일 권한, 컨테이너 설정, 미적용 업데이트, Lynis, 리소스 …)은 확인만 된 채 <code>SECDASH_ACKED_AGE_DAYS</code>(기본 30일) 동안 다시 관찰되지 않으면 "조치를 확인한 것이 아니라 시간이 지나 닫혔다"는 메모와 함께 자동 해결로 정리된다. 지우지는 않는다 — 삭제는 보존 기간(기본 90일)이 지난 뒤다. 침입 신호는 이 정리에서 빠지고, 남겨둔 건수와 규칙은 <code>ALERT_AGED</code> 이벤트로 남는다. 쉬운 화면에서도 '확인'과 '해결'을 따로 누를 수 있다.</figcaption>
       </figure>
     </section>
 

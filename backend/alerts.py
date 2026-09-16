@@ -13,6 +13,7 @@ import time
 
 from sqlalchemy.orm import Session
 
+import config
 import korean
 import notifications
 from database import Alert, MaintenanceWindow, SessionLocal, utcnow
@@ -27,6 +28,21 @@ MAINTENANCE_RULE_PREFIXES = (
     "new_listener", "kernel_module", "lynis_", "usn_affects_host", "high_cpu", "high_memory", "disk_full", "process_spike",
     # 설정 점검 계열: 작업 중 서비스를 띄우거나 권한을 잠시 바꾸면 걸리는 것들 (침입 신호가 아니다)
     "exposed_port", "file_permission", "container_config",
+)
+
+# 확인(ACKED)만 된 채 오래 남은 알림을 시간 경과로 정리할 수 있는 규칙.
+#
+# 여기 있는 것은 모두 '지금 상태'에 관한 규칙이고, 조건이 사라지면 그것을 관찰한 모니터가
+# auto_resolve 로 직접 닫는다 (노출 포트가 닫힘, 권한이 좁혀짐, 업데이트가 적용됨 …).
+# 그래서 이 규칙들이 ACKED 로 오래 남아 있는 것은 "사람이 보고 받아들인 상태"에 가깝다.
+#
+# 침입 신호(브루트포스, 실패 후 성공, 리버스 셸, 계정 변경, 영속화, 커널 모듈, 스캔 뒤 접속 …)는
+# 절대 넣지 않는다. 그것은 '한 번 일어난 사실'이고, 다시 보이지 않는 것이 처리됐다는 뜻이 아니다.
+# 목록에 없는 새 규칙도 건드리지 않는다 — 분류하지 않은 것은 그대로 둔다(모르면 손대지 않는다).
+AGEABLE_ACKED_RULE_PREFIXES = (
+    "exposed_port", "file_permission", "container_config", "new_listener",
+    "pending_security_updates", "reboot_required", "usn_affects_host", "lynis_",
+    "high_cpu", "high_memory", "disk_full", "process_spike", "time_unsynced",
 )
 _mw_cache: dict = {"at": 0.0, "win": None}
 
@@ -280,6 +296,71 @@ def auto_resolve(fingerprint: str, note: str = "조건 해소로 자동 해결",
             a.resolution_note = note
         db.commit()
         return len(rows)
+    finally:
+        if own:
+            db.close()
+
+
+def age_out_acked(days: int | None = None, db: Session | None = None) -> dict:
+    """확인(ACKED)만 된 채 오래된 알림을 자동 해결로 정리한다.
+
+    확인(ack)은 "봤다"는 표시일 뿐 "끝났다"가 아니다. 그래서 ACKED 는 사람이 해결로 바꾸거나
+    모니터가 조건 해소를 관찰할 때까지 남고, 둘 다 일어나지 않으면 영원히 남는다. 오래 운영하면
+    여기에만 수백 건이 쌓이는데, 그렇게 쌓인 목록은 결국 아무도 보지 않는다.
+
+    정리 대상은 AGEABLE_ACKED_RULE_PREFIXES 뿐이다. 침입 신호와 아직 분류하지 않은 규칙은
+    건드리지 않고, 남겨둔 건수와 규칙을 이벤트로 남긴다 — 조용히 남겨두면 목록이 왜 줄지
+    않는지 아무도 알 수 없다.
+
+    지우는 것은 없다. 상태만 RESOLVED 로 옮기고, note 에 '조치를 확인한 것이 아니라 시간이
+    지나 닫혔다'고 그대로 적는다. 이후 보존 기간(ALERT_RETENTION_DAYS)이 지나면 삭제된다.
+    """
+    from database import Event
+    days = config.ACKED_AGE_DAYS if days is None else days
+    if days <= 0:
+        return {"days": days, "resolved": 0, "kept": 0, "kept_rules": [], "enabled": False}
+    own = db is None
+    db = db or SessionLocal()
+    try:
+        cutoff = utcnow() - datetime.timedelta(days=days)
+        rows = (
+            db.query(Alert)
+            .filter(Alert.status == "ACKED", Alert.last_seen_at.isnot(None), Alert.last_seen_at < cutoff)
+            .all()
+        )
+        aged = [a for a in rows if (a.rule or "").startswith(AGEABLE_ACKED_RULE_PREFIXES)]
+        aged_ids = {a.id for a in aged}
+        kept = [a for a in rows if a.id not in aged_ids]
+        now = utcnow()
+        for a in aged:
+            note = (f"확인(ack)만 된 채 {days}일이 지나 자동으로 정리했습니다 "
+                    f"(마지막 관찰 {a.last_seen_at.strftime('%Y-%m-%d')}). "
+                    f"조치를 확인해서 닫은 것이 아니라 시간이 지나 닫은 것입니다.")
+            if a.resolution_note:
+                note += f" 이전 메모: {a.resolution_note}"
+            a.status, a.resolved_at, a.resolved_by, a.resolution_note = "RESOLVED", now, "system", note
+        kept_rules = sorted({a.rule for a in kept if a.rule})
+        result = {"days": days, "resolved": len(aged), "kept": len(kept), "kept_rules": kept_rules, "enabled": True}
+        if aged or kept:
+            msg = (f"확인만 된 채 {days}일이 지난 알림 {len(aged)}건을 자동 해결로 정리했어요"
+                   if aged else f"확인만 된 채 {days}일이 지난 알림을 살펴봤어요 (정리한 것 없음)")
+            if kept:
+                msg += (f". 침입 신호처럼 시간만으로는 끝났다고 볼 수 없는 {len(kept)}건은 닫지 않고 "
+                        f"'대응 중'으로 그대로 뒀어요 (규칙: {', '.join(kept_rules[:8])}"
+                        f"{' 외' if len(kept_rules) > 8 else ''})")
+            db.add(Event(
+                event_type="ALERT_AGED", severity="INFO", source="보존 정책",
+                description=(f"aged out {len(aged)} ACKED alert(s) not seen for {days}d; "
+                             f"kept {len(kept)} unageable (intrusion-signal/unclassified)"),
+                description_ko=msg, details=json.dumps(result, ensure_ascii=False),
+            ))
+            logger.info(f"acked ageing: resolved={len(aged)} kept={len(kept)} rules={kept_rules}")
+        db.commit()
+        return result
+    except Exception as e:
+        db.rollback()
+        logger.error(f"age_out_acked failed: {e}")
+        return {"days": days, "resolved": 0, "kept": 0, "kept_rules": [], "enabled": True, "error": str(e)}
     finally:
         if own:
             db.close()

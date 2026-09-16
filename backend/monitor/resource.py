@@ -35,6 +35,9 @@ class ResourceMonitor(BaseMonitor):
         super().__init__(interval)
         self.source = "psutil (cpu/mem/disk/pids)"
         self.prev_proc_count = None
+        # 급증 직전의 프로세스 수. 여기 이하로 돌아오면 급증이 끝난 것으로 본다.
+        # 재시작하면 None 이라 알림을 닫지 않는다 — 기준을 모르는데 닫으면 조용히 지우는 셈이다.
+        self._spike_base: int | None = None
         self._cpu_high_count = 0
         self._mem_alerted = False
         self._disk_alerted = False
@@ -94,11 +97,19 @@ class ResourceMonitor(BaseMonitor):
         if self.prev_proc_count is not None:
             delta = proc_count - self.prev_proc_count
             if delta > PROC_SPIKE_THRESHOLD:
-                d = {"delta": delta, "count": proc_count, "message_ko": f"프로세스 수 급증 +{delta} (현재 {proc_count})"}
+                if self._spike_base is None:
+                    self._spike_base = self.prev_proc_count
+                d = {"delta": delta, "count": proc_count, "baseline": self._spike_base,
+                     "message_ko": f"프로세스 수 급증 +{delta} (현재 {proc_count})"}
                 self.log_event("RESOURCE_ANOMALY", "WARNING", f"Process count spiked by {delta} (now {proc_count})", d)
                 raise_alert("process_spike", "WARNING", f"Process count spiked by {delta}", fingerprint="process_spike",
                             title_ko=f"프로세스 수 급증: +{delta} (현재 {proc_count})", summary_ko="포크 폭탄이나 대량 생성 공격일 수 있습니다.",
                             action_ko="`ps -eo pid,ppid,user,comm --sort=-pid | head -60` 로 새로 생긴 프로세스를 확인하세요.", details=d)
+            elif self._spike_base is not None and proc_count <= self._spike_base:
+                # 급증 직전 수준으로 돌아왔다. 늘어난 프로세스가 아직 남아 있으면 닫지 않는다.
+                auto_resolve("process_spike",
+                             f"프로세스 수가 급증 직전 수준({self._spike_base}개) 이하로 돌아옴 (현재 {proc_count}개)")
+                self._spike_base = None
         self.prev_proc_count = proc_count
 
         if time.time() - self._last_time_check >= 600:

@@ -85,6 +85,12 @@ def _retention_loop():
     # 기동 직후에는 실행하지 않는다: 운영자가 보존 기간(SECDASH_*_RETENTION_DAYS)을 조정할 여유를 준다
     time.sleep(3600)
     while True:
+        # 확인만 된 알림을 먼저 정리하고(지우지 않고 RESOLVED 로 옮긴다), 그 뒤 보존 기간이
+        # 지난 것을 지운다. 방금 옮긴 것은 resolved_at 이 지금이라 삭제되지 않는다.
+        try:
+            alert_engine.age_out_acked()
+        except Exception as e:
+            logger.error(f"acked ageing failed: {e}")
         database.apply_retention()
         time.sleep(24 * 3600)
 

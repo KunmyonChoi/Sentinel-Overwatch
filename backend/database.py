@@ -229,7 +229,13 @@ def get_db():
 
 
 def apply_retention():
-    """오래된 원시 이벤트와 해결된 알림을 삭제한다."""
+    """오래된 원시 이벤트와 해결된 알림을 삭제한다.
+
+    확인(ACKED)만 된 알림은 여기서 지우지 않는다. alerts.age_out_acked() 가 먼저 그중
+    정리해도 되는 것을 RESOLVED 로 옮기고(지우지 않는다), 그 뒤 이 함수가 보존 기간이 지난
+    RESOLVED 를 지운다. app._retention_loop 이 그 순서로 부른다 — 방금 옮긴 것은
+    resolved_at 이 지금이라 여기서 지워지지 않는다.
+    """
     db = SessionLocal()
     try:
         ev_cut = utcnow() - datetime.timedelta(days=config.EVENT_RETENTION_DAYS)

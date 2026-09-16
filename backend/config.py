@@ -117,6 +117,11 @@ USN_MATCH = _env_bool("SECDASH_USN_MATCH", True)
 # --- 보존 정책 ---
 EVENT_RETENTION_DAYS = _env_int("SECDASH_EVENT_RETENTION_DAYS", 30)
 ALERT_RETENTION_DAYS = _env_int("SECDASH_ALERT_RETENTION_DAYS", 90)
+# 확인(ack)만 된 채 이 기간 동안 다시 관찰되지 않은 알림은 자동 해결로 정리한다 (0 이면 끄기).
+# 확인은 "봤다"는 표시일 뿐이라 스스로 사라지지 않는다. 그대로 두면 ACKED 만 수백 건 쌓이고,
+# 쌓인 목록은 결국 아무도 보지 않는다. 침입 신호 계열은 시간이 지났다는 이유로 닫지 않는다
+# (대상 규칙은 alerts.AGEABLE_ACKED_RULE_PREFIXES).
+ACKED_AGE_DAYS = _env_int("SECDASH_ACKED_AGE_DAYS", 30)
 
 # --- 식별 ---
 import socket as _socket
