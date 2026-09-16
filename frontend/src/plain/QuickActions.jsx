@@ -8,6 +8,10 @@
 // 설명이 그 사실을 그대로 말한다 (원칙 2: 한 일만 말한다).
 //
 // 줄은 최대 세 개까지만 둔다. 더 늘어나면 홈이 목록이 되고, '이상 없음'인 날의 여백이 사라진다.
+//
+// 해당하지 않는 줄은 빼기도 한다. USB 저장장치 차단은 '누가 이 기계 앞에 와서 꽂는' 상황을 위한
+// 조작이라, 아무도 손댈 수 없는 원격 서버에서는 잡음이다. 해당하는지는 백엔드가 정해
+// host.physical_access 로 내려준다 — 이 화면은 받은 대로 그릴 뿐이고, 정하지 못했으면 그린다.
 import React, { useState } from 'react';
 import { Icon, Card, Btn } from './ui';
 import { copyText } from './brief';
@@ -90,7 +94,12 @@ export default function QuickActions({ host, accounts = [], asOf = 0 }) {
     const usb = host?.usb_storage;
     const cmds = usb?.commands || {};
 
-    if (usb && usb.state !== 'unknown') {
+    // 백엔드가 '이 기계 앞에는 앉을 사람이 없다'고 분명히 말할 때만 USB 줄을 뺀다. 필드가
+    // 없거나(옛 백엔드) 판단을 못 했으면 그린다 — 추측으로 보안 조작을 감추는 것이 필요 없는
+    // 줄 하나를 그리는 것보다 나쁘다. 판단 근거는 자세히 보기 → 컴퓨터 상태에 적혀 있다.
+    const usbRelevant = host?.physical_access?.usb_relevant !== false;
+
+    if (usb && usb.state !== 'unknown' && usbRelevant) {
         const blocked = usb.state === 'blocked';
         const temporarily = usb.state === 'temporarily_unblocked';
         const actions = [];

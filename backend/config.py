@@ -95,6 +95,15 @@ _FIX_SCRIPT_DEFAULT = "/usr/local/sbin/secdash-fix-permissions"
 PERMISSION_FIX_SCRIPT = _env("SECDASH_PERMISSION_FIX_SCRIPT", _FIX_SCRIPT_DEFAULT)
 PERMISSION_FIX_USE_SUDO = _env_bool("SECDASH_PERMISSION_FIX_USE_SUDO", os.geteuid() != 0)
 
+# --- 물리 접근 (이 기계 앞에 사람이 앉을 수 있는가) ---
+# 홈의 'USB 저장장치' 줄은 누가 이 기계 앞에 와서 USB 를 꽂는 상황을 위한 조작이다.
+# 아무도 손댈 수 없는 원격 서버에서는 그 줄이 잡음이라 빼는 편이 낫다.
+#   auto   = logind seat 을 1차 신호로, 섀시·가상화를 보조로 판정한다. 못 읽으면 그린다.
+#   always = 자동 판정과 무관하게 늘 그린다.
+#   never  = 아무도 직접 손댈 수 없는 기계다 — 그리지 않는다.
+# 판정 결과와 그렇게 정한 이유는 /api/host 의 physical_access 에 실린다 (integrations/presence.py).
+PHYSICAL_ACCESS = (_env("SECDASH_PHYSICAL_ACCESS", "auto") or "auto").strip().lower()
+
 # --- 브루트포스 판정 ---
 BRUTE_FORCE_WINDOW_MIN = _env_int("SECDASH_BRUTE_WINDOW_MIN", 30)
 BRUTE_FORCE_THRESHOLD = _env_int("SECDASH_BRUTE_THRESHOLD", 5)
