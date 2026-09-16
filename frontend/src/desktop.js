@@ -79,7 +79,8 @@ export function startDesktopBridge() {
                     api('/api/alerts?status=active'),
                 ]);
                 alerts = active;
-                status = statusOf(stats, buildTasks(active).length, 'ok');
+                // 개수가 아니라 할 일 목록을 넘긴다. 침입 신호인지 아닌지까지 같은 판정을 쓴다.
+                status = statusOf(stats, buildTasks(active), 'ok');
             }
         } catch {
             // 못 읽었으면 '이상 없음'이라고 말하지 않는다.

@@ -71,7 +71,7 @@ export default function PlainApp({ page = 'home', onPage, onMode }) {
     }, [load]);
 
     const tasks = buildTasks(d.alerts);
-    const status = statusOf(d.stats, tasks.length, conn);
+    const status = statusOf(d.stats, tasks, conn);
 
     // 홈의 안심 정보 세 칸
     const pending = d.host?.pending_updates || {};
