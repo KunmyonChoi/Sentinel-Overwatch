@@ -26,4 +26,9 @@ export default defineConfig([
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  {
+    // 빌드 설정 파일은 브라우저가 아니라 node 에서 돈다 (vite.config.js 의 process.env).
+    files: ['*.config.js'],
+    languageOptions: { globals: globals.node },
+  },
 ])

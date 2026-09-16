@@ -16,6 +16,10 @@ import HistoryView from './HistoryView';
 import ExpertView from './ExpertView';
 import { buildTasks, statusOf } from './tasks';
 
+// 미확인 알림을 한 번에 받아올 최대 건수. 서버 상한(LIST_MAX_LIMIT)과 같다.
+// 이보다 많으면 statusOf 가 "일부를 불러오지 못했다"고 말한다 — 조용히 줄여 보여주지 않는다.
+const OPEN_LIMIT = 500;
+
 function agoKo(iso) {
     if (!iso) return '확인 중이에요';
     const sec = Math.max(0, (Date.now() - new Date(iso.endsWith('Z') || iso.includes('+') ? iso : iso + 'Z').getTime()) / 1000);
@@ -30,7 +34,7 @@ export default function PlainApp({ page = 'home', onPage, onMode }) {
     // 할 일 상세·기록은 잠깐 들르는 곳이라 여기서만 들고 있는다.
     const [view, setView] = useState(() => ({ name: page }));
     const [needToken, setNeedToken] = useState(() => !getToken());
-    const [d, setD] = useState({ stats: null, alerts: [], events: [], host: null, exposure: null, blocked: null, monitors: [], accounts: [] });
+    const [d, setD] = useState({ stats: null, alerts: [], openAlerts: [], alertCount: null, events: [], host: null, exposure: null, blocked: null, monitors: [], accounts: [] });
     const [tick, setTick] = useState(0);
     const [conn, setConn] = useState('loading');   // loading | ok | down
     const alive = useRef(true);
@@ -38,8 +42,13 @@ export default function PlainApp({ page = 'home', onPage, onMode }) {
     const load = useCallback(async () => {
         if (!getToken()) return;
         const get = (p) => api(p).catch(() => null);
-        const [stats, alerts, events, host, exposure, blocked, monitors, accounts] = await Promise.all([
-            get('/api/stats'), get('/api/alerts?status=active'), get('/api/events?limit=60&include_simulation=false'),
+        // 할 일은 미확인(OPEN)만 따로 받는다. 확인된 알림까지 한 목록으로 받으면(status=active)
+        // 확인 처리한 알림이 100건을 넘는 순간 오래된 미확인 알림이 목록 밖으로 밀려, 홈이
+        // "손볼 일이 0 가지"라고 말하면서 카드를 하나도 못 보여준다. 실제로 그런 상태를 만들어 확인했다.
+        // '알림 전체'(자세히 보기)는 확인한 것까지 보여주는 자리라 active 목록을 그대로 쓴다.
+        const [stats, openAlerts, alerts, alertCount, events, host, exposure, blocked, monitors, accounts] = await Promise.all([
+            get('/api/stats'), get(`/api/alerts?status=OPEN&limit=${OPEN_LIMIT}`), get('/api/alerts?status=active'),
+            get('/api/alerts/count?status=active'), get('/api/events?limit=60&include_simulation=false'),
             get('/api/host'), get('/api/exposure'), get('/api/blocked'), get('/api/monitors'),
             get('/api/accounts'),   // 붙여넣기용 글에서 계정 이름을 가리는 데 쓴다
         ]);
@@ -48,6 +57,7 @@ export default function PlainApp({ page = 'home', onPage, onMode }) {
         else setConn('down');   // 못 읽었으면 '이상 없음'이라고 말하지 않는다
         setD((p) => ({
             stats: stats ?? p.stats, alerts: alerts ?? p.alerts, events: events ?? p.events,
+            openAlerts: openAlerts ?? p.openAlerts, alertCount: alertCount ?? p.alertCount,
             host: host ?? p.host, exposure: exposure ?? p.exposure, blocked: blocked ?? p.blocked,
             monitors: monitors ?? p.monitors,
             accounts: accounts?.accounts ?? p.accounts,
@@ -70,7 +80,7 @@ export default function PlainApp({ page = 'home', onPage, onMode }) {
         };
     }, [load]);
 
-    const tasks = buildTasks(d.alerts);
+    const tasks = buildTasks(d.openAlerts);
     const status = statusOf(d.stats, tasks, conn);
 
     // 홈의 안심 정보 세 칸
@@ -157,7 +167,7 @@ export default function PlainApp({ page = 'home', onPage, onMode }) {
                 {view.name === 'history' && <HistoryView />}
                 {view.name === 'expert' && (
                     <ExpertView stats={d.stats} host={d.host} events={d.events}
-                        alerts={d.alerts} onChanged={load} tick={tick} />
+                        alerts={d.alerts} alertCounts={d.alertCount} onChanged={load} tick={tick} />
                 )}
             </div>
 

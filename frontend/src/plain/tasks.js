@@ -373,6 +373,20 @@ export function statusOf(stats, tasks, conn = 'ok') {
         lead: `${unknowns[0].title}. 지킴이가 판단하지 못한 일이에요. 오늘 바로 확인하세요.`,
       };
     }
+    // 목록이 잘려 할 일을 다 받지 못한 경우. 서버가 센 미확인 건수와 받아온 알림 수를 비교한다.
+    // 확인 처리한 알림이 쌓이면 오래된 미확인 알림이 목록 밖으로 밀려나는 일이 실제로 있었고,
+    // 그때 화면은 카드 하나 없이 "손볼 일이 0 가지"라고 말했다. 모르는 것은 모른다고 말한다.
+    const fetchedOpen = list.reduce((n, t) => n + (t.count || 1), 0);
+    const openTotal = (stats?.open_critical || 0) + (stats?.open_warning || 0);
+    const missing = Math.max(0, openTotal - fetchedOpen);
+    if (missing > 0) {
+      return {
+        key: 'warn', label: '살펴보세요', urgency: URGENCY.UNKNOWN,
+        lead: taskCount === 0
+          ? `손볼 일이 ${missing}가지 있는데 아직 불러오지 못했어요. 잠시 뒤 다시 보시거나, 아래 ‘지킴이가 본 것 자세히 보기’에서 확인하세요.`
+          : `아래가 전부는 아니에요. 손볼 일 ${missing}가지를 아직 불러오지 못했어요.`,
+      };
+    }
     return {
       key: 'warn', label: '살펴보세요', urgency: URGENCY.CARE,
       lead: `손볼 일이 ${taskCount === 1 ? '한' : taskCount} 가지 있어요. 급하지는 않지만 오늘 중에 해두는 게 좋아요.`,

@@ -74,9 +74,12 @@ export function startDesktopBridge() {
             if (!getToken()) {
                 status = { key: 'unknown', label: '토큰을 입력해야 해요' };
             } else {
+                // 트레이도 화면과 같은 목록을 본다. 미확인만 받는다 — 확인된 알림이 쌓이면
+                // status=active 목록의 기본 100건 안에서 오래된 미확인이 밀려나, 트레이가
+                // 할 일이 없다고 말하게 된다.
                 const [stats, active] = await Promise.all([
                     api('/api/stats'),
-                    api('/api/alerts?status=active'),
+                    api('/api/alerts?status=OPEN&limit=500'),
                 ]);
                 alerts = active;
                 // 개수가 아니라 할 일 목록을 넘긴다. 침입 신호인지 아닌지까지 같은 판정을 쓴다.
