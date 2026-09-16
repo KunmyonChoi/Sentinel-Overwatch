@@ -339,10 +339,12 @@ cd desktop && npm ci && npm run build
 | 경로 | 설명 |
 |---|---|
 | `GET /api/stats` | DEFCON(미확인 알림 기반), 24h 집계, 리소스, 탐지 공백, 점검 모드 |
-| `GET /api/alerts?status=active\|all` · `POST /api/alerts/{id}/ack\|resolve` | 알림 조회/확인/해결 |
+| `GET /api/alerts?status=active\|all&limit=` · `POST /api/alerts/{id}/ack\|resolve` | 알림 조회(`limit` 기본 100·최대 500)/확인/해결 |
+| `GET /api/alerts/count?status=active\|all` | 목록과 같은 조건의 전체 건수 (`total`·`open`·`acked`·`resolved`·`open_critical`·`open_warning`·`simulation`·`max_limit`). 머리글 숫자는 불러온 행이 아니라 이 값을 쓴다 |
 | `POST /api/alerts/ack-all` | 미확인 알림 일괄 확인 (`ids` 또는 `rule`, 메모) |
 | `GET/POST/DELETE /api/maintenance` | 점검 모드 조회/시작(`minutes`, `note`)/종료 |
-| `GET /api/events` | 원시 이벤트 (`include_simulation=false` 로 테스트 제외) |
+| `GET /api/events` | 원시 이벤트 (`include_simulation=false` 로 테스트 제외, `limit` 기본 100·최대 500) |
+| `GET /api/events/count` | 목록과 같은 조건(`include_simulation`, `severity`)의 전체 건수 (`total`·`max_limit`) |
 | `GET /api/blocked` · `POST /api/blocked` · `POST /api/blocked/{ip}/unblock` | fail2ban 차단 목록/수동 차단/해제 |
 | `GET /api/monitors` | 모니터 health(ok/degraded/down), 사유, 해결 힌트 |
 | `GET /api/host` | 호스트, 버전, 실행 권한 점검, 미적용 업데이트, USB 저장장치 차단 상태 |
