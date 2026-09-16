@@ -196,6 +196,43 @@ sudo secdash-<버전>/deploy/update.sh --deps
 | 라이브 피드 | 원시 이벤트(한국어 + 원문). 시뮬레이션은 TEST DATA 표시 | 알림의 근거를 찾을 때 |
 | 점검 모드 (헤더) | 시간과 메모를 정하면 그동안의 설정·패키지·영속화 알림은 자동 확인, 침입 신호는 그대로 | 계획 작업 전에 켜기 |
 
+### 화면 예시
+
+작은 그림을 누르면 원본 크기로 볼 수 있다. 모두 **예시 데이터**이며 실제 서버 정보가 아니다.
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <a href="docs/images/screens/plain-home.png"><img src="docs/images/screens/plain-home-thumb.png" alt="쉬운 화면 홈: 살펴보세요 상태, 할 일 두 가지, 열린 문·밀린 업데이트·막은 접속 시도 요약"></a><br>
+      <b>쉬운 화면 — 홈</b><br><sub>지금 상태 한 줄, 할 일 카드, 안심 정보 세 칸</sub>
+    </td>
+    <td width="50%" align="center">
+      <a href="docs/images/screens/plain-task.png"><img src="docs/images/screens/plain-task-thumb.png" alt="할 일 상세: 무슨 일인가, 왜 문제인가, 이렇게 하시면 돼요, 지킴이가 본 것, 붙여넣기용 복사"></a><br>
+      <b>할 일 상세</b><br><sub>무슨 일·왜 문제·순서, 근거, 가리고 복사하기</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <a href="docs/images/screens/plain-history.png"><img src="docs/images/screens/plain-history-thumb.png" alt="기록 화면: 로그인 성공, 포트 스캔, 차단, 업데이트 점검을 시간 순서로 나열"></a><br>
+      <b>무슨 일이 있었는지</b><br><sub>지킴이가 한 일과 생긴 일을 시간 순서로 · 파일로 저장</sub>
+    </td>
+    <td width="50%" align="center">
+      <a href="docs/images/screens/plain-expert.png"><img src="docs/images/screens/plain-expert-thumb.png" alt="자세히 보기: 열린 문, 파일과 프로그램 설정, 계정, 막은 상대 등 접이식 패널"></a><br>
+      <b>자세히 보기</b><br><sub>전문가 패널을 쉬운 말 설명과 함께 접이식으로</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <a href="docs/images/screens/expert-dashboard.png"><img src="docs/images/screens/expert-dashboard-thumb.png" alt="전문가 화면: 현재 상황 요약, DEFCON, 알림, IP 차단 목록, 라이브 피드"></a><br>
+      <b>전문가 화면</b><br><sub>요약·DEFCON·알림·차단 목록·라이브 피드를 한 화면에</sub>
+    </td>
+    <td width="50%" align="center">
+      <a href="docs/images/desktop-app.png"><img src="docs/images/screens/desktop-app-thumb.png" alt="데스크톱 앱 창에서 열린 같은 홈 화면"></a><br>
+      <b>데스크톱 앱</b><br><sub>같은 화면을 트레이 상주 앱으로 · 긴급 알림은 OS 알림</sub>
+    </td>
+  </tr>
+</table>
+
 ## 탐지 항목
 
 | 모니터 | 소스 | 알림 규칙 |
