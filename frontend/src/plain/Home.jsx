@@ -1,5 +1,6 @@
 import React from 'react';
 import { Icon, Card, Btn, StatusHead, FactCard } from './ui';
+import QuickActions from './QuickActions';
 import { TONE, toneOf } from './tokens';
 import { KIND } from './tasks';
 
@@ -42,7 +43,7 @@ function TaskCard({ task, onOpen }) {
     );
 }
 
-export default function Home({ status, tasks, facts, onOpenTask, onGo }) {
+export default function Home({ status, tasks, facts, host, accounts, asOf, onOpenTask, onGo }) {
     const hasTasks = tasks.length > 0;
     return (
         <div className="flex flex-col min-h-full">
@@ -58,7 +59,13 @@ export default function Home({ status, tasks, facts, onOpenTask, onGo }) {
                     </div>
                 )}
 
-                <div className={`grid gap-4 ${hasTasks ? 'mt-6' : 'mt-10'} grid-cols-1 sm:grid-cols-3`}>
+                {/* 할 일(지킴이가 시키는 것)과 안심 정보(읽는 것) 사이에 둔다.
+                    사용자가 스스로 하는 조작이라 성격이 둘 중간이다. */}
+                <div className={hasTasks ? 'mt-6' : 'mt-10'}>
+                    <QuickActions host={host} accounts={accounts} asOf={asOf} />
+                </div>
+
+                <div className={`grid gap-4 mt-6 grid-cols-1 sm:grid-cols-3`}>
                     <FactCard icon="door" label="밖에서 들어올 수 있는 문"
                         value={facts.doors === '—' ? '—' : `${facts.doors}개`} note={facts.doorsNote} />
                     <FactCard icon="update" label="밀린 보안 업데이트"
