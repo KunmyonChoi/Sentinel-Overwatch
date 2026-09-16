@@ -188,7 +188,7 @@ sudo secdash-<버전>/deploy/update.sh --deps
 | 현재 상황 요약 | 미확인 알림, 탐지 공백, 24h 로그인 실패/성공, 차단 IP, 미적용 보안 업데이트, Lynis 지수를 한 문단으로 | 하루 한 번 읽기 |
 | 시스템 상태 | DEFCON, 미확인 긴급/경고/대응 중 수, 리소스, 24h 타임라인, 실행 권한 점검, USB 저장장치 차단 상태와 해제/재차단 명령 | 레벨이 SAFE 가 아니면 알림 패널로 |
 | 알림 | OPEN/ACKED 알림. 제목·요약·**지금 할 일**·근거(diff, 로그 줄, 최근 관리자 활동). 확인/해결/모두 확인 | 알림마다 확인(ack) 또는 해결(resolve) |
-| 모니터 상태 | 14개 모니터의 health(정상/제한/중단), 사유, 해결 명령 복사 | 제한/중단이 보이면 그 명령 실행 |
+| 모니터 상태 | 15개 모니터의 health(정상/제한/중단), 사유, 해결 명령 복사 | 제한/중단이 보이면 그 명령 실행 |
 | 계정 상태 | root 와 사람 계정의 잠김/만료, sudo·docker 그룹, SSH 키, 마지막 로그인·출발지, 180일 미사용 표시, 잠금/되살리기 명령 | 쓰지 않는 계정 잠그기 |
 | 강화 작업 목록 | Lynis 강화 지수, 경고, 제안. 제안은 알림이 아니라 백로그 | 주 1회, 항목마다 적용/수용/해결 결정 |
 | 위협 인텔 | 보안 뉴스 + Ubuntu USN. 설치 패키지에 실제 영향 있는 공지는 "이 서버 영향" 배지 | 배지가 붙은 것만 처리 |
@@ -203,6 +203,7 @@ sudo secdash-<버전>/deploy/update.sh --deps
 | AuthLogWatcher | auth.log | 브루트포스, 실패 후 성공(긴급), 새 공인 IP 로그인, root 직접 로그인, sudo 실패, 계정/권한 그룹 변경 |
 | AuditMonitor | auditd (`deploy/audit-secdash.rules`) | 대화형 세션의 모든 execve(도구·임시 디렉터리 실행 즉시 탐지), 핵심 파일 쓰기의 주체, ld.so.preload 쓰기(긴급), 커널 모듈 로드 |
 | Fail2banSync | `fail2ban-client banned` | sshd·recidive jail 차단 목록 동기화, 수동 차단/해제, jail 비활성 시 제한 표시 |
+| FirewallLogWatcher | ufw 차단 로그(`/var/log/ufw.log`) | 막힌 포트 스캔은 이벤트와 하루 요약으로만 남김(알림 아님). 스캔한 IP 가 24시간 안에 SSH 로그인 시도·성공하거나 리스닝 포트에 실제로 연결하면 경고, 내부망 주소의 스캔은 곧바로 경고. 숫자는 최소치, 자동 차단 없음 |
 | NetworkWatcher | /proc/net | 외부 인터페이스 새 리스너(프로세스 포함), 새 외부 연결, 포트 스캔(저신뢰) |
 | ProcessAudit | /proc (30초 샘플링, auditd 폴백) | 셸 stdin/stdout 이 소켓(리버스 셸, 긴급), /tmp·/dev/shm 실행, 삭제된 실행 파일, 공격/진단 도구 실행 |
 | IntegrityMonitor | sha256 + DB 기준선 | passwd/group/shadow/sudoers(.d)/sshd_config(.d)/authorized_keys/ld.so.preload/modprobe.d/sysctl.d — diff 와 최근 관리자 활동 첨부, 서비스 중지 중 변경도 탐지 |
@@ -232,6 +233,9 @@ sudo secdash-<버전>/deploy/update.sh --deps
 | `SECDASH_AUTH_LOG` / `SECDASH_DPKG_LOG` | /var/log/auth.log, /var/log/dpkg.log | 로그 경로 (시뮬레이션 시 테스트 파일) |
 | `SECDASH_FAIL2BAN_JAIL` / `SECDASH_FAIL2BAN_JAILS` | sshd / sshd,recidive | 차단 요청 jail / 동기화 대상 jail |
 | `SECDASH_BRUTE_THRESHOLD` / `SECDASH_BRUTE_WINDOW_MIN` | 5 / 30 | 브루트포스 판정 (공개키 거부는 세지 않음) |
+| `SECDASH_UFW_LOG` | /var/log/ufw.log | ufw 차단 로그 경로 (`adm` 그룹이면 읽힘, 시뮬레이션 시 테스트 파일) |
+| `SECDASH_SCAN_PORTS` / `SECDASH_SCAN_WINDOW_SEC` | 10 / 60 | 같은 IP 가 이 시간(초) 안에 막힌 포트 N개 이상(TCP SYN·UDP)을 두드리면 스캔 이벤트 |
+| `SECDASH_SCAN_FOLLOWUP_HOURS` | 24 | 스캔한 IP 의 SSH 시도·실제 연결을 경고로 올리는 기간 |
 | `SECDASH_F2B_IGNOREIP` | – | 관리자 IP·대역(공백 구분). 대시보드가 차단하지 않고, `apply-host-config.sh` 가 fail2ban `ignoreip` 에도 넣는다. **원격 서버라면 반드시** |
 | `SECDASH_SSH_PORTS` | 22 | 로그인해 있는 관리자 SSH 세션을 알아보는 포트 (차단 보호용) |
 | `SECDASH_NETWORK_IGNORE_PROCESSES` | – | 외부 연결 이벤트에서 제외할 프로세스 (예: `firefox,chrome`) |
@@ -242,7 +246,12 @@ sudo secdash-<버전>/deploy/update.sh --deps
 
 ## 한계 (알고 쓰기)
 
-- 포트 스캔 탐지는 커널 소켓 테이블 기반 휴리스틱이라 SYN 스캔 대부분을 놓친다. 필요하면 방화벽 로그나 IDS 를 붙여라.
+- 포트 스캔은 ufw 가 **막은** 포트에 대해서만 방화벽 로그(`FirewallLogWatcher`)로 본다. 스캔 자체는 알림이 아니고, 스캔 뒤 SSH 시도·실제 연결이 이어지거나 내부망 주소가 스캔할 때만 경고한다. 보지 못하는 것:
+  - **Docker 가 게시한 포트**: Docker 는 ufw 규칙보다 앞에서 패킷을 넘기므로 ufw 로그에 남지 않는다.
+  - **정확한 횟수**: ufw 는 `logging low`~`high` 에서 차단 기록을 모든 IP 합산 분당 3건(한 번에 10건까지)으로 제한한다. 숫자는 최소치이고, 여러 곳이 동시에 두드리면 스캔 자체를 놓칠 수 있다. `logging full` 은 제한이 없지만 기록이 매우 많아진다.
+  - **허용된 포트에 대한 스캔**: 막히지 않으니 기록이 없다. 이건 여전히 NetworkWatcher 의 소켓 표 휴리스틱(저신뢰)뿐이다. FIN·NULL·Xmas 스캔(SYN 없는 TCP)도 스캔으로 세지 않는다.
+  - **ufw 가 아닌 방화벽**(nftables 직접 규칙, firewalld, 클라우드 보안 그룹)의 기록은 읽지 않는다. 필요하면 IDS(Suricata 등)를 붙여라.
+  - 시작할 때는 파일 끝부터 읽는다(재시작 전 기록은 다시 읽지 않는다). 하루 요약은 대시보드가 켜져 있던 동안만 센다.
 - 파일 무결성은 자체 해시다. 규제 요건이 있으면 AIDE 를 병행하고 이 대시보드는 표시 계층으로 써라.
 - auditd 가 없으면 프로세스 실행 이력(execve)은 30초 샘플링으로만 본다. `deploy/install.sh` 는 auditd 와 최소 규칙을 설치해 이 공백을 메운다.
 - 데스크톱 앱은 같은 컴퓨터의 백엔드(`127.0.0.1:8000`)에만 붙는다. 원격 서버를 보려면 SSH 터널을 직접 열어 둔다. Linux 트레이(AppIndicator)는 아이콘 클릭을 받지 않아 창은 트레이 메뉴로 연다.
