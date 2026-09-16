@@ -273,17 +273,56 @@ function JudgeFlow({ task, onAnswered, onBack, host, accounts }) {
     );
 }
 
-/** 순서대로 알려주는 일 */
-function GuideFlow({ task, onAck, onBack, done }) {
-    if (done) {
+/**
+ * 순서대로 알려주는 일.
+ *
+ * 답이 둘이다. '다 했어요'(해결)와 '읽었지만 아직 못 했어요'(확인)는 서버에서도 다른 상태다.
+ * 확인은 "봤다"는 표시일 뿐인데 그것을 해결로 처리하면, 아직 열려 있는 문이 기록에는 닫힌
+ * 것으로 남는다. 그래서 버튼을 나누고, 무엇이 달라지는지를 버튼 옆에 적는다.
+ *
+ * '확인'을 누르면 이 쉬운 화면 목록에서는 다시 보이지 않는다는 것도 먼저 말해 준다. 그게 사실이고,
+ * 그 사실을 모르면 "나중에 다시 눌러야지" 하고 잊는다.
+ *
+ * 기록에 실패하면 성공한 척하지 않는다 — 실패를 그 자리에 적고 상태를 바꾸지 않는다.
+ */
+function GuideFlow({ task, onAck, onResolve, onBack, done }) {
+    const [busy, setBusy] = useState(null);   // 'resolve' | 'ack' | null
+    const [err, setErr] = useState(null);
+
+    const run = async (kind, fn) => {
+        setBusy(kind); setErr(null);
+        try {
+            await fn();
+        } catch (e) {
+            setErr(e.message || '알 수 없는 이유');
+        } finally { setBusy(null); }
+    };
+
+    if (done === 'resolved') {
         return (
             <Card tone="ok" className="mt-7 p-5">
                 <div className="flex items-center gap-2 text-[15px] font-semibold">
-                    <Icon name="check" size={18} className="text-calm-accent" />확인 처리했어요
+                    <Icon name="check" size={18} className="text-calm-accent" />해결로 기록했어요
                 </div>
                 <div className="text-[14px] text-calm-muted mt-2 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
-                    이 일은 목록에서 빠져요. <b className="text-calm-ink">같은 일이 또 생겨도 다시 알리지 않아요.</b> 더 심각해지면 그때 알려드려요.
+                    이 일은 <b className="text-calm-ink">끝난 것</b>으로 남아요. 목록에서 빠지고, 기록에는 언제 끝냈는지가 함께 남아요.
+                    같은 일이 나중에 다시 생기면 그때 새로 알려드려요.
                 </div>
+                <div className="mt-4"><Btn kind="primary" className="h-11" onClick={onBack}>홈으로</Btn></div>
+            </Card>
+        );
+    }
+    if (done === 'acked') {
+        return (
+            <Card className="mt-7 p-5">
+                <div className="flex items-center gap-2 text-[15px] font-semibold">
+                    <Icon name="eye" size={18} className="text-calm-muted" />봤다는 표시만 남겼어요
+                </div>
+                <div className="text-[14px] text-calm-muted mt-2 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
+                    <b className="text-calm-ink">아직 해결한 것은 아니에요.</b> 이 일은 목록에서 빠지지만, 기록에는 &lsquo;대응 중&rsquo;으로 남아요.
+                    같은 일이 또 생겨도 다시 알리지 않고, 더 심각해지면 그때 알려드려요.
+                </div>
+                <div className="mt-4"><Btn kind="primary" className="h-11" onClick={onBack}>홈으로</Btn></div>
             </Card>
         );
     }
@@ -298,7 +337,35 @@ function GuideFlow({ task, onAck, onBack, done }) {
                     </div>
                 ))}
             </div>
-            <div className="mt-6 flex gap-2.5"><Btn kind="outline" onClick={onAck}>확인했어요</Btn><Btn kind="ghost" onClick={onBack}>나중에</Btn></div>
+
+            <Card className="mt-6 p-5">
+                <div className="text-[15px] font-semibold">하고 나서 알려주세요</div>
+                <div className="text-[13.5px] text-calm-muted mt-1.5 leading-relaxed max-w-[74ch]" style={{ wordBreak: 'keep-all' }}>
+                    <b className="text-calm-ink">다 했어요</b>는 이 일이 끝났다는 기록이에요.{' '}
+                    <b className="text-calm-ink">읽었지만 아직 못 했어요</b>는 봤다는 표시만 남겨요.
+                    두 기록은 달라요 — 나중에 무엇이 정말 끝났고 무엇이 남아 있는지 구분할 수 있게요.
+                </div>
+                <div className="mt-4 flex gap-2.5 flex-wrap">
+                    <Btn kind="primary" disabled={Boolean(busy)} onClick={() => run('resolve', onResolve)}>
+                        {busy === 'resolve' ? '기록하는 중이에요…' : '알려주신 대로 다 했어요'}
+                    </Btn>
+                    <Btn kind="outline" disabled={Boolean(busy)} onClick={() => run('ack', onAck)}>
+                        {busy === 'ack' ? '기록하는 중이에요…' : '읽었지만 아직 못 했어요'}
+                    </Btn>
+                    <Btn kind="ghost" disabled={Boolean(busy)} onClick={onBack}>나중에</Btn>
+                </div>
+                <div className="text-[13px] text-calm-muted mt-3 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
+                    &lsquo;읽었지만 아직 못 했어요&rsquo;를 누르면 이 화면의 할 일 목록에서는 빠져서 다시 보이지 않아요.
+                    아직 하실 일이 남았다면, 먼저 해두고 &lsquo;다 했어요&rsquo;를 누르시는 게 좋아요.
+                    지금 정하기 어려우면 &lsquo;나중에&rsquo;로 두셔도 돼요 — 그러면 목록에 그대로 남아요.
+                </div>
+                {err && (
+                    <div className="text-[13px] text-calm-warn mt-3 flex items-start gap-1.5" style={{ wordBreak: 'keep-all' }}>
+                        <Icon name="alert" size={14} className="mt-0.5 shrink-0" />
+                        <span>기록하지 못했어요 — {err}. 상태는 바뀌지 않았어요. 잠시 뒤 다시 눌러보세요.</span>
+                    </div>
+                )}
+            </Card>
         </div>
     );
 }
@@ -448,12 +515,25 @@ function AskElsewhere({ task, host, accounts }) {
 
 export default function TaskDetail({ task, onBack, onChanged, host, accounts }) {
     const tone = toneOf(task.severity);
-    const [guideDone, setGuideDone] = useState(false);
-    const ackAll = async () => {
-        try {
-            await api('/api/alerts/ack-all', { method: 'POST', body: { ids: task.alerts.map((a) => a.id), by: '사용자', note: '쉬운 화면에서 확인' } });
-        } catch { /* 확인 처리 실패는 화면을 막지 않는다 */ }
+    const [guideDone, setGuideDone] = useState(null);   // null | 'acked' | 'resolved'
+
+    // 확인과 해결은 서버에서도 다른 상태다.
+    //   확인(ack-all)        → ACKED   "봤다" — DEFCON 에서는 빠지지만 끝난 일이 아니다
+    //   조치 완료(respond fixed) → RESOLVED "끝났다" — 전문가 화면의 '해결'과 같은 상태
+    // 실패는 부르는 쪽으로 넘긴다. 실패했는데 "처리했어요" 를 띄우면 조용히 실패하는 것이다.
+    const markAcked = async () => {
+        await api('/api/alerts/ack-all', {
+            method: 'POST',
+            body: { ids: task.alerts.map((a) => a.id), by: '사용자', note: '쉬운 화면에서 확인만 함 (조치는 아직)' },
+        });
         onChanged?.();          // 목록만 새로 읽는다. 화면은 사용자가 직접 나간다.
+    };
+    const markResolved = async () => {
+        await api('/api/alerts/respond', {
+            method: 'POST',
+            body: { ids: task.alerts.map((a) => a.id), answer: 'fixed', by: '사용자', note: '쉬운 화면에서 조치를 마쳤다고 답함' },
+        });
+        onChanged?.();
     };
 
     return (
@@ -491,7 +571,8 @@ export default function TaskDetail({ task, onBack, onChanged, host, accounts }) 
                 )}
                 {task.kind === KIND.GUIDE && (
                     <GuideFlow task={task} done={guideDone} onBack={onBack}
-                        onAck={async () => { await ackAll(); setGuideDone(true); }} />
+                        onAck={async () => { await markAcked(); setGuideDone('acked'); }}
+                        onResolve={async () => { await markResolved(); setGuideDone('resolved'); }} />
                 )}
 
                 <Evidence task={task} />

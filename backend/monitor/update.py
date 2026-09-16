@@ -15,7 +15,7 @@ import re
 import time
 
 import config
-from alerts import auto_resolve, raise_alert, recent_admin_context
+from alerts import auto_resolve, open_fingerprints, raise_alert, recent_admin_context
 from integrations import apt
 from monitor.base import BaseMonitor, TailReader
 
@@ -25,6 +25,8 @@ PENDING_CHECK_INTERVAL = 6 * 3600
 REBOOT_FLAGS = ("/run/reboot-required", "/var/run/reboot-required")
 # 재부팅 전까지 옛 코드가 계속 도는 것들. 남은 할 일을 말할 때 이 이름이 있으면 더 분명해진다.
 REBOOT_HEAVY = ("linux-image", "linux-base", "libc6", "systemd", "dbus", "openssl", "libssl")
+# 제거되면 이 대시보드의 탐지 범위까지 줄어드는 패키지. 다시 설치된 것이 확인되면 알림을 닫는다.
+SECURITY_PACKAGES = ("fail2ban", "rsyslog", "openssh-server", "auditd", "ufw", "apparmor", "unattended-upgrades")
 
 
 class UpdateMonitor(BaseMonitor):
@@ -48,6 +50,7 @@ class UpdateMonitor(BaseMonitor):
         self._try_open()
         self._check_pending()
         self._check_reboot()
+        self._recheck_removed_packages()
 
     def _try_open(self) -> bool:
         try:
@@ -76,6 +79,7 @@ class UpdateMonitor(BaseMonitor):
         self._check_reboot()
         if time.time() - self._last_pending_check >= self._pending_interval:
             self._check_pending()
+            self._recheck_removed_packages()
 
     def _check_reboot(self):
         """재부팅 대기 상태. 파일이 사라지면(=재부팅함) 스스로 해결 처리한다."""
@@ -129,7 +133,7 @@ class UpdateMonitor(BaseMonitor):
             ctx = recent_admin_context(types=("SUDO_COMMAND", "AUTH_SUCCESS", "ROOT_SESSION"))
             d = {"action": action, "package": pkg, "version": v[0] if v else "", "admin_context": ctx}
             self.log_event("SOFTWARE_UPDATE", "WARNING", f"Package {action}d: {pkg} {d['version']}", d)
-            if pkg in ("fail2ban", "rsyslog", "openssh-server", "auditd", "ufw", "apparmor", "unattended-upgrades"):
+            if pkg in SECURITY_PACKAGES:
                 raise_alert("security_package_removed", "CRITICAL", f"Security package removed: {pkg}",
                             fingerprint=f"pkg_removed:{pkg}", title_ko=f"보안 관련 패키지 제거됨: {pkg}",
                             summary_ko="방어 도구가 제거되면 이 대시보드의 탐지 범위도 줄어듭니다.",
@@ -138,10 +142,34 @@ class UpdateMonitor(BaseMonitor):
         elif action == "install":
             d = {"action": action, "package": pkg, "version": v[-1] if v else ""}
             self.log_event("SOFTWARE_UPDATE", "INFO", f"Package installed: {pkg} {d['version']}", d)
+            # 제거 알림을 올린 보안 패키지가 돌아왔다. 조건이 사라졌으므로 그 자리에서 닫는다.
+            if pkg in SECURITY_PACKAGES:
+                auto_resolve(f"pkg_removed:{pkg}", f"{pkg} 가 다시 설치되어 자동 해결 (설치 버전 {d['version'] or '?'})")
         elif action == "upgrade":
             old, new = (v + ["", ""])[:2]
             d = {"action": action, "package": pkg, "old": old, "new": new}
             self.log_event("SOFTWARE_UPDATE", "INFO", f"Package upgraded: {pkg} {old} -> {new}", d)
+
+    def _recheck_removed_packages(self):
+        """제거됐다고 올린 보안 패키지가 지금 다시 설치돼 있으면 자동 해결한다.
+
+        dpkg.log 의 install 줄을 놓친 경우(서비스가 꺼진 동안 복구했거나 로그가 돌아간 경우)도
+        정리되도록 설치 목록과 직접 대조한다. 목록을 읽지 못하면 아무 판단도 하지 않는다 —
+        못 읽은 것을 '복구됨'으로 바꾸면 조용히 알림을 지우는 셈이다.
+        """
+        fps = open_fingerprints("security_package_removed")
+        if not fps:
+            return
+        installed = apt.installed_packages()
+        if not installed:
+            self.log.warning("설치 패키지 목록을 읽지 못해 제거된 보안 패키지 재대조를 건너뜁니다")
+            return
+        for fp in sorted(fps):
+            pkg = fp.split(":", 1)[1] if ":" in fp else ""
+            if not pkg or pkg not in installed:
+                continue
+            if auto_resolve(fp, f"{pkg} 가 다시 설치되어 자동 해결 (현재 버전 {installed[pkg]})"):
+                self.log.info(f"{pkg} 재설치 확인, 제거 알림 자동 해결")
 
     def _check_pending(self):
         self._last_pending_check = time.time()
