@@ -34,7 +34,7 @@ export default function PlainApp({ page = 'home', onPage, onMode }) {
     // 할 일 상세·기록은 잠깐 들르는 곳이라 여기서만 들고 있는다.
     const [view, setView] = useState(() => ({ name: page }));
     const [needToken, setNeedToken] = useState(() => !getToken());
-    const [d, setD] = useState({ stats: null, alerts: [], openAlerts: [], alertCount: null, events: [], host: null, exposure: null, blocked: null, monitors: [], accounts: [] });
+    const [d, setD] = useState({ stats: null, alerts: [], openAlerts: [], alertCount: null, events: [], host: null, exposure: null, blocked: null, monitors: [], accounts: [], fetchedAt: 0 });
     const [tick, setTick] = useState(0);
     const [conn, setConn] = useState('loading');   // loading | ok | down
     const alive = useRef(true);
@@ -61,6 +61,9 @@ export default function PlainApp({ page = 'home', onPage, onMode }) {
             host: host ?? p.host, exposure: exposure ?? p.exposure, blocked: blocked ?? p.blocked,
             monitors: monitors ?? p.monitors,
             accounts: accounts?.accounts ?? p.accounts,
+            // 화면을 받은 시각. '180일 넘게 안 쓴 계정' 판정의 기준이다 —
+            // 그리는 중에 시계를 읽지 않기 위해 여기서 한 번만 잡는다.
+            fetchedAt: stats ? Date.now() : p.fetchedAt,
         }));
         setTick((t) => t + 1);
     }, []);
@@ -158,7 +161,8 @@ export default function PlainApp({ page = 'home', onPage, onMode }) {
                 </div>
 
                 {view.name === 'home' && (
-                    <Home status={status} tasks={tasks} facts={facts} onOpenTask={openTask} onGo={go} />
+                    <Home status={status} tasks={tasks} facts={facts} host={d.host} accounts={d.accounts}
+                        asOf={d.fetchedAt} onOpenTask={openTask} onGo={go} />
                 )}
                 {view.name === 'task' && (
                     <TaskDetail task={tasks.find((t) => t.id === view.task.id) || view.task}
