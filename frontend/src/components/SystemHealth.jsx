@@ -16,7 +16,7 @@ function CopyCmd({ label, cmd }) {
     );
 }
 
-function UsbPolicy({ usb, blocked }) {
+function UsbPolicy({ usb, blocked, access }) {
     if (!usb) return null;
     const c = usb.commands || {};
     const tone = usb.state === 'blocked' ? 'text-neon-green' : usb.state === 'temporarily_unblocked' ? 'text-yellow-400' : 'text-gray-300';
@@ -35,6 +35,15 @@ function UsbPolicy({ usb, blocked }) {
             </div>
             {blocked && blocked.length > 0 && (
                 <div className="text-gray-600 mt-1">차단 모듈: {blocked.join(', ')} · 해제 시 auditd 가 모듈 로드를 기록해 알림이 올라옵니다</div>
+            )}
+            {/* 쉬운 화면 홈에서 이 줄을 왜 그렸는지(또는 왜 안 그렸는지) 궁금한 운영자를 위한 자리.
+                판정은 백엔드가 하고(SECDASH_PHYSICAL_ACCESS·logind seat·섀시), 여기 근거만 적는다. */}
+            {access && (
+                <div className="text-gray-600 mt-1">
+                    쉬운 화면 홈의 USB 줄: <span className={access.usb_relevant ? 'text-gray-400' : 'text-yellow-400'}>
+                        {access.usb_relevant ? '보임' : '숨김'}
+                    </span> — {access.reason}
+                </div>
             )}
         </div>
     );
@@ -133,7 +142,7 @@ export default function SystemHealth({ stats, host }) {
                             <span className={ok ? 'text-gray-400' : 'text-yellow-400'}>{label}: {ok ? '가능' : '불가'}</span>
                         </div>
                     ))}
-                    <UsbPolicy usb={host.usb_storage} blocked={host.blocked_modules} />
+                    <UsbPolicy usb={host.usb_storage} blocked={host.blocked_modules} access={host.physical_access} />
                     {host.pending_updates?.available && (
                         <div className={host.pending_updates.security > 0 ? 'text-yellow-400' : 'text-gray-400'}>
                             미적용 업데이트 {host.pending_updates.total} (보안 {host.pending_updates.security})

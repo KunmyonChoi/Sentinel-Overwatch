@@ -39,6 +39,7 @@ from integrations.fail2ban import Fail2banClient
 from integrations import modules as kmod
 from integrations import accounts as acct
 from integrations import permission_fix
+from integrations import presence
 from monitor.container_audit import ContainerAudit
 from monitor.exposure import ExposureMonitor
 from monitor.fail2ban_sync import Fail2banSync
@@ -555,6 +556,9 @@ def get_host():
         # 안 했으면 남은 할 일이 있는데도 화면은 '없음'이라고 답한다.
         "reboot": getattr(upd, "reboot", {}),
         "usb_storage": kmod.usb_storage_status(),
+        # USB 차단 해제·재차단이 이 기계에 해당하는 이야기인지. 판정과 그 이유를 함께 내려서
+        # 화면이 정책을 다시 계산하지 않게 한다. 못 읽었으면 '해당한다'로 답한다(presence 참고).
+        "physical_access": presence.physical_access(),
         "blocked_modules": kmod.blocked_modules(),
         "firewall": getattr(monitor_registry.get("ExposureMonitor", {}).get("instance"), "fw", {"available": False}),
         "api_token_file": str(config.API_TOKEN_FILE),

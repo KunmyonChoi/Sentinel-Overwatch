@@ -268,6 +268,7 @@ sudo secdash-<버전>/deploy/update.sh --deps
 | `SECDASH_API_TOKEN` | 자동 생성(`backend/.api_token`) | API 토큰 고정 |
 | `SECDASH_HOSTNAME` | 시스템 호스트명 | Slack 알림 제목 접두사, 대시보드 헤더 |
 | `SECDASH_HOST_ROLE` | – | 서버 역할 메모. 강화 작업 목록의 "Claude 에 붙여넣기용 복사" 본문에 포함 |
+| `SECDASH_PHYSICAL_ACCESS` | auto | 이 기계 앞에 사람이 앉을 수 있는가. 쉬운 화면 홈 '지금 할 수 있는 것'의 USB 저장장치 줄을 그릴지 정한다. `auto` = 앉는 자리(logind seat)를 1차 신호로, 섀시·가상화를 보조로 판정하고 **못 읽거나 엇갈리면 그린다**. `always` = 늘 그린다. `never` = 아무도 직접 손댈 수 없는 기계라 그리지 않는다. 판정과 그 이유는 `/api/host` 의 `physical_access` (자세히 보기 → 컴퓨터 상태에 한 줄로 보인다) |
 | `SECDASH_AUTH_LOG` / `SECDASH_DPKG_LOG` | /var/log/auth.log, /var/log/dpkg.log | 로그 경로 (시뮬레이션 시 테스트 파일) |
 | `SECDASH_FAIL2BAN_JAIL` / `SECDASH_FAIL2BAN_JAILS` | sshd / sshd,recidive | 차단 요청 jail / 동기화 대상 jail |
 | `SECDASH_BRUTE_THRESHOLD` / `SECDASH_BRUTE_WINDOW_MIN` | 5 / 30 | 브루트포스 판정 (공개키 거부는 세지 않음) |
