@@ -1,6 +1,6 @@
 [package]
 name = "sentinel-desktop"
-version = "0.1.0"
+version = "0.1.1"
 description = "내 컴퓨터 지킴이 — 트레이 상주 데스크톱 앱"
 edition = "2021"
 license = "Apache-2.0"
