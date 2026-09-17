@@ -301,6 +301,31 @@ describe('statusOf', () => {
   it('할 일 목록 대신 개수만 넘기면 위생 작업 문장을 쓴다', () => {
     const s = statusOf({ status: 'DEFCON 3', open_critical: 0, open_warning: 0 }, 3, 'ok')
     expect(s.urgency).toBe(URGENCY.CARE)
-    expect(s.lead).toBe('손볼 일이 3 가지 있어요. 급하지는 않지만 오늘 중에 해두는 게 좋아요.')
+    expect(s.lead).toBe('손볼 일이 3가지 있어요. 급하지는 않지만 오늘 중에 해두는 게 좋아요.')
+  })
+
+  // 예전에는 침입 신호나 판단 못 한 것이 하나라도 있으면 먼저 반환해 버려서,
+  // 나머지를 못 받았다는 말이 사라졌다. 가장 급한 신호를 말하면서도 못 받은 것은 함께 알린다.
+  it('침입 신호가 있어도 못 받은 알림이 있으면 함께 말한다', () => {
+    const tasks = buildTasks([alert({ rule: 'new_login_ip', title_ko: '처음 보는 곳에서 로그인' })])
+    const s = statusOf({ status: 'DEFCON 3', open_critical: 0, open_warning: 50 }, tasks, 'ok')
+    expect(s.urgency).toBe(URGENCY.SIGNAL)
+    expect(s.lead).toContain('직접 하신 일이 아니라면 오늘 바로 확인하세요.')
+    expect(s.lead).toContain('아직 불러오지 못한 일이 49가지 더 있어요.')
+  })
+
+  it('판단 못 한 것이 있어도 못 받은 알림이 있으면 함께 말한다', () => {
+    const tasks = buildTasks([alert({ rule: 'monitor_blind_spot' })])
+    const s = statusOf({ status: 'DEFCON 3', open_critical: 0, open_warning: 4 }, tasks, 'ok')
+    expect(s.urgency).toBe(URGENCY.UNKNOWN)
+    expect(s.lead).toContain('지킴이가 판단하지 못한 일이에요.')
+    expect(s.lead).toContain('아직 불러오지 못한 일이 3가지 더 있어요.')
+  })
+
+  it('침입 신호를 다 받았으면 못 받았다는 말을 붙이지 않는다', () => {
+    const tasks = buildTasks([alert({ rule: 'new_login_ip', title_ko: '처음 보는 곳에서 로그인' })])
+    const s = statusOf({ status: 'DEFCON 3', open_critical: 0, open_warning: 1 }, tasks, 'ok')
+    expect(s.urgency).toBe(URGENCY.SIGNAL)
+    expect(s.lead).not.toContain('불러오지 못한')
   })
 })
