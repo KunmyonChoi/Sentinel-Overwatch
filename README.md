@@ -143,10 +143,10 @@ sudo secdash-1.0.0/deploy/apply-host-config.sh && sudo systemctl restart secdash
 
 ```bash
 cd ~
-wget https://github.com/KunmyonChoi/Sentinel-Overwatch/releases/download/desktop-v0.1.1/sentinel-overwatch_0.1.1_amd64.deb
-wget https://github.com/KunmyonChoi/Sentinel-Overwatch/releases/download/desktop-v0.1.1/SHA256SUMS
+wget https://github.com/KunmyonChoi/Sentinel-Overwatch/releases/download/desktop-v0.1.2/sentinel-overwatch_0.1.2_amd64.deb
+wget https://github.com/KunmyonChoi/Sentinel-Overwatch/releases/download/desktop-v0.1.2/SHA256SUMS
 sha256sum -c --ignore-missing SHA256SUMS      # "…deb: OK"
-sudo apt install ./sentinel-overwatch_0.1.1_amd64.deb
+sudo apt install ./sentinel-overwatch_0.1.2_amd64.deb
 ```
 
 앱 메뉴에서 **내 컴퓨터 지킴이**를 실행하고, 5단계와 같은 토큰을 한 번 넣는다. 앱에서는 토큰이 **OS 키링**(Ubuntu 의 '암호와 키')에 저장된다.
