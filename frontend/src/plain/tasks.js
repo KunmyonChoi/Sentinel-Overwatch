@@ -477,28 +477,32 @@ export function statusOf(stats, tasks, conn = 'ok') {
     const of = (u) => list.filter((t) => t.urgency === u);
     const signals = of(URGENCY.SIGNAL);
     const unknowns = of(URGENCY.UNKNOWN);
+    // 목록이 잘려 할 일을 다 받지 못한 경우. 서버가 센 미확인 건수와 받아온 알림 수를 비교한다.
+    // 확인 처리한 알림이 쌓이면 오래된 미확인 알림이 목록 밖으로 밀려나는 일이 실제로 있었고,
+    // 그때 화면은 카드 하나 없이 "손볼 일이 0 가지"라고 말했다. 모르는 것은 모른다고 말한다.
+    //
+    // 이 계산은 침입 신호·판단 못 한 것 분기보다 **먼저** 해야 한다. 뒤에 두었더니 신호가 하나라도
+    // 있으면 먼저 반환해 버려, 나머지를 못 받았다는 말이 사라졌다 (테스트로 드러난 버그).
+    const fetchedOpen = list.reduce((n, t) => n + (t.count || 1), 0);
+    const openTotal = (stats?.open_critical || 0) + (stats?.open_warning || 0);
+    const missing = Math.max(0, openTotal - fetchedOpen);
+    const notLoaded = missing > 0 ? ` 아직 불러오지 못한 일이 ${missing}가지 더 있어요.` : '';
     // 침입 신호: 무슨 신호인지 한 줄로 말하고, 오늘 바로 보라고 한다.
     if (signals.length) {
       return {
         key: 'warn', label: '살펴보세요', urgency: URGENCY.SIGNAL,
         lead: `${signals[0].title}. `
           + (signals.length > 1 ? `이런 신호가 ${signals.length}가지 있어요. ` : '')
-          + '직접 하신 일이 아니라면 오늘 바로 확인하세요.',
+          + '직접 하신 일이 아니라면 오늘 바로 확인하세요.' + notLoaded,
       };
     }
     // 판단하지 못한 것: 괜찮다고도, 위험하다고도 말하지 않는다. 모른다고 말한다.
     if (unknowns.length) {
       return {
         key: 'warn', label: '살펴보세요', urgency: URGENCY.UNKNOWN,
-        lead: `${unknowns[0].title}. 지킴이가 판단하지 못한 일이에요. 오늘 바로 확인하세요.`,
+        lead: `${unknowns[0].title}. 지킴이가 판단하지 못한 일이에요. 오늘 바로 확인하세요.` + notLoaded,
       };
     }
-    // 목록이 잘려 할 일을 다 받지 못한 경우. 서버가 센 미확인 건수와 받아온 알림 수를 비교한다.
-    // 확인 처리한 알림이 쌓이면 오래된 미확인 알림이 목록 밖으로 밀려나는 일이 실제로 있었고,
-    // 그때 화면은 카드 하나 없이 "손볼 일이 0 가지"라고 말했다. 모르는 것은 모른다고 말한다.
-    const fetchedOpen = list.reduce((n, t) => n + (t.count || 1), 0);
-    const openTotal = (stats?.open_critical || 0) + (stats?.open_warning || 0);
-    const missing = Math.max(0, openTotal - fetchedOpen);
     if (missing > 0) {
       return {
         key: 'warn', label: '살펴보세요', urgency: URGENCY.UNKNOWN,
@@ -509,7 +513,7 @@ export function statusOf(stats, tasks, conn = 'ok') {
     }
     return {
       key: 'warn', label: '살펴보세요', urgency: URGENCY.CARE,
-      lead: `손볼 일이 ${taskCount === 1 ? '한' : taskCount} 가지 있어요. 급하지는 않지만 오늘 중에 해두는 게 좋아요.`,
+      lead: `손볼 일이 ${taskCount === 1 ? '한 가지' : `${taskCount}가지`} 있어요. 급하지는 않지만 오늘 중에 해두는 게 좋아요.`,
     };
   }
   return { key: 'ok', label: '이상 없음', lead: '지금 손볼 일이 없어요. 이 창을 닫으셔도 돼요.' };

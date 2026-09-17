@@ -59,14 +59,32 @@ describe('QuickActions — USB 저장장치', () => {
         expect(screen.queryByRole('button', { name: '잠깐 쓰기' })).toBeNull();
     });
 
-    it('열려 있으면 지금 열려 있다고 말한다', () => {
-        render(<QuickActions host={usbHost('unblocked', {
+    // 백엔드가 실제로 내는 '열림' 상태는 allowed 와 allowed_loaded 두 가지다
+    // (backend/integrations/modules.py). 예전 테스트는 백엔드에 없는 'unblocked' 를 썼고,
+    // 처음 보는 값을 '열림'으로 읽던 버그 덕분에 통과하고 있었다.
+    it.each([
+        ['allowed', '허용 (차단 설정 없음)'],
+        ['allowed_loaded', '허용 (모듈 로드됨)'],
+    ])('열려 있으면(%s) 지금 열려 있다고 말한다', (state, stateKo) => {
+        render(<QuickActions host={usbHost(state, {
             reblock: 'sudo secdash-usb reblock',
             permanent_block: 'sudo secdash-usb permanent-block',
-        }, '열려 있어요')} />);
+        }, stateKo)} />);
 
         expect(screen.getByText('지금은 USB 메모리를 꽂으면 파일이 열려요.')).toBeTruthy();
         expect(screen.getByRole('button', { name: '다시 막기' })).toBeTruthy();
+    });
+
+    // 처음 보는 상태값은 '열림'도 '막힘'도 아니다. 모르는 것을 안다고 말하지 않도록 줄을 빼야 한다.
+    it.each(['unblocked', 'something_new', ''])('처음 보는 상태값(%j)이면 USB 줄을 그리지 않는다', (state) => {
+        const { container } = render(<QuickActions host={usbHost(state, {
+            reblock: 'sudo secdash-usb reblock',
+            temp_unblock: 'sudo secdash-usb temp-unblock',
+        })} />);
+
+        expect(screen.queryByText('USB 저장장치')).toBeNull();
+        expect(screen.queryByText(/파일이 열려요/)).toBeNull();
+        expect(container.firstChild).toBeNull();
     });
 
     it('상태를 모르면 USB 줄을 그리지 않는다', () => {

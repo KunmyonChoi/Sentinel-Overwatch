@@ -19,6 +19,11 @@ import { copyText } from './brief';
 const UNUSED_DAYS = 180;   // 전문가 화면의 계정 패널과 같은 기준
 const MAX_ROWS = 3;
 
+// 백엔드가 내는 USB 상태는 이 넷뿐이다 (backend/integrations/modules.py 의 usb_storage_status).
+// 이 밖의 값이 오면 '열려 있다'고 단정하지 않고 줄을 그리지 않는다. 예전에는 'unknown' 만
+// 걸러서, 처음 보는 값은 모두 "지금은 파일이 열려요"로 읽혔다 (테스트로 드러난 버그).
+const KNOWN_USB_STATES = ['blocked', 'temporarily_unblocked', 'allowed_loaded', 'allowed'];
+
 /** 명령 한 줄 + 왜 그런지 + 복사. 자동 복사가 막히면 직접 끌어 복사하도록 글을 남긴다. */
 function CommandPanel({ cmd, why }) {
     const [state, setState] = useState('idle');   // idle | ok | fail
@@ -99,7 +104,7 @@ export default function QuickActions({ host, accounts = [], asOf = 0 }) {
     // 줄 하나를 그리는 것보다 나쁘다. 판단 근거는 자세히 보기 → 컴퓨터 상태에 적혀 있다.
     const usbRelevant = host?.physical_access?.usb_relevant !== false;
 
-    if (usb && usb.state !== 'unknown' && usbRelevant) {
+    if (usb && KNOWN_USB_STATES.includes(usb.state) && usbRelevant) {
         const blocked = usb.state === 'blocked';
         const temporarily = usb.state === 'temporarily_unblocked';
         const actions = [];
@@ -189,8 +194,8 @@ export default function QuickActions({ host, accounts = [], asOf = 0 }) {
                     누르면 터미널에 붙여 넣을 명령을 알려드려요
                 </span>
             </div>
-            {rows.slice(0, MAX_ROWS).map((r) => (
-                <Row key={r.key} {...r} openId={openId} setOpenId={setOpenId} />
+            {rows.slice(0, MAX_ROWS).map(({ key, ...row }) => (
+                <Row key={key} {...row} openId={openId} setOpenId={setOpenId} />
             ))}
         </Card>
     );
