@@ -1,6 +1,7 @@
 import React from 'react';
 import { Icon, Card, Btn, StatusHead, FactCard } from './ui';
 import QuickActions from './QuickActions';
+import { VersionLine } from '../VersionLine';
 import { TONE, toneOf } from './tokens';
 import { KIND } from './tasks';
 
@@ -86,6 +87,9 @@ export default function Home({ status, tasks, facts, host, accounts, asOf, onOpe
                     className="h-11 px-3 rounded-lg inline-flex items-center gap-2 text-[14.5px] text-calm-accent hover:bg-calm-panel2 cursor-pointer font-kr">
                     <Icon name="eye" size={16} />지킴이가 본 것 자세히 보기
                 </button>
+                {/* 앱과 서버는 따로 올라간다. 문제를 물어볼 때 함께 말할 수 있도록 오른쪽 끝에 작게. */}
+                <VersionLine server={host?.version}
+                    className="ml-auto text-[12.5px] text-calm-muted tabular-nums whitespace-nowrap" />
             </div>
         </div>
     );

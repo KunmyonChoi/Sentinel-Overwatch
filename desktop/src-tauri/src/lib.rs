@@ -131,12 +131,18 @@ pub fn run() {
                 app, "autostart", "로그인할 때 자동으로 켜기", true, autostart_on, None::<&str>,
             )?;
             let quit_i = MenuItem::with_id(app, "quit", "종료", true, None::<&str>)?;
+            // 앱 버전. 누를 수 없는 줄이다 — 문제를 물어볼 때 이 번호를 알려줄 수 있게만 둔다.
+            // 서버 버전은 트레이가 아니라 창 안에 적는다(서버에 붙기 전에는 알 수 없다).
+            let version_i = MenuItem::with_id(
+                app, "version", format!("앱 버전 {}", app.package_info().version), false, None::<&str>,
+            )?;
             let menu = Menu::with_items(app, &[
                 &status_i,
                 &PredefinedMenuItem::separator(app)?,
                 &open_i,
                 &autostart_i,
                 &PredefinedMenuItem::separator(app)?,
+                &version_i,
                 &quit_i,
             ])?;
 

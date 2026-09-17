@@ -17,6 +17,7 @@ import MaintenanceControl from './components/MaintenanceControl';
 import AccountsPanel from './components/AccountsPanel';
 import ExposurePanel from './components/ExposurePanel';
 import ConfigAuditPanel from './components/ConfigAuditPanel';
+import { AppVersionTag } from './VersionLine';
 import { api, getToken } from './api';
 import { ShieldAlert } from 'lucide-react';
 import ModeSwitch from './ModeSwitch';
@@ -109,7 +110,7 @@ export default function Dashboard({ onMode }) {
             <h1 className="text-3xl font-bold tracking-widest text-neon-green neon-text">SENTINEL // OVERWATCH</h1>
             {host && (
               <div className="text-xs text-gray-500 font-mono mt-1">
-                {host.hostname} · v{host.version} · {host.os} · 실행 계정 {host.running_as?.user || host.running_as?.uid}{host.running_as?.root ? ' (root)' : ''}
+                {host.hostname} · 서버 v{host.version}<AppVersionTag /> · {host.os} · 실행 계정 {host.running_as?.user || host.running_as?.uid}{host.running_as?.root ? ' (root)' : ''}
               </div>
             )}
           </div>
