@@ -24,15 +24,15 @@
 1. **받기와 확인** — 터미널(`Ctrl` + `Alt` + `T`)에서:
    ```bash
    cd ~
-   wget https://github.com/KunmyonChoi/Sentinel-Overwatch/releases/download/desktop-v0.1.1/sentinel-overwatch_0.1.1_amd64.deb
-   wget https://github.com/KunmyonChoi/Sentinel-Overwatch/releases/download/desktop-v0.1.1/SHA256SUMS
+   wget https://github.com/KunmyonChoi/Sentinel-Overwatch/releases/download/desktop-v0.1.2/sentinel-overwatch_0.1.2_amd64.deb
+   wget https://github.com/KunmyonChoi/Sentinel-Overwatch/releases/download/desktop-v0.1.2/SHA256SUMS
    sha256sum -c --ignore-missing SHA256SUMS      # "…deb: OK" 가 아니면 설치하지 않는다
    ```
 2. **설치** — 처음 한 번 내 계정 비밀번호를 묻는다(입력하는 글자는 보이지 않는다).
    ```bash
-   sudo apt install ./sentinel-overwatch_0.1.1_amd64.deb
+   sudo apt install ./sentinel-overwatch_0.1.2_amd64.deb
    ```
-   설치하지 않고 쓰려면 같은 릴리스의 AppImage 를 받아 `chmod +x sentinel-overwatch_0.1.1_amd64.AppImage && ./sentinel-overwatch_0.1.1_amd64.AppImage`.
+   설치하지 않고 쓰려면 같은 릴리스의 AppImage 를 받아 `chmod +x sentinel-overwatch_0.1.2_amd64.AppImage && ./sentinel-overwatch_0.1.2_amd64.AppImage`.
 3. **실행** — 앱 메뉴에서 **내 컴퓨터 지킴이**(영문 환경에서는 Sentinel Overwatch)를 연다.
 4. **토큰 넣기** — 처음 창이 뜨면 **"API 토큰 필요"** 창이 나온다. 토큰은 지킴이 화면에 들어가는 비밀 문자열이다.
    - 지킴이가 설치된 컴퓨터(원격이면 서버)의 터미널에서 `sudo cat /opt/secdash/backend/.api_token` 을 실행한다.
@@ -112,7 +112,7 @@ npm ci && npm run build   # 화면 빌드(frontend → desktop/dist) + 앱 빌�
    sudo deploy/update.sh
    ```
    `update.sh` 는 `frontend/dist` 에 개발 토큰이 들어 있으면 웹 화면을 올리지 않고 알린다.
-2. **설치** — `sudo apt install "./src-tauri/target/release/bundle/deb/Sentinel Overwatch_0.1.1_amd64.deb"`
+2. **설치** — `sudo apt install "./src-tauri/target/release/bundle/deb/Sentinel Overwatch_0.1.2_amd64.deb"`
 3. **확인할 것** — 트레이 아이콘과 메뉴 첫 줄, 창 닫기(트레이에 남음)·창 열기, 로그인 시 자동 시작,
    운영 서비스를 멈췄을 때 "상태를 알 수 없어요" (`sudo systemctl stop secdash` → 확인 → `start`).
 
